@@ -1,4 +1,3 @@
-import datetime
 import logging
 
 from aiter import join_aiters, map_aiter
@@ -7,15 +6,7 @@ from .utils.server import readers_writers_server_for_port
 from .utils.cbor_wrap import reader_to_cbor_event_stream, send_cbor_message
 
 
-async def do_ping(message):
-    return dict(response="got ping message %r at time %s" % (message.get("m"), datetime.datetime.utcnow()))
-
-
-async def do_create_new_block(message):
-    pass
-
-
-async def wallet_server(port):
+async def api_server(port, api):
     rws_aiter = readers_writers_server_for_port(port)
     event_aiter = join_aiters(map_aiter(reader_to_cbor_event_stream, rws_aiter))
 
@@ -24,7 +15,7 @@ async def wallet_server(port):
             # {"c": "command"}
             message = event["message"]
             c = message.get("c")
-            f = globals().get("do_%s" % c)
+            f = api.get("do_%s" % c)
             if f:
                 r = await f(message)
                 logging.debug("handled %s message" % c)

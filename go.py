@@ -9,7 +9,8 @@ import cbor
 
 from aiter import join_aiters, map_aiter
 
-from chiasim.wallet_server import wallet_server
+from chiasim import wallet_api
+from chiasim.api_server import api_server
 from chiasim.utils.server import readers_writers_server_for_port
 
 
@@ -108,7 +109,7 @@ def server_command(args):
 
 
 def wallet_command(args):
-    return wallet_server(args.port)
+    return api_server(args.port, wallet_api.__dict__)
 
 
 def main(args=sys.argv):
