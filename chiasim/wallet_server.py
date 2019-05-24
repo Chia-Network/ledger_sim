@@ -8,7 +8,11 @@ from .utils.cbor_wrap import reader_to_cbor_event_stream, send_cbor_message
 
 
 async def do_ping(message):
-    return dict(response="got ping message at time %s" % datetime.datetime.utcnow())
+    return dict(response="got ping message %r at time %s" % (message.get("m"), datetime.datetime.utcnow()))
+
+
+async def do_create_new_block(message):
+    pass
 
 
 async def wallet_server(port):
