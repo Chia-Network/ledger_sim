@@ -61,11 +61,10 @@ class Mempool:
 
         timestamp = self.generate_timestamp()
 
-        breakpoint()
         body_hash = body.hash()
         header = Header(
-            self._tip, timestamp, additions, removals, proof_of_space.hash(),
-            body.hash(), std_hash(extension_data))
+            self._tip, timestamp, merkle_hash(additions), merkle_hash(removals),
+            proof_of_space.hash(), body.hash(), std_hash(extension_data))
 
         private_key = private_for_public(proof_of_space.plot_pubkey)
         header_signature = private_key.sign(header.hash())

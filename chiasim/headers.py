@@ -152,7 +152,10 @@ def pad_to_power_of_2(leaves, pad):
     return depth, tuple(_.hash() for _ in leaves) + tuple([pad] * pad_count)
 
 
-def merkle_hash(leaves, hash_f=std_hash, pad=hexbytes([0] * 32)):
+def merkle_hash(leaves, hash_f=std_hash, pad=bytes32([0] * 32)):
+
+    if len(leaves) == 0:
+        return pad
 
     def merkle_pair(leaves, hash_f):
         count = len(leaves)
@@ -170,13 +173,13 @@ def merkle_hash(leaves, hash_f=std_hash, pad=hexbytes([0] * 32)):
 
 @dataclasses.dataclass(frozen=True)
 class CoinInfo(Streamable):
-    parent_coin_info: Hash
+    parent_coin_info_hash: Hash
     puzzle_hash: Hash
 
 
 @dataclasses.dataclass(frozen=True)
 class Coin(Streamable):
-    coin_info: Hash
+    coin_info_hash: Hash
     amount: uint64
 
     def additions(self, solution):
