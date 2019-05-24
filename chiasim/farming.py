@@ -1,6 +1,9 @@
 import time
 
-from .headers import Body, Hash, merkle_hash, SpendBundle, uint64, Header, Coin, ProofOfSpace, EORPrivateKey, Signature, std_hash
+from .hashable import (
+    Body, Hash, merkle_hash, SpendBundle, uint64, Header,
+    Coin, ProofOfSpace, EORPrivateKey, Signature, std_hash
+)
 
 
 def best_solution_program(bundle: SpendBundle):
@@ -61,7 +64,6 @@ class Mempool:
 
         timestamp = self.generate_timestamp()
 
-        body_hash = body.hash()
         header = Header(
             self._tip, timestamp, merkle_hash(additions), merkle_hash(removals),
             proof_of_space.hash(), body.hash(), std_hash(extension_data))

@@ -1,0 +1,44 @@
+import dataclasses
+
+from .base import bytes32
+from .Hash import Hash
+from .Streamable import Streamable
+
+
+def eor_bytes32(a: bytes32, b: bytes32) -> bytes32:
+    return bytes32([_[0] ^ _[1] for _ in zip(a, b)])
+
+
+EORPublicKey = bytes32
+PublicKey = EORPublicKey
+
+
+@dataclasses.dataclass(frozen=True)
+class EORSignature(Streamable):
+    val: bytes32
+
+    @classmethod
+    def zero(cls):
+        return cls(bytes32([0] * 32))
+
+    def validate(self, message_hash: Hash, pubkey: EORPublicKey) -> bool:
+        eor_result = eor_bytes32(self.val, message_hash)
+        return eor_result == pubkey
+
+    def __add__(self, other):
+        if isinstance(other, EORSignature):
+            return EORSignature(eor_bytes32(self.val, other.val))
+
+
+@dataclasses.dataclass(frozen=True)
+class EORPrivateKey(Streamable):
+    val: bytes32
+
+    def sign(self, message_hash: bytes32) -> EORSignature:
+        return EORSignature(eor_bytes32(self.val, message_hash))
+
+    def public_key(self) -> EORPublicKey:
+        return EORPublicKey(self.val)
+
+
+Signature = EORSignature
