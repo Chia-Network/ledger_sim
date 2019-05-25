@@ -39,7 +39,9 @@ class Mempool:
         return uint64(max(self.minimum_legal_timestamp(), int(time.time())))
 
     def farm_new_block(
-            self, proof_of_space: ProofOfSpace, coinbase_coin, coinbase_signature, fees_puzzle_hash):
+            self, proof_of_space: ProofOfSpace,
+            coinbase_coin: Coin, coinbase_signature: Signature,
+            fees_puzzle_hash: Hash):
         """
         Steps:
             - collect up a consistent set of removals and solutions
