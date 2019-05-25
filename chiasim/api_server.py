@@ -1,14 +1,13 @@
 import logging
 
-from aiter import join_aiters, map_aiter
-
 from .utils.server import readers_writers_server_for_port
-from .utils.cbor_wrap import reader_to_cbor_event_stream, send_cbor_message
+from .utils.cbor_messages import reader_to_cbor_stream, send_cbor_message
+from .utils.event_stream import rws_to_event_aiter
 
 
 async def api_server(port, api):
     rws_aiter = readers_writers_server_for_port(port)
-    event_aiter = join_aiters(map_aiter(reader_to_cbor_event_stream, rws_aiter))
+    event_aiter = rws_to_event_aiter(rws_aiter, reader_to_cbor_stream)
 
     async for event in event_aiter:
         try:

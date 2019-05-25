@@ -5,36 +5,26 @@ import struct
 import cbor
 
 
-async def reader_to_cbor_event_stream(dict_with_reader):
+async def reader_to_cbor_stream(reader):
     """
-    Turn a reader into a generator that yields events with cbor messages.
+    Turn a reader into a generator that yields cbor messages.
     """
-
-    template = dict(dict_with_reader)
-    reader = dict_with_reader["reader"]
     while True:
         try:
-            message_size_blob = await reader.readexactly(2)
-            message_size, = struct.unpack(">H", message_size_blob)
+            message_size_blob = await reader.readexactly(4)
+            message_size, = struct.unpack(">L", message_size_blob)
             blob = await reader.readexactly(message_size)
-            message = cbor.loads(blob)
-
-            new_dict = dict(template)
-            new_dict.update(message=message)
-            yield new_dict
+            yield cbor.loads(blob)
         except asyncio.IncompleteReadError:
             break
         except ValueError:
             logging.info("badly formatted cbor from stream %s", reader)
             break
 
-    if "writer" in dict_with_reader:
-        dict_with_reader["writer"].close()
-
 
 def send_cbor_message(msg, writer):
     msg_blob = cbor.dumps(msg)
-    length_blob = struct.pack(">H", len(msg_blob))
+    length_blob = struct.pack(">L", len(msg_blob))
     writer.write(length_blob)
     writer.write(msg_blob)
 

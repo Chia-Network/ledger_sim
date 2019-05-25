@@ -2,84 +2,23 @@ import argparse
 import asyncio
 import json
 import logging
-import struct
 import sys
-
-import cbor
-
-from aiter import join_aiters, map_aiter
 
 from chiasim import wallet_api
 from chiasim.api_server import api_server
+from chiasim.utils.cbor_messages import send_cbor_message, reader_to_cbor_stream
+from chiasim.utils.event_stream import rws_to_event_aiter
+from chiasim.utils.readline_messages import reader_to_readline_stream
 from chiasim.utils.server import readers_writers_server_for_port
-
-
-async def reader_to_message_stream(reader):
-    """
-    This adaptor accepts a reader and turns it into a generator that yields
-    messages (in the form of lines) read from the reader.
-    """
-    while True:
-        line = await reader.readline()
-        # if the connection is closed, we get a line of no bytes
-        if len(line) == 0:
-            break
-        yield line
-
-
-async def event_to_message_stream(event):
-    """
-    This adaptor accepts a dictionary with "reader" key and turns it into a generator that yields
-    tuples (messages (in the form of lines) read from the reader.
-    """
-    template = dict(event)
-
-    def add_template(message):
-        d = dict(template)
-        d.update(message=message)
-        return d
-
-    return map_aiter(add_template, reader_to_message_stream(event["reader"]))
-
-
-async def reader_to_length_prefixed_blobs(reader):
-    """
-    Turn a reader into a generator that yields length-prefixed blobs.
-    """
-    while True:
-        try:
-            message_size_blob = await reader.readexactly(2)
-        except asyncio.IncompleteReadError:
-            break
-        message_size, = struct.unpack(">H", message_size_blob)
-        blob = await reader.readexactly(message_size)
-        yield blob
-
-
-def blob_to_cbor_message(blob):
-    """
-    This adaptor converts blobs into cbor messages.
-    """
-    try:
-        return cbor.loads(blob)
-    except ValueError:
-        pass
-
-
-def send_cbor_message(msg, writer):
-    msg_blob = cbor.dumps(msg)
-    length_blob = struct.pack(">H", len(msg_blob))
-    writer.write(length_blob)
-    writer.write(msg_blob)
 
 
 async def run_server(port):
     """
     Run a server on the port, and process the messages from them one at a time.
     """
-    event_aiter = readers_writers_server_for_port(port)
-    message_aiter = join_aiters(map_aiter(event_to_message_stream, event_aiter))
-    async for event in message_aiter:
+    rws_aiter = readers_writers_server_for_port(port)
+    event_aiter = rws_to_event_aiter(rws_aiter, reader_to_readline_stream)
+    async for event in event_aiter:
         line = event["message"]
         writer = event["writer"]
         writer.write(line)
@@ -95,9 +34,10 @@ async def run_client(host, port, msg):
     message = json.loads(msg)
     send_cbor_message(message, writer)
     await writer.drain()
-    async for _ in map_aiter(blob_to_cbor_message, reader_to_length_prefixed_blobs(reader)):
+    async for _ in reader_to_cbor_stream(reader):
         break
     print(_)
+    writer.close()
 
 
 def client_command(args):
