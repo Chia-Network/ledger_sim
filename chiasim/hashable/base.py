@@ -55,6 +55,13 @@ class uint64(int, streamable):
 
 
 class bytes32(hexbytes, streamable):
+
+    def __new__(self, v):
+        v = bytes(v)
+        if not isinstance(v, bytes) or len(v) != 32:
+            raise ValueError("bad bytes32 initializer %s" % v)
+        return hexbytes.__new__(self, v)
+
     @classmethod
     def parse(cls, f: BinaryIO) -> Any:
         b = f.read(32)

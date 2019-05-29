@@ -24,4 +24,5 @@ def make_tuple_type(*type_tuple):
             v.stream(f)
 
     methods = dict(parse=parse, stream=stream)
-    return dataclasses.make_dataclass(type_name, fields, bases=(bin_methods,), frozen=True, namespace=methods)
+    return dataclasses.make_dataclass(
+        type_name, fields, bases=(bin_methods,), frozen=True, namespace=methods)

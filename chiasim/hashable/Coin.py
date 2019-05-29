@@ -1,13 +1,11 @@
-import dataclasses
-
 from .base import uint64
 from .Hash import Hash
-from .Streamable import Streamable
+from .make_streamable import streamable
+from .CoinInfo import CoinInfoHash
 
-
-@dataclasses.dataclass(frozen=True)
-class Coin(Streamable):
-    coin_info_hash: Hash
+@streamable
+class Coin:
+    coin_info_hash: CoinInfoHash
     amount: uint64
 
     def additions(self, solution):

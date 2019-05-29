@@ -1,26 +1,48 @@
 import dataclasses
 
-from typing import Type, BinaryIO
+from typing import Type, BinaryIO, get_type_hints
 
 from .base import bin_methods
+from .Hash import Hash, std_hash
 
 
-def make_streamable(type_name, *fields):
+def streamable(cls):
 
-    @classmethod
-    def parse(cls: Type[type_name], f: BinaryIO) -> type_name:
-        items = []
-        for _, t in fields:
-            items.append(t.parse(f))
-        return cls(*items)
+    class _local:
+        def __init__(self, *args):
+            fields = get_type_hints(self)
+            la, lf = len(args), len(fields)
+            if la != lf:
+                raise ValueError("got %d and expected %d args" % (la, lf))
+            for a, (f_name, f_type) in zip(args, fields.items()):
+                if not isinstance(a, f_type):
+                    a = f_type(a)
+                if not isinstance(a, f_type):
+                    raise ValueError("wrong type for %s" % f_name)
+                object.__setattr__(self, f_name, a)
 
-    def stream(self, f: BinaryIO) -> None:
-        for _, t in fields:
-            v = getattr(self, _)
-            v.stream(f)
+        @classmethod
+        def parse(cls: Type[cls.__name__], f: BinaryIO) -> cls.__name__:
+            values = []
+            for f_name, f_type in get_type_hints(cls).items():
+                if hasattr(f_type, "parse"):
+                    values.append(f_type.parse(f))
+                else:
+                    raise NotImplementedError
+            return cls(*values)
 
-    bases = (bin_methods,)
-    namespace = dict(parse=parse, stream=stream)
-    return dataclasses.make_dataclass(
-        type_name, fields, bases=bases, namespace=namespace,
-        frozen=True) #, init=1+False)
+        def stream(self, f: BinaryIO) -> None:
+            for f_name, f_type in get_type_hints(self).items():
+                v = getattr(self, f_name)
+                if hasattr(f_type, "stream"):
+                    v.stream(f)
+                else:
+                    raise NotImplementedError("can't stream %s: %s" % (v, f_name))
+
+        def hash(self) -> Hash:
+            return std_hash(self.as_bin())
+
+    cls1 = dataclasses.dataclass(_cls=cls, frozen=True, init=False)
+
+    cls2 = type(cls.__name__, (cls1, bin_methods, _local), {})
+    return cls2
