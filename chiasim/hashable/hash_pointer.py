@@ -15,7 +15,7 @@ def hash_pointer(the_type, hash_f=std_hash):
 
     async def obj(self, data_source=None):
         if self._obj is None and data_source:
-            blob = await data_source.fetch(self)
+            blob = await data_source.blob_for_hash(self)
             if hash_f(blob) == self:
                 self._obj = the_type.from_bin(blob)
         return self._obj
