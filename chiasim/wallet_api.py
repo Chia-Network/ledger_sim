@@ -1,10 +1,19 @@
 import datetime
 import logging
 
+from .hashable import SpendBundle
 
-async def do_ping(message):
-    logging.info("ping")
-    return dict(response="got ping message %r at time %s" % (message.get("m"), datetime.datetime.utcnow()))
+
+class WalletAPI:
+    async def do_ping(self, message):
+        logging.info("ping")
+        return dict(response="got ping message %r at time %s" % (message.get("m"), datetime.datetime.utcnow()))
+
+    async def do_push_tx(self, message):
+        logging.info("push_tx %s", message)
+        tx_blob = message.get("tx")
+        spend_bundle = SpendBundle.from_bin(tx_blob)
+        self.accept_spend_bundle(spend_bundle)
 
 
 """

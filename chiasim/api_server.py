@@ -14,7 +14,7 @@ async def api_server(port, api):
             # {"c": "command"}
             message = event["message"]
             c = message.get("c")
-            f = api.get("do_%s" % c)
+            f = getattr(api, "do_%s" % c, None)
             if f:
                 r = await f(message)
                 logging.debug("handled %s message" % c)

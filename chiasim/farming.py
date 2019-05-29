@@ -74,3 +74,8 @@ class Mempool:
         header_signature = private_key.sign(header.hash())
 
         return header, header_signature, body, additions, removals
+
+    def accept_spend_bundle(self, spend_bundle):
+        # TODO: validate that this bundle is correct and consistent
+        # with the current mempool state
+        self._bundles.add(spend_bundle)

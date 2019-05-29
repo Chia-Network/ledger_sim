@@ -49,7 +49,8 @@ def server_command(args):
 
 
 def wallet_command(args):
-    return api_server(args.port, wallet_api.__dict__)
+    wallet = wallet_api.WalletAPI()
+    return api_server(args.port, wallet)
 
 
 def main(args=sys.argv):
