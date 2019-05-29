@@ -13,18 +13,11 @@ class hexbytes(bytes):
         return "<%s: %s>" % (self.__class__.__name__, str(self))
 
 
-class streamable:
+class bin_methods:
     @classmethod
     def from_bin(cls, blob: bytes) -> Any:
         f = io.BytesIO(blob)
         return cls.parse(f)
-
-    @classmethod
-    def parse(cls, f: BinaryIO) -> Any:
-        return cls(*struct.unpack(cls.PACK, f.read(struct.calcsize(cls.PACK))))
-
-    def stream(self, f):
-        f.write(struct.pack(self.PACK, self))
 
     def as_bin(self) -> hexbytes:
         f = io.BytesIO()
@@ -32,8 +25,29 @@ class streamable:
         return hexbytes(f.getvalue())
 
 
+class streamable(bin_methods):
+    @classmethod
+    def parse(cls, f: BinaryIO) -> Any:
+        return cls(*struct.unpack(cls.PACK, f.read(struct.calcsize(cls.PACK))))
+
+    def stream(self, f):
+        f.write(struct.pack(self.PACK, self))
+
+
 class int8(int, streamable):
     PACK = "!b"
+
+
+class uint8(int, streamable):
+    PACK = "!B"
+
+
+class int16(int, streamable):
+    PACK = "!h"
+
+
+class uint16(int, streamable):
+    PACK = "!H"
 
 
 class uint64(int, streamable):
