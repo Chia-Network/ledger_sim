@@ -2,13 +2,14 @@ import dataclasses
 
 from .Coin import Coin
 from .Signature import Signature
+from .Solution import Solution
 
 from typing import Tuple, List
 
 
 @dataclasses.dataclass(frozen=True)
 class SpendBundle:
-    spends: List[Tuple[Coin, bytes]]
+    spends: List[Tuple[Coin, Solution]]
     aggregated_solution_signature: Signature
 
     def __add__(self, other):

@@ -1,19 +1,20 @@
 import time
 
-from .atoms import hexbytes, uint64
+from .atoms import hexbytes
 
 
 from .hashable import (
     Body, SpendBundle, Header, HeaderHash,
     Coin, ProofOfSpace, Puzzle, EORPrivateKey, Signature,
-    std_hash
+    Solution
 )
 
 
 def best_solution_program(bundle: SpendBundle):
     # this could potentially get very complicated and clever
-    # for now, just return a quoted version of all the solutions
-    return hexbytes(b'')
+    # the first attempt should just return a quoted version of all the solutions
+    # for now, return a (bad) blank solution
+    return Solution(b'')
 
 
 def private_for_public(pk):
@@ -40,7 +41,7 @@ class Mempool:
         return 0
 
     def generate_timestamp(self):
-        return uint64(max(self.minimum_legal_timestamp(), int(time.time())))
+        return max(self.minimum_legal_timestamp(), int(time.time()))
 
     def farm_new_block(
             self, proof_of_space: ProofOfSpace,
@@ -56,7 +57,7 @@ class Mempool:
             - return Header, HeaderSignature, Body, Additions and Removals
         """
 
-        program_cost = uint64(0)
+        program_cost = 0
         best_bundle = self.collect_best_bundle()
         additions = best_bundle.additions()
         removals = best_bundle.removals()
@@ -72,11 +73,11 @@ class Mempool:
         header = Header(
             self._tip, timestamp, additions, removals,
             proof_of_space, body, extension_data)
+        return header, body, additions, removals
 
-        private_key = private_for_public(proof_of_space.plot_pubkey)
-        header_signature = private_key.sign(std_hash(header.as_bin()))
-
-        return header, header_signature, body, additions, removals
+        # still need to do the following:
+        # private_key = private_for_public(proof_of_space.plot_pubkey)
+        # header_signature = private_key.sign(std_hash(header.as_bin()))
 
     def accept_spend_bundle(self, spend_bundle):
         # TODO: validate that this bundle is correct and consistent

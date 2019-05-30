@@ -3,8 +3,13 @@ import logging
 
 from .hashable import SpendBundle
 
+from .farming import Mempool
+
 
 class WalletAPI:
+    def __init__(self):
+        self._mempool = Mempool()
+
     async def do_ping(self, message):
         logging.info("ping")
         return dict(response="got ping message %r at time %s" % (
@@ -14,7 +19,7 @@ class WalletAPI:
         logging.info("push_tx %s", message)
         tx_blob = message.get("tx")
         spend_bundle = SpendBundle.from_bin(tx_blob)
-        self.accept_spend_bundle(spend_bundle)
+        self._mempool.accept_spend_bundle(spend_bundle)
 
 
 """

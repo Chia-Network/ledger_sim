@@ -2,7 +2,7 @@ from ..atoms import streamable, hexbytes
 
 
 @streamable
-class Puzzle:
+class Solution:
     code: hexbytes
 
     def stream(self, f):
