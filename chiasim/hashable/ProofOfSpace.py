@@ -1,11 +1,9 @@
-import dataclasses
-
-from .Streamable import Streamable
+from .make_streamable import streamable
 from .Signature import PublicKey
 
 
-@dataclasses.dataclass(frozen=True)
-class ProofOfSpace(Streamable):
+@streamable
+class ProofOfSpace:
     pool_pubkey: PublicKey
     plot_pubkey: PublicKey
     # TODO: more items

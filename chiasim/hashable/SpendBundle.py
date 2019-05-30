@@ -3,13 +3,12 @@ import dataclasses
 from .base import uint64
 from .Coin import Coin
 from .Signature import Signature
-from .Streamable import Streamable
 
 from typing import Tuple, List
 
 
 @dataclasses.dataclass(frozen=True)
-class SpendBundle(Streamable):
+class SpendBundle:
     spends: List[Tuple[Coin, bytes]]
     aggregated_solution_signature: Signature
 

@@ -1,8 +1,6 @@
-import dataclasses
-
 from .base import bytes32
 from .Hash import Hash
-from .Streamable import Streamable
+from .make_streamable import streamable
 
 
 def eor_bytes32(a: bytes32, b: bytes32) -> bytes32:
@@ -13,8 +11,8 @@ EORPublicKey = bytes32
 PublicKey = EORPublicKey
 
 
-@dataclasses.dataclass(frozen=True)
-class EORSignature(Streamable):
+@streamable
+class EORSignature:
     val: bytes32
 
     @classmethod
@@ -30,8 +28,8 @@ class EORSignature(Streamable):
             return EORSignature(eor_bytes32(self.val, other.val))
 
 
-@dataclasses.dataclass(frozen=True)
-class EORPrivateKey(Streamable):
+@streamable
+class EORPrivateKey:
     val: bytes32
 
     def sign(self, message_hash: bytes32) -> EORSignature:
