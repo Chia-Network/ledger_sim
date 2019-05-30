@@ -6,6 +6,9 @@ from typing import Any, BinaryIO
 
 
 class hexbytes(bytes):
+    def as_bin(self) -> "hexbytes":
+        return self
+
     def __str__(self):
         return binascii.hexlify(self).decode("utf8")
 

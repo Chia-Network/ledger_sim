@@ -1,6 +1,4 @@
-import dataclasses
-
-from .base import uint64
+from .base import uint64, hexbytes
 from .Hash import Hash
 from .Body import Body
 from .Coin import Coin
@@ -9,14 +7,6 @@ from .ProofOfSpace import ProofOfSpace
 from .hash_pointer import hash_pointer
 from .make_streamable import streamable
 from .merkle_list import merkle_list
-
-
-@dataclasses.dataclass
-class Extension:
-    blob: bytes
-
-    def as_bin(self):
-        return self.blob
 
 
 @streamable
@@ -29,4 +19,4 @@ class Header:
     # leaves are coin id ordered same as solutions
     proof_of_space_hash: hash_pointer(ProofOfSpace)
     body_hash: hash_pointer(Body)
-    extension_data_hash: hash_pointer(Extension)
+    extension_data_hash: hash_pointer(hexbytes)

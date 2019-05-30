@@ -1,7 +1,6 @@
 import time
 
-from .hashable.Body import Solution
-from .hashable.Header import Extension
+from .hashable.base import hexbytes
 
 
 from .hashable import (
@@ -13,7 +12,7 @@ from .hashable import (
 def best_solution_program(bundle: SpendBundle):
     # this could potentially get very complicated and clever
     # for now, just return a quoted version of all the solutions
-    return Solution(b'')
+    return hexbytes(b'')
 
 
 def private_for_public(pk):
@@ -61,7 +60,7 @@ class Mempool:
         additions = best_bundle.additions()
         removals = best_bundle.removals()
         solution_program = best_solution_program(best_bundle)
-        extension_data = Extension(b'')
+        extension_data = hexbytes(b'')
 
         fees_coin = Coin(fees_puzzle_hash, best_bundle.fees())
         body = Body(
