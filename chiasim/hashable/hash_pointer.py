@@ -1,4 +1,5 @@
 from .Hash import std_hash
+from .base import bin_methods
 
 from typing import get_type_hints
 
@@ -20,7 +21,10 @@ def hash_pointer(the_type, hash_f=std_hash):
                 self._obj = the_type.from_bin(blob)
         return self._obj
 
+    def stream(self, f):
+        f.write(self)
+
     namespace = dict(__new__=__new__, obj=obj)
     hash_pointer_type = type(
-        "%sPointer" % the_type.__name__, (hash_type,), namespace)
+        "%sPointer" % the_type.__name__, (hash_type, bin_methods,), namespace)
     return hash_pointer_type

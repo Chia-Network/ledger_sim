@@ -1,7 +1,7 @@
 from .base import uint64
-from .Hash import Hash
 from .make_streamable import streamable
 from .CoinInfo import CoinInfoHash
+
 
 @streamable
 class Coin:

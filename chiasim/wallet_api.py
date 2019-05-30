@@ -7,7 +7,8 @@ from .hashable import SpendBundle
 class WalletAPI:
     async def do_ping(self, message):
         logging.info("ping")
-        return dict(response="got ping message %r at time %s" % (message.get("m"), datetime.datetime.utcnow()))
+        return dict(response="got ping message %r at time %s" % (
+            message.get("m"), datetime.datetime.utcnow()))
 
     async def do_push_tx(self, message):
         logging.info("push_tx %s", message)

@@ -16,7 +16,7 @@ def pad_to_power_of_2(leaves, pad):
 def merkle_hash(leaves, hash_f=std_hash, pad=bytes32([0] * 32)):
 
     if len(leaves) == 0:
-        return pad
+        return pad, 0
 
     def merkle_pair(leaves, hash_f):
         count = len(leaves)
@@ -39,18 +39,17 @@ def merkle_list(the_type, hash_f=std_hash):
 
     def __init__(self, *args):
         la = len(args)
+        if la not in (1, 2):
+            raise ValueError("wrong arg count: %s", args)
         if la == 1:
             items = list(args[0])
             if any(not isinstance(_, the_type) for _ in items):
                 raise ValueError("wrong type")
             self._obj = items
             hashes = [hash_f(_.as_bin()) for _ in items]
-            self.id, self.depth = merkle_hash(hashes, hash_f)
-        elif la == 2:
-            self.id = hash_type(args[0])
-            self.depth = uint8(args[1])
-        else:
-            raise ValueError("wrong arg count: %s", args)
+            args = merkle_hash(hashes, hash_f)
+        self.id = hash_type(args[0])
+        self.depth = uint8(args[1])
 
     @classmethod
     def parse(cls: Type[cls_name], f: BinaryIO) -> cls_name:
@@ -59,8 +58,8 @@ def merkle_list(the_type, hash_f=std_hash):
         return cls(id, depth)
 
     def stream(self, f: BinaryIO) -> None:
-        f.stream(self.id)
-        f.stream(self.depth)
+        self.id.stream(f)
+        self.depth.stream(f)
 
     async def obj(self, data_source=None):
         if self._obj is None and data_source:

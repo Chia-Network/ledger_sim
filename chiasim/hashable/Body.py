@@ -2,17 +2,26 @@ import dataclasses
 
 from .base import uint64
 from .Coin import Coin
-from .Hash import Hash
 from .Signature import Signature
-from .Streamable import Streamable
+
+from .make_streamable import streamable
+from .hash_pointer import hash_pointer
 
 
-@dataclasses.dataclass(frozen=True)
-class Body(Streamable):
+@dataclasses.dataclass
+class Solution:
+    val: bytes
+
+    def as_bin(self):
+        return self.val
+
+
+@streamable
+class Body:
     coinbase_signature: Signature
     coinbase_coin: Coin
     fees_coin: Coin
-    solution_program_hash: Hash
+    solution_program_hash: hash_pointer(Solution)
     program_cost: uint64
     aggregated_solution_signature: Signature
 

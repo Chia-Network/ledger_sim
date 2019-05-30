@@ -65,7 +65,6 @@ class bytes32(hexbytes, streamable):
     @classmethod
     def parse(cls, f: BinaryIO) -> Any:
         b = f.read(32)
-        assert len(b) == 32
         return cls(b)
 
     def stream(self, f):
