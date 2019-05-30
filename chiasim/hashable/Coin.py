@@ -1,10 +1,11 @@
-from .base import uint64
-from .make_streamable import streamable
+from ..atoms import streamable, uint64
+
+from .Hash import Hashable
 from .CoinInfo import CoinInfoHash
 
 
 @streamable
-class Coin:
+class Coin(Hashable):
     coin_info_hash: CoinInfoHash
     amount: uint64
 

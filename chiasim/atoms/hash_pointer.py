@@ -1,12 +1,11 @@
-from .Hash import std_hash
-from .base import bin_methods
+from .bin_methods import bin_methods
 
 from typing import get_type_hints
 
 
-def hash_pointer(the_type, hash_f=std_hash):
+def hash_pointer(the_type, hash_f):
 
-    hash_type = get_type_hints(std_hash)["return"]
+    hash_type = get_type_hints(hash_f)["return"]
 
     def __new__(self, v):
         if isinstance(v, the_type):

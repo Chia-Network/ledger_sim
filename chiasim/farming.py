@@ -1,11 +1,12 @@
 import time
 
-from .hashable.base import hexbytes
+from .atoms import hexbytes, uint64
 
 
 from .hashable import (
-    Body, Hash, SpendBundle, uint64, Header,
-    Coin, ProofOfSpace, EORPrivateKey, Signature
+    Body, SpendBundle, Header, HeaderHash,
+    Coin, ProofOfSpace, Puzzle, EORPrivateKey, Signature,
+    std_hash
 )
 
 
@@ -24,7 +25,7 @@ class Mempool:
     """
     A mempool contains a list of consisten removals and solutions
     """
-    def __init__(self, tip: Hash):
+    def __init__(self, tip: HeaderHash):
         self._bundles = set()
         self._tip = tip
 
@@ -44,7 +45,7 @@ class Mempool:
     def farm_new_block(
             self, proof_of_space: ProofOfSpace,
             coinbase_coin: Coin, coinbase_signature: Signature,
-            fees_puzzle_hash: Hash):
+            fees_puzzle_hash: Puzzle):
         """
         Steps:
             - collect up a consistent set of removals and solutions
@@ -73,7 +74,7 @@ class Mempool:
             proof_of_space, body, extension_data)
 
         private_key = private_for_public(proof_of_space.plot_pubkey)
-        header_signature = private_key.sign(header.hash())
+        header_signature = private_key.sign(std_hash(header.as_bin()))
 
         return header, header_signature, body, additions, removals
 

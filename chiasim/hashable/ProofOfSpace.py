@@ -1,4 +1,5 @@
-from .make_streamable import streamable
+from ..atoms import streamable
+
 from .Signature import PublicKey
 
 

@@ -1,6 +1,6 @@
-from .base import bytes32
+from ..atoms import bytes32, streamable
+
 from .Hash import Hash
-from .make_streamable import streamable
 
 
 def eor_bytes32(a: bytes32, b: bytes32) -> bytes32:

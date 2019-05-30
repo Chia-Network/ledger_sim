@@ -2,8 +2,8 @@ import math
 
 from typing import get_type_hints, BinaryIO, Type
 
-from .Hash import std_hash
-from .base import uint8, bytes32, bin_methods
+from .bin_methods import bin_methods
+from . import uint8, bytes32
 
 
 def pad_to_power_of_2(leaves, pad):
@@ -13,7 +13,7 @@ def pad_to_power_of_2(leaves, pad):
     return depth, tuple(leaves) + tuple([pad] * pad_count)
 
 
-def merkle_hash(leaves, hash_f=std_hash, pad=bytes32([0] * 32)):
+def merkle_hash(leaves, hash_f, pad=bytes32([0] * 32)):
 
     if len(leaves) == 0:
         return pad, 0
@@ -32,10 +32,10 @@ def merkle_hash(leaves, hash_f=std_hash, pad=bytes32([0] * 32)):
     return the_hash, depth
 
 
-def merkle_list(the_type, hash_f=std_hash):
+def merkle_list(the_type, hash_f):
 
     cls_name = "%sMerkleList" % the_type.__name__
-    hash_type = get_type_hints(std_hash)["return"]
+    hash_type = get_type_hints(hash_f)["return"]
 
     def __init__(self, *args):
         la = len(args)

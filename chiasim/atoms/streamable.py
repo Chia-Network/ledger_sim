@@ -2,8 +2,7 @@ import dataclasses
 
 from typing import Type, BinaryIO, get_type_hints
 
-from .base import bin_methods
-from .Hash import Hash, std_hash
+from .bin_methods import bin_methods
 
 
 def streamable(cls):
@@ -38,9 +37,6 @@ def streamable(cls):
                     v.stream(f)
                 else:
                     raise NotImplementedError("can't stream %s: %s" % (v, f_name))
-
-        def hash(self) -> Hash:
-            return std_hash(self.as_bin())
 
     cls1 = dataclasses.dataclass(_cls=cls, frozen=True, init=False)
 

@@ -1,6 +1,5 @@
 import dataclasses
 
-from .base import uint64
 from .Coin import Coin
 from .Signature import Signature
 
@@ -26,5 +25,5 @@ class SpendBundle:
     def removals(self):
         return tuple(_[0] for _ in self.spends)
 
-    def fees(self) -> uint64:
-        return uint64(0)
+    def fees(self) -> int:
+        return 0

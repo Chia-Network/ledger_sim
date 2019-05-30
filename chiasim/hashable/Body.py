@@ -1,9 +1,8 @@
-from .base import uint64, hexbytes
+from ..atoms import hash_pointer, hexbytes, streamable, uint64
+
 from .Coin import Coin
 from .Signature import Signature
-
-from .make_streamable import streamable
-from .hash_pointer import hash_pointer
+from .Hash import std_hash
 
 
 @streamable
@@ -11,8 +10,6 @@ class Body:
     coinbase_signature: Signature
     coinbase_coin: Coin
     fees_coin: Coin
-    solution_program_hash: hash_pointer(hexbytes)
+    solution_program_hash: hash_pointer(hexbytes, std_hash)
     program_cost: uint64
     aggregated_solution_signature: Signature
-
-# solution program is simply a bunch of bytes
