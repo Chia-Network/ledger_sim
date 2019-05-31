@@ -32,7 +32,7 @@ class Mempool:
 
     def collect_best_bundle(self) -> SpendBundle:
         # this is way too simple
-        total = SpendBundle([], Signature.zero())
+        total = SpendBundle.empty()
         for _ in self._bundles:
             total += _
         return total
@@ -67,7 +67,7 @@ class Mempool:
         fees_coin = Coin(fees_puzzle_hash, best_bundle.fees())
         body = Body(
             coinbase_signature, coinbase_coin, fees_coin,
-            solution_program, program_cost, best_bundle.aggregated_solution_signature)
+            solution_program, program_cost, best_bundle.aggregated_signature)
         timestamp = self.generate_timestamp()
 
         header = Header(

@@ -1,3 +1,5 @@
+from typing import List
+
 from ..atoms import bytes32, streamable
 
 from .Message import MessageHash
@@ -19,9 +21,13 @@ class EORSignature:
     def zero(cls):
         return cls(bytes32([0] * 32))
 
-    def validate(self, message_hash: MessageHash, pubkey: EORPublicKey) -> bool:
-        eor_result = eor_bytes32(self.val, message_hash)
-        return eor_result == pubkey
+    def validate(self, message_hash: List[MessageHash], pubkeys: List[EORPublicKey]) -> bool:
+        eor_result = self.zero().val
+        for _ in message_hash:
+            eor_result = eor_bytes32(eor_result, _)
+        for _ in pubkeys:
+            eor_result = eor_bytes32(eor_result, _)
+        return eor_result == self.val
 
     def __add__(self, other):
         if isinstance(other, EORSignature):

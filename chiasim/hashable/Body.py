@@ -13,4 +13,4 @@ class Body:
     fees_coin: Coin
     solution_program: hash_pointer(Solution, std_hash)
     program_cost: uint64
-    aggregated_solution_signature: Signature
+    aggregated_signature: Signature
