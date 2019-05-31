@@ -6,21 +6,23 @@ from .hexbytes import hexbytes
 from .struct_stream import struct_stream
 
 
-class bytes32(hexbytes, struct_stream):
+def make_sized_bytes(size):
+
+    name = "bytes%d" % size
 
     def __new__(self, v):
         v = bytes(v)
-        if not isinstance(v, bytes) or len(v) != 32:
-            raise ValueError("bad bytes32 initializer %s" % v)
+        if not isinstance(v, bytes) or len(v) != size:
+            raise ValueError("bad %s initializer %s" % (name, v))
         return hexbytes.__new__(self, v)
 
     @classmethod
     def parse(cls, f: BinaryIO) -> Any:
-        b = f.read(32)
+        b = f.read(size)
+        assert len(b) == size
         return cls(b)
 
     def stream(self, f):
-        assert len(self) == 32
         f.write(self)
 
     def __str__(self):
@@ -28,3 +30,14 @@ class bytes32(hexbytes, struct_stream):
 
     def __repr__(self):
         return "<%s: %s>" % (self.__class__.__name__, str(self))
+
+    namespace = dict(__new__=__new__, parse=parse, stream=stream, __str__=__str__, __repr__=__repr__)
+
+    cls = type(name, (hexbytes, struct_stream), namespace)
+
+    return cls
+
+
+bytes32 = make_sized_bytes(32)
+bytes48 = make_sized_bytes(48)
+bytes96 = make_sized_bytes(96)
