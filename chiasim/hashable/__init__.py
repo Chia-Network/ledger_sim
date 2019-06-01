@@ -1,3 +1,4 @@
+from .BLSSignature import BLSSignature, BLSPublicKey
 from .Body import Body
 from .Coin import Coin
 from .CoinInfo import CoinInfo

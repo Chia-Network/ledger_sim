@@ -4,9 +4,8 @@ from .atoms import hexbytes
 
 
 from .hashable import (
-    Body, SpendBundle, Header, HeaderHash,
-    Coin, ProofOfSpace, Puzzle, EORPrivateKey, Signature,
-    Solution
+    BLSSignature, Body, Coin, Header,
+    HeaderHash, ProofOfSpace, Puzzle, Solution, SpendBundle
 )
 
 
@@ -15,11 +14,6 @@ def best_solution_program(bundle: SpendBundle):
     # the first attempt should just return a quoted version of all the solutions
     # for now, return a (bad) blank solution
     return Solution(b'')
-
-
-def private_for_public(pk):
-    # this works for EOR private keys only
-    return EORPrivateKey(pk)
 
 
 class Mempool:
@@ -32,7 +26,7 @@ class Mempool:
 
     def collect_best_bundle(self) -> SpendBundle:
         # this is way too simple
-        total = SpendBundle.empty()
+        total = SpendBundle.aggregate([])
         for _ in self._bundles:
             total += _
         return total
@@ -45,7 +39,7 @@ class Mempool:
 
     def farm_new_block(
             self, proof_of_space: ProofOfSpace,
-            coinbase_coin: Coin, coinbase_signature: Signature,
+            coinbase_coin: Coin, coinbase_signature: BLSSignature,
             fees_puzzle_hash: Puzzle):
         """
         Steps:
