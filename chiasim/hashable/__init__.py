@@ -1,11 +1,11 @@
-from .BLSSignature import BLSSignature, BLSPublicKey
-from .Body import Body
-from .Coin import Coin
-from .CoinInfo import CoinInfo
-from .Hash import Hash, std_hash
-from .Header import Header, HeaderHash
-from .ProofOfSpace import ProofOfSpace
-from .Puzzle import Puzzle
-from .Signature import EORPrivateKey, PublicKey, Signature
-from .Solution import Solution
-from .SpendBundle import SpendBundle
+from .BLSSignature import BLSSignature, BLSPublicKey  # noqa
+from .Body import Body  # noqa
+from .Coin import Coin  # noqa
+from .CoinInfo import CoinInfo  # noqa
+from .Hash import Hash, std_hash  # noqa
+from .Header import Header, HeaderHash  # noqa
+from .ProofOfSpace import ProofOfSpace  # noqa
+from .Puzzle import Puzzle  # noqa
+from .Signature import EORPrivateKey, PublicKey, Signature  # noqa
+from .Solution import Solution  # noqa
+from .SpendBundle import SpendBundle  # noqa

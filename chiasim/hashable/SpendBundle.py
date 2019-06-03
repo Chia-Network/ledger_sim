@@ -1,15 +1,12 @@
-import dataclasses
+from ..atoms import streamable
 
 from .BLSSignature import BLSSignature
-from .Coin import Coin
-from .Solution import Solution
-
-from typing import Tuple, List
+from .CoinSolution import CoinSolutionList
 
 
-@dataclasses.dataclass(frozen=True)
+@streamable
 class SpendBundle:
-    spends: List[Tuple[Coin, Solution]]
+    spends: CoinSolutionList
     aggregated_signature: BLSSignature
 
     @classmethod
