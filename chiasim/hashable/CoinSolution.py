@@ -1,12 +1,15 @@
-from ..atoms import streamable, streamable_list_type
+from ..atoms import streamable, streamable_list, uint64
 
-from .Coin import Coin
+from .CoinInfo import CoinInfo
+from .Hash import Hash
 from .Solution import Solution
 
 
 @streamable
 class CoinSolution:
-    coin: Coin
+    parent_coin_info: CoinInfo
+    puzzle_hash: Hash
+    amount: uint64
     solution: Solution
 
     def additions(self):
@@ -14,4 +17,4 @@ class CoinSolution:
         return []
 
 
-CoinSolutionList = streamable_list_type(CoinSolution)
+CoinSolutionList = streamable_list(CoinSolution)

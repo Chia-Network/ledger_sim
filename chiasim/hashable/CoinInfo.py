@@ -7,7 +7,7 @@ from .Puzzle import Puzzle
 @streamable
 class CoinInfo:
     parent_coin_info: "CoinInfoHash"
-    puzzle: hash_pointer(Puzzle, std_hash)
+    puzzle_hash: hash_pointer(Puzzle, std_hash)
 
 
 CoinInfoHash = hash_pointer(CoinInfo, std_hash)

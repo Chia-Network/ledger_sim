@@ -15,18 +15,23 @@ PublicKey = EORPublicKey
 
 @streamable
 class EORSignature:
+
+    @streamable
+    class pair:
+        message_hash: MessageHash
+        public_key: PublicKey
+
     val: bytes32
 
     @classmethod
     def zero(cls):
         return cls(bytes32([0] * 32))
 
-    def validate(self, message_hash: List[MessageHash], pubkeys: List[EORPublicKey]) -> bool:
+    def validate(self, hash_key_pairs: List[pair]) -> bool:
         eor_result = self.zero().val
-        for _ in message_hash:
-            eor_result = eor_bytes32(eor_result, _)
-        for _ in pubkeys:
-            eor_result = eor_bytes32(eor_result, _)
+        for _ in hash_key_pairs:
+            eor_result = eor_bytes32(eor_result, _.message_hash)
+            eor_result = eor_bytes32(eor_result, _.public_key)
         return eor_result == self.val
 
     def __add__(self, other):

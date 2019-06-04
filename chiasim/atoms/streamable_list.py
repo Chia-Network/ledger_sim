@@ -13,7 +13,7 @@ def streamable_list(the_type):
         self._items = tuple(items)
 
     def __iter__(self):
-        return self._items
+        return iter(self._items)
 
     @classmethod
     def parse(cls: Type[cls_name], f: BinaryIO) -> cls_name:

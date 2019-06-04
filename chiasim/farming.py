@@ -18,7 +18,7 @@ def best_solution_program(bundle: SpendBundle):
 
 class Mempool:
     """
-    A mempool contains a list of consisten removals and solutions
+    A mempool contains a list of consistent removals and solutions
     """
     def __init__(self, tip: HeaderHash):
         self._bundles = set()
@@ -26,9 +26,7 @@ class Mempool:
 
     def collect_best_bundle(self) -> SpendBundle:
         # this is way too simple
-        total = SpendBundle.aggregate([])
-        for _ in self._bundles:
-            total += _
+        total = SpendBundle.aggregate(self._bundles)
         return total
 
     def minimum_legal_timestamp(self):

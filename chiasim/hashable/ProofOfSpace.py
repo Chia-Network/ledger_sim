@@ -6,8 +6,8 @@ from .Signature import PublicKey
 
 @streamable
 class ProofOfSpace:
-    pool_pubkey: BLSPublicKey
-    plot_pubkey: PublicKey
+    pool_public_key: BLSPublicKey
+    plot_public_key: PublicKey
     # TODO: more items
     # Farmer commitment
     # Size (k)
