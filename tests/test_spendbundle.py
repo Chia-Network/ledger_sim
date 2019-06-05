@@ -6,8 +6,8 @@ import clvm
 from opacity import binutils
 
 from chiasim.coin.consensus import conditions_for_puzzle_hash_solution, created_outputs_for_conditions
-from chiasim.coin.Conditions import conditions_by_opcode, make_create_coin_condition, conditions_to_sexp
-from chiasim.hashable import BLSSignature, Coin, Puzzle, Solution, std_hash
+from chiasim.coin.Conditions import make_create_coin_condition, conditions_to_sexp
+from chiasim.hashable import Coin, std_hash
 
 
 def prv_key_for_seed(seed):
@@ -19,8 +19,6 @@ def pub_key_for_seed(seed):
     eprv = blspy.ExtendedPrivateKey.from_seed(seed)
     return eprv.get_public_key()
 
-    #coinbase_signature = BLSSignature(pool_prvkey.sign_prepend_prehashed(std_hash(coinbase_coin.as_bin())).serialize())
-
 
 def make_simple_puzzle_program(pub_key):
     # want to return ((aggsig pub_key SOLN) + SOLN)
@@ -31,7 +29,7 @@ def make_simple_puzzle_program(pub_key):
     return clvm.to_sexp_f(puzzle_script)
 
 
-def solution_for_simple_puzzle(pub_key, conditions_program): # -> (SExp, SExp):
+def solution_for_simple_puzzle(pub_key, conditions_program):
     puzzle_program = make_simple_puzzle_program(pub_key)
     return puzzle_program, conditions_program
 
@@ -55,7 +53,6 @@ def make_solution_to_simple_puzzle_program(puzzle_program, conditions):
     return puzzle_hash_solution_blob
 
 
-
 def test_1():
     pub_key_0 = pub_key_for_seed(b"foo")
     pub_key_1 = pub_key_for_seed(b"bar")
@@ -73,7 +70,8 @@ def test_1():
 
     puzzle_hash = std_hash(puzzle_program_0.as_bin())
 
-    output_conditions_dict = conditions_for_puzzle_hash_solution(puzzle_hash, puzzle_hash_solution_blob, trace_eval)
+    output_conditions_dict = conditions_for_puzzle_hash_solution(
+        puzzle_hash, puzzle_hash_solution_blob, trace_eval)
     from pprint import pprint
     pprint(output_conditions_dict)
     input_coin_info_hash = bytes([0] * 32)

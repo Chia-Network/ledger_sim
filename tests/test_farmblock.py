@@ -1,5 +1,8 @@
-from chiasim.atoms import uint64, bytes32
-from chiasim.hashable import std_hash, Coin, EORPrivateKey, CoinInfo, ProofOfSpace, BLSSignature, BLSPublicKey
+from chiasim.atoms import uint64
+from chiasim.hashable import (
+    std_hash, Coin, EORPrivateKey, CoinInfo,
+    ProofOfSpace, BLSSignature, BLSPublicKey
+)
 from chiasim.farming import Mempool
 
 
