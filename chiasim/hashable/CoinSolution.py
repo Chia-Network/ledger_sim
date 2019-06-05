@@ -1,14 +1,12 @@
 from ..atoms import streamable, streamable_list, uint64
 
-from .CoinInfo import CoinInfo
-from .Hash import Hash
+from .CoinInfo import CoinInfoHash
 from .Solution import Solution
 
 
 @streamable
 class CoinSolution:
-    parent_coin_info: CoinInfo
-    puzzle_hash: Hash
+    parent_coin_info_hash: CoinInfoHash
     amount: uint64
     solution: Solution
 

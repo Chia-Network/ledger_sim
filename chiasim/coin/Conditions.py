@@ -1,5 +1,9 @@
 import enum
 
+import clvm
+
+from opacity import binutils
+
 
 class ConditionOpcode(bytes, enum.Enum):
     AGGSIG_COIN = bytes([50])
@@ -38,3 +42,7 @@ def conditions_by_opcode(conditions):
 
 def parse_sexp_to_conditions_dict(sexp):
     return conditions_by_opcode([parse_sexp_to_condition(_) for _ in sexp.as_iter()])
+
+
+def conditions_to_sexp(conditions):
+    return clvm.to_sexp_f([binutils.assemble("#q"), conditions])

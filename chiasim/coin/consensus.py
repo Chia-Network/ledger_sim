@@ -25,7 +25,8 @@ async def conditions_for_solution(coin_solution, data_store):
 # run '(compile (if (equal (sha256 (wrap (first x1))) x0) (call (first x1) (rest x1)) (raise)))'
 # this compiles to something slightly more complicated that what is below
 
-STD_SCRIPT = "(e (i (= (sha256 (wrap (f (f (r (a)))))) (f (a))) (f (f (r (a)))) (q (x))) (r (f (r (a)))))"
+STD_SCRIPT = ("(e (i (= (sha256 (wrap (f (f (r (a)))))) (f (a))) (f (f (r (a)))) (q (x))) "
+              "(f (r (f (r (a))))))")
 
 STD_SCRIPT_SEXP = binutils.assemble(STD_SCRIPT)
 
@@ -48,7 +49,8 @@ def created_outputs_for_conditions(conditions_dict, input_coin_info_hash):
         # maybe write a type-checking framework for conditions
         # and don't just fail with asserts
         assert len(_) == 3
-        opcode, puzzle_hash, amount = _
+        opcode, puzzle_hash, amount_bin = _
+        amount = clvm.casts.int_from_bytes(amount_bin)
         coin = Coin(CoinInfo(input_coin_info_hash, puzzle_hash), amount)
         output_coins.append(coin)
     return output_coins

@@ -6,7 +6,7 @@ import clvm
 from opacity import binutils
 
 from chiasim.coin.consensus import conditions_for_puzzle_hash_solution, created_outputs_for_conditions
-from chiasim.coin.Conditions import conditions_by_opcode
+from chiasim.coin.Conditions import conditions_by_opcode, make_create_coin_condition, conditions_to_sexp
 from chiasim.hashable import BLSSignature, Coin, Puzzle, Solution, std_hash
 
 
@@ -24,9 +24,9 @@ def pub_key_for_seed(seed):
 
 def make_simple_puzzle_program(pub_key):
     # want to return ((aggsig pub_key SOLN) + SOLN)
-    # (cons (list aggsig PUBKEY (sha256 x0)) (unwrap x0))
+    # (cons (list aggsig PUBKEY (sha256 x0)) (call (unwrap (f (a))) (r (a))))
     aggsig = 50
-    STD_SCRIPT = f"(c (c (q {aggsig}) (c (q 0x%s) (c (sha256 (f (a))) (q ())))) (unwrap (f (a))))"
+    STD_SCRIPT = f"(c (c (q {aggsig}) (c (q 0x%s) (c (sha256 (wrap (f (a)))) (q ())))) (e (f (a)) (r (a))))"
     puzzle_script = binutils.assemble(STD_SCRIPT % binascii.hexlify(pub_key.serialize()).decode("utf8"))
     return clvm.to_sexp_f(puzzle_script)
 
@@ -48,20 +48,35 @@ def trace_eval(eval_f, args, env):
     return r
 
 
+def make_solution_to_simple_puzzle_program(puzzle_program, conditions):
+    conditions_program = conditions_to_sexp(conditions)
+    solution_program_solved = conditions_program.cons(clvm.to_sexp_f([[]]))
+    puzzle_hash_solution_blob = clvm.to_sexp_f([puzzle_program, solution_program_solved])
+    return puzzle_hash_solution_blob
+
+
+
 def test_1():
-    pub_key = pub_key_for_seed(b"foo")
+    pub_key_0 = pub_key_for_seed(b"foo")
+    pub_key_1 = pub_key_for_seed(b"bar")
+    pub_key_2 = pub_key_for_seed(b"baz")
 
-    conditions_program = binutils.assemble("(q 0xdeadbeef)")
+    puzzle_program_0 = make_simple_puzzle_program(pub_key_0)
+    puzzle_program_1 = make_simple_puzzle_program(pub_key_1)
+    puzzle_program_2 = make_simple_puzzle_program(pub_key_2)
 
-    puzzle_program = make_simple_puzzle_program(pub_key)
-    solution_program = conditions_program
-    solution_program_solved = conditions_program.cons(clvm.to_sexp_f([]))
-    puzzle_hash_solution_blob = clvm.to_sexp_f([puzzle_program, solution_program_solved.as_bin()])
+    conditions = [make_create_coin_condition(std_hash(pp.as_bin()), amount) for pp, amount in [
+        (puzzle_program_1, 1000), (puzzle_program_2, 2000),
+    ]]
 
-    puzzle_hash = std_hash(puzzle_program.as_bin())
+    puzzle_hash_solution_blob = make_solution_to_simple_puzzle_program(puzzle_program_0, conditions)
 
-    output_conditions_dict = conditions_for_puzzle_hash_solution(puzzle_hash, puzzle_hash_solution_blob)
+    puzzle_hash = std_hash(puzzle_program_0.as_bin())
+
+    output_conditions_dict = conditions_for_puzzle_hash_solution(puzzle_hash, puzzle_hash_solution_blob, trace_eval)
     from pprint import pprint
     pprint(output_conditions_dict)
     input_coin_info_hash = bytes([0] * 32)
-    print(created_outputs_for_conditions(output_conditions_dict, input_coin_info_hash))
+    additions = created_outputs_for_conditions(output_conditions_dict, input_coin_info_hash)
+    print(additions)
+    assert len(additions) == 2
