@@ -1,13 +1,13 @@
 from ..atoms import hash_pointer, streamable
 
 from .Hash import std_hash
-from .Puzzle import Puzzle
+from .Program import ProgramHash
 
 
 @streamable
 class CoinNameData:
     parent_coin_info: "CoinName"
-    puzzle_hash: hash_pointer(Puzzle, std_hash)
+    puzzle_hash: ProgramHash
 
 
 CoinName = hash_pointer(CoinNameData, std_hash)

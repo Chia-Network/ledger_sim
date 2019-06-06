@@ -1,11 +1,13 @@
 import time
 
+from clvm import to_sexp_f
+
 from .atoms import hexbytes
 
 
 from .hashable import (
     BLSSignature, Body, Coin, Header,
-    HeaderHash, ProofOfSpace, Puzzle, Solution, SpendBundle
+    HeaderHash, Program, ProgramHash, ProofOfSpace, SpendBundle
 )
 
 
@@ -13,7 +15,7 @@ def best_solution_program(bundle: SpendBundle):
     # this could potentially get very complicated and clever
     # the first attempt should just return a quoted version of all the solutions
     # for now, return a (bad) blank solution
-    return Solution(b'')
+    return Program(to_sexp_f([]))
 
 
 class Mempool:
@@ -38,7 +40,7 @@ class Mempool:
     def farm_new_block(
             self, block_index: int, proof_of_space: ProofOfSpace,
             coinbase_coin: Coin, coinbase_signature: BLSSignature,
-            fees_puzzle_hash: Puzzle):
+            fees_puzzle_hash: ProgramHash):
         """
         Steps:
             - collect up a consistent set of removals and solutions

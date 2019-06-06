@@ -1,15 +1,15 @@
-from ..atoms import hash_pointer, streamable, uint64
+from ..atoms import streamable, uint64
 
-from .Hash import Hashable, std_hash
-from .CoinName import CoinName
-from .Puzzle import Puzzle
+from .Hash import Hashable
+from .CoinName import CoinName, CoinNameData
+from .Program import ProgramHash
 
 
 @streamable
 class Coin(Hashable):
     parent_coin_info: CoinName
-    puzzle_hash: hash_pointer(Puzzle, std_hash)
+    puzzle_hash: ProgramHash
     amount: uint64
 
-    def name(self):
-        return CoinName(self.parent_coin_info, self.puzzle_hash)
+    def coin_name(self) -> CoinName:
+        return CoinName(CoinNameData(self.parent_coin_info, self.puzzle_hash))

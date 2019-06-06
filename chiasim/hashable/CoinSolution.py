@@ -1,13 +1,13 @@
 from ..atoms import streamable, streamable_list
 
 from .Coin import Coin
-from .Solution import Solution
+from .Program import Program
 
 
 @streamable
 class CoinSolution:
     coin: Coin
-    solution: Solution
+    solution: Program
 
     def additions(self):
         # TODO: run the script and figure out what new coins are created
