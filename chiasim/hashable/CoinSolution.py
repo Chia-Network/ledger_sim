@@ -1,13 +1,12 @@
-from ..atoms import streamable, streamable_list, uint64
+from ..atoms import streamable, streamable_list
 
-from .CoinInfo import CoinInfoHash
+from .Coin import Coin
 from .Solution import Solution
 
 
 @streamable
 class CoinSolution:
-    parent_coin_info_hash: CoinInfoHash
-    amount: uint64
+    coin: Coin
     solution: Solution
 
     def additions(self):

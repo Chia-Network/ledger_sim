@@ -36,7 +36,7 @@ class Mempool:
         return max(self.minimum_legal_timestamp(), int(time.time()))
 
     def farm_new_block(
-            self, proof_of_space: ProofOfSpace,
+            self, block_index: int, proof_of_space: ProofOfSpace,
             coinbase_coin: Coin, coinbase_signature: BLSSignature,
             fees_puzzle_hash: Puzzle):
         """
@@ -56,7 +56,8 @@ class Mempool:
         solution_program = best_solution_program(best_bundle)
         extension_data = hexbytes(b'')
 
-        fees_coin = Coin(fees_puzzle_hash, best_bundle.fees())
+        block_index_hash = block_index.to_bytes(32, "big")
+        fees_coin = Coin(block_index_hash, fees_puzzle_hash, best_bundle.fees())
         body = Body(
             coinbase_signature, coinbase_coin, fees_coin,
             solution_program, program_cost, best_bundle.aggregated_signature)

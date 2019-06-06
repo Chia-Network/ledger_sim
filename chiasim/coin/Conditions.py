@@ -6,7 +6,7 @@ from opacity import binutils
 
 
 class ConditionOpcode(bytes, enum.Enum):
-    AGGSIG_COIN = bytes([50])
+    AGG_SIG = bytes([50])
     CREATE_COIN = bytes([51])
 
 

@@ -2,7 +2,7 @@ import clvm
 
 from opacity import binutils
 
-from ..hashable import Coin, CoinInfo
+from ..hashable import Coin
 
 from .Conditions import parse_sexp_to_conditions_dict, ConditionOpcode
 
@@ -51,6 +51,6 @@ def created_outputs_for_conditions(conditions_dict, input_coin_info_hash):
         assert len(_) == 3
         opcode, puzzle_hash, amount_bin = _
         amount = clvm.casts.int_from_bytes(amount_bin)
-        coin = Coin(CoinInfo(input_coin_info_hash, puzzle_hash), amount)
+        coin = Coin(input_coin_info_hash, puzzle_hash, amount)
         output_coins.append(coin)
     return output_coins

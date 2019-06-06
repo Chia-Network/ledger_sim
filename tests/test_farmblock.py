@@ -1,6 +1,6 @@
 from chiasim.atoms import uint64
 from chiasim.hashable import (
-    std_hash, Coin, EORPrivateKey, CoinInfo,
+    std_hash, Coin, EORPrivateKey,
     ProofOfSpace, BLSSignature, BLSPublicKey
 )
 from chiasim.farming import Mempool
@@ -12,7 +12,7 @@ import blspy
 # pool manager function
 def make_coinbase_coin_and_signature(block_index, puzzle_hash, pool_private_key):
     block_index_as_hash = block_index.to_bytes(32, "big")
-    coin = Coin(CoinInfo(block_index_as_hash, puzzle_hash), uint64(10000))
+    coin = Coin(block_index_as_hash, puzzle_hash, uint64(10000))
     message_hash = blspy.Util.hash256(coin.as_bin())
     sig = pool_private_key.sign_prepend_prehashed(message_hash)
     signature = BLSSignature(sig.serialize())
@@ -47,7 +47,7 @@ def test_farm_block():
     pool_public_key = BLSPublicKey.from_bin(pool_private_key.get_public_key().serialize())
     proof_of_space = ProofOfSpace(pool_public_key, plot_public_key)
     header, body, additions, removals = mempool.farm_new_block(
-        proof_of_space, coinbase_coin, coinbase_signature, fees_puzzle_hash)
+        1, proof_of_space, coinbase_coin, coinbase_signature, fees_puzzle_hash)
 
     header_signature = plot_private_key.sign(header.hash())
 

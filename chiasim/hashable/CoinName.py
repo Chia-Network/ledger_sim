@@ -5,11 +5,11 @@ from .Puzzle import Puzzle
 
 
 @streamable
-class CoinInfo:
-    parent_coin_info: "CoinInfoHash"
+class CoinNameData:
+    parent_coin_info: "CoinName"
     puzzle_hash: hash_pointer(Puzzle, std_hash)
 
 
-CoinInfoHash = hash_pointer(CoinInfo, std_hash)
+CoinName = hash_pointer(CoinNameData, std_hash)
 
-CoinInfo.__annotations__["parent_coin_info"] = CoinInfoHash
+CoinNameData.__annotations__["parent_coin_info"] = CoinName
