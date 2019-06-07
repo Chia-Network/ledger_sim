@@ -41,7 +41,7 @@ def conditions_by_opcode(conditions):
 
 
 def parse_sexp_to_conditions_dict(sexp):
-    return conditions_by_opcode([parse_sexp_to_condition(_) for _ in sexp.as_iter()])
+    return conditions_by_opcode(parse_sexp_to_conditions(sexp))
 
 
 def conditions_to_sexp(conditions):

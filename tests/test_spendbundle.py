@@ -5,8 +5,8 @@ import clvm
 
 from opacity import binutils
 
-from chiasim.coin.consensus import conditions_for_puzzle_hash_solution, created_outputs_for_conditions
-from chiasim.coin.Conditions import make_create_coin_condition, conditions_to_sexp
+from chiasim.coin.consensus import conditions_for_puzzle_hash_solution, created_outputs_for_conditions_dict
+from chiasim.coin.Conditions import conditions_by_opcode, conditions_to_sexp, make_create_coin_condition
 from chiasim.hashable import Coin, std_hash
 
 
@@ -70,11 +70,12 @@ def test_1():
 
     puzzle_hash = std_hash(puzzle_program_0.as_bin())
 
-    output_conditions_dict = conditions_for_puzzle_hash_solution(
+    output_conditions = conditions_for_puzzle_hash_solution(
         puzzle_hash, puzzle_hash_solution_blob, trace_eval)
     from pprint import pprint
+    output_conditions_dict = conditions_by_opcode(output_conditions)
     pprint(output_conditions_dict)
     input_coin_info_hash = bytes([0] * 32)
-    additions = created_outputs_for_conditions(output_conditions_dict, input_coin_info_hash)
+    additions = created_outputs_for_conditions_dict(output_conditions_dict, input_coin_info_hash)
     print(additions)
     assert len(additions) == 2

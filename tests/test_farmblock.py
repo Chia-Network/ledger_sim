@@ -23,12 +23,7 @@ def fake_hash(v):
     return std_hash(bytes([v]))
 
 
-def test_farm_block():
-    # TODO: fix
-    FIRST_BLOCK = fake_hash(0)
-    mempool = Mempool(FIRST_BLOCK)
-    mempool.minimum_legal_timestamp = lambda: int(1e10)
-
+def farm_block(mempool):
     eprv_k = blspy.ExtendedPrivateKey.from_seed(b"foo")
     pool_private_key = eprv_k.private_child(0).get_private_key()
 
@@ -74,3 +69,12 @@ def test_farm_block():
 
     hkp = body.coinbase_signature.pair(body.coinbase_coin.hash(), bad_bls_public_key)
     assert not body.coinbase_signature.validate([hkp])
+
+
+def test_farm_block_empty():
+    # TODO: fix
+    FIRST_BLOCK = fake_hash(0)
+
+    mempool = Mempool(FIRST_BLOCK)
+    mempool.minimum_legal_timestamp = lambda: int(1e10)
+    farm_block(mempool)

@@ -4,7 +4,7 @@ from opacity import binutils
 
 from ..hashable import BLSSignature, Coin
 
-from .Conditions import parse_sexp_to_conditions_dict, ConditionOpcode
+from .Conditions import parse_sexp_to_conditions, ConditionOpcode
 
 
 # STD_SCRIPT
@@ -26,12 +26,12 @@ def conditions_for_puzzle_hash_solution(puzzle_hash, solution_blob, eval=clvm.ev
     args = clvm.to_sexp_f([puzzle_hash, solution_blob])
     try:
         r = eval(eval, STD_SCRIPT_SEXP, args)
-        return parse_sexp_to_conditions_dict(r)
+        return parse_sexp_to_conditions(r)
     except Exception:
         raise
 
 
-def created_outputs_for_conditions(conditions_dict, input_coin_name):
+def created_outputs_for_conditions_dict(conditions_dict, input_coin_name):
     output_coins = []
     for _ in conditions_dict.get(ConditionOpcode.CREATE_COIN, []):
         # TODO: check condition very carefully
@@ -46,7 +46,7 @@ def created_outputs_for_conditions(conditions_dict, input_coin_name):
     return output_coins
 
 
-def hash_key_pairs_for_condition(conditions_dict):
+def hash_key_pairs_for_conditions_dict(conditions_dict):
     pairs = []
     for _ in conditions_dict.get(ConditionOpcode.AGG_SIG, []):
         # TODO: check types
