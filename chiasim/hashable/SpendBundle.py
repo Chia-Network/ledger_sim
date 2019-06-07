@@ -26,7 +26,15 @@ class SpendBundle:
         return tuple(items)
 
     def removals(self):
-        return tuple(_[0] for _ in self.coin_solutions)
+        return tuple(_.coin for _ in self.coin_solutions)
 
     def fees(self) -> int:
-        return 0
+        amount_in = sum(_.amount for _ in self.removals())
+        amount_out = sum(_.amount for _ in self.additions())
+        return amount_in - amount_out
+
+    def validate_signature(self) -> bool:
+        hash_key_pairs = []
+        for coin_solution in self.coin_solutions:
+            hash_key_pairs += coin_solution.hash_key_pairs()
+        return self.aggregated_signature.validate(hash_key_pairs)

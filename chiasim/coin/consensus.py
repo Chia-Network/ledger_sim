@@ -2,19 +2,9 @@ import clvm
 
 from opacity import binutils
 
-from ..hashable import Coin
+from ..hashable import BLSSignature, Coin
 
 from .Conditions import parse_sexp_to_conditions_dict, ConditionOpcode
-
-
-async def conditions_for_solution(coin_solution, data_store):
-    # get the puzzle hash
-    # get the solution
-    # run the solution on the puzzle hash
-    # get the resulting conditions
-    puzzle_hash = (await coin_solution.coin.coin_info_hash.obj(data_store)).puzzle_hash
-    solution = coin_solution.solution
-    return conditions_for_puzzle_hash_solution(puzzle_hash, solution)
 
 
 # STD_SCRIPT
@@ -41,7 +31,7 @@ def conditions_for_puzzle_hash_solution(puzzle_hash, solution_blob, eval=clvm.ev
         raise
 
 
-def created_outputs_for_conditions(conditions_dict, input_coin_info_hash):
+def created_outputs_for_conditions(conditions_dict, input_coin_name):
     output_coins = []
     for _ in conditions_dict.get(ConditionOpcode.CREATE_COIN, []):
         # TODO: check condition very carefully
@@ -51,6 +41,15 @@ def created_outputs_for_conditions(conditions_dict, input_coin_info_hash):
         assert len(_) == 3
         opcode, puzzle_hash, amount_bin = _
         amount = clvm.casts.int_from_bytes(amount_bin)
-        coin = Coin(input_coin_info_hash, puzzle_hash, amount)
+        coin = Coin(input_coin_name, puzzle_hash, amount)
         output_coins.append(coin)
     return output_coins
+
+
+def hash_key_pairs_for_condition(conditions_dict):
+    pairs = []
+    for _ in conditions_dict.get(ConditionOpcode.AGG_SIG, []):
+        # TODO: check types
+        assert len(_) == 3
+        pairs.append(BLSSignature.pair(_[1:]))
+    return pairs
