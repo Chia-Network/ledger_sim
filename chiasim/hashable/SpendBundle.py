@@ -21,8 +21,8 @@ class SpendBundle:
 
     def additions(self):
         items = []
-        for coin, s in self.coin_solutions:
-            items += coin.additions(s)
+        for coin_solution in self.coin_solutions._items:
+            items += coin_solution.additions()
         return tuple(items)
 
     def removals(self):

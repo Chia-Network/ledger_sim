@@ -1,3 +1,5 @@
+import blspy
+
 from chiasim.atoms import uint64
 from chiasim.hashable import (
     std_hash, Coin, EORPrivateKey,
@@ -5,8 +7,7 @@ from chiasim.hashable import (
 )
 from chiasim.farming import Mempool
 
-
-import blspy
+from .helpers import build_spend_bundle
 
 
 # pool manager function
@@ -23,7 +24,7 @@ def fake_hash(v):
     return std_hash(bytes([v]))
 
 
-def farm_block(mempool):
+def farm_block(mempool, block_number):
     eprv_k = blspy.ExtendedPrivateKey.from_seed(b"foo")
     pool_private_key = eprv_k.private_child(0).get_private_key()
 
@@ -42,7 +43,7 @@ def farm_block(mempool):
     pool_public_key = BLSPublicKey.from_bin(pool_private_key.get_public_key().serialize())
     proof_of_space = ProofOfSpace(pool_public_key, plot_public_key)
     header, body, additions, removals = mempool.farm_new_block(
-        1, proof_of_space, coinbase_coin, coinbase_signature, fees_puzzle_hash)
+        block_number, proof_of_space, coinbase_coin, coinbase_signature, fees_puzzle_hash)
 
     header_signature = plot_private_key.sign(header.hash())
 
@@ -77,4 +78,15 @@ def test_farm_block_empty():
 
     mempool = Mempool(FIRST_BLOCK)
     mempool.minimum_legal_timestamp = lambda: int(1e10)
-    farm_block(mempool)
+    farm_block(mempool, 1)
+
+
+def test_farm_block_one_spendbundle():
+    FIRST_BLOCK = fake_hash(0)
+
+    mempool = Mempool(FIRST_BLOCK)
+    mempool.minimum_legal_timestamp = lambda: int(1e10)
+
+    spend_bundle = build_spend_bundle()
+    mempool.accept_spend_bundle(spend_bundle)
+    farm_block(mempool, 2)

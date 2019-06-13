@@ -65,8 +65,9 @@ class Mempool:
             solution_program, program_cost, best_bundle.aggregated_signature)
         timestamp = self.generate_timestamp()
 
+        removal_names = tuple(_.coin_name() for _ in removals)
         header = Header(
-            self._tip, timestamp, additions, removals,
+            self._tip, timestamp, additions, removal_names,
             proof_of_space, body, extension_data)
         return header, body, additions, removals
 

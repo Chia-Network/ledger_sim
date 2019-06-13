@@ -16,13 +16,13 @@ class CoinSolution:
     solution: Program
 
     def conditions(self):
-        return conditions_for_puzzle_hash_solution(self.coin.puzzle_hash, self.solution)
+        return conditions_for_puzzle_hash_solution(self.coin.puzzle_hash, self.solution.code)
 
     def conditions_dict(self):
         return conditions_by_opcode(self.conditions())
 
     def additions(self):
-        return created_outputs_for_conditions_dict(self.conditions(self.coin.coin_name()))
+        return created_outputs_for_conditions_dict(self.conditions_dict(), self.coin.coin_name())
 
     def hash_key_pairs(self):
         return hash_key_pairs_for_conditions_dict(self.conditions_dict())

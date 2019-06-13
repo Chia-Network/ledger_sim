@@ -1,22 +1,9 @@
-import dataclasses
-
 import blspy
 
-from chiasim.atoms import bytes32
-from chiasim.hashable.BLSSignature import BLSSignature, BLSPublicKey
+from chiasim.hashable.BLSSignature import BLSPublicKey
 from chiasim.hashable.Message import bls_hash
 
-
-@dataclasses.dataclass
-class BLSPrivateKey:
-
-    pk: blspy.PrivateKey
-
-    def sign(self, message_hash: bytes32) -> BLSSignature:
-        return BLSSignature(self.pk.sign_prepend_prehashed(message_hash).serialize())
-
-    def public_key(self) -> BLSPublicKey:
-        return BLSPublicKey(self.pk.get_public_key())
+from .helpers import BLSPrivateKey
 
 
 def test_BLSSignature():
