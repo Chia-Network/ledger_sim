@@ -5,10 +5,11 @@ from clvm.subclass_sexp import BaseSExp
 from .Hash import std_hash
 
 from ..atoms import hash_pointer, streamable
+from ..atoms.bin_methods import bin_methods
 
 
 @streamable
-class Program:
+class Program(bin_methods):
     code: BaseSExp
 
     @classmethod
