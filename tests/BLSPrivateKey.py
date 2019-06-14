@@ -1,4 +1,3 @@
-import binascii
 import dataclasses
 
 import blspy

@@ -1,5 +1,4 @@
 import binascii
-import dataclasses
 
 import blspy
 import clvm
@@ -14,8 +13,8 @@ from .BLSPrivateKey import BLSPrivateKey
 
 HIERARCHICAL_PRIVATE_KEY = blspy.ExtendedPrivateKey.from_seed(b"foo")
 PRIVATE_KEYS = [HIERARCHICAL_PRIVATE_KEY.private_child(_).get_private_key() for _ in range(10)]
-PUBLIC_KEYS = [_.get_public_key() for _ in PRIVATE_KEYS]
-KEYCHAIN = {_.get_public_key().serialize() : BLSPrivateKey(_) for _ in PRIVATE_KEYS}
+PUBLIC_KEYS = [_.get_public_key().serialize() for _ in PRIVATE_KEYS]
+KEYCHAIN = {_.get_public_key().serialize(): BLSPrivateKey(_) for _ in PRIVATE_KEYS}
 
 
 def make_simple_puzzle_program(pub_key):
@@ -23,7 +22,7 @@ def make_simple_puzzle_program(pub_key):
     # (cons (list aggsig PUBKEY (sha256 x0)) (call (unwrap (f (a))) (r (a))))
     aggsig = 50
     STD_SCRIPT = f"(c (c (q {aggsig}) (c (q 0x%s) (c (sha256 (wrap (f (a)))) (q ())))) (e (f (a)) (r (a))))"
-    puzzle_script = binutils.assemble(STD_SCRIPT % binascii.hexlify(pub_key.serialize()).decode("utf8"))
+    puzzle_script = binutils.assemble(STD_SCRIPT % binascii.hexlify(pub_key).decode("utf8"))
     return clvm.to_sexp_f(puzzle_script)
 
 
@@ -52,7 +51,7 @@ def build_conditions():
     return conditions
 
 
-def build_spend_bundle(coin=None):
+def build_spend_bundle(coin=None, puzzle_program=None):
     if coin is None:
         puzzle_program = make_simple_puzzle_program(PUBLIC_KEYS[0])
         parent = bytes(([0] * 31) + [1])
