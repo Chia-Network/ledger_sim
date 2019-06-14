@@ -17,9 +17,9 @@ PublicKey = EORPublicKey
 class EORSignature:
 
     @streamable
-    class pair:
-        message_hash: MessageHash
+    class aggsig_pair:
         public_key: PublicKey
+        message_hash: MessageHash
 
     val: bytes32
 
@@ -27,7 +27,7 @@ class EORSignature:
     def zero(cls):
         return cls(bytes32([0] * 32))
 
-    def validate(self, hash_key_pairs: List[pair]) -> bool:
+    def validate(self, hash_key_pairs: List[aggsig_pair]) -> bool:
         eor_result = self.zero().val
         for _ in hash_key_pairs:
             eor_result = eor_bytes32(eor_result, _.message_hash)

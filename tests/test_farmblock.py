@@ -54,17 +54,17 @@ def farm_block(mempool, block_number, proof_of_space, coinbase_coin, coinbase_si
 
     bad_eor_public_key = EORPrivateKey(fake_hash(5)).public_key()
 
-    hkp = header_signature.pair(header.hash(), proof_of_space.plot_public_key)
+    hkp = header_signature.aggsig_pair(proof_of_space.plot_public_key, header.hash())
     _ = header_signature.validate([hkp])
     assert _
 
-    hkp = header_signature.pair(header.hash(), bad_eor_public_key)
+    hkp = header_signature.aggsig_pair(bad_eor_public_key, header.hash())
     assert not header_signature.validate([hkp])
 
-    hkp = body.coinbase_signature.pair(body.coinbase_coin.hash(), proof_of_space.pool_public_key)
+    hkp = body.coinbase_signature.aggsig_pair(proof_of_space.pool_public_key, body.coinbase_coin.hash())
     assert body.coinbase_signature.validate([hkp])
 
-    hkp = body.coinbase_signature.pair(body.coinbase_coin.hash(), bad_bls_public_key)
+    hkp = body.coinbase_signature.aggsig_pair(bad_bls_public_key, body.coinbase_coin.hash())
     assert not body.coinbase_signature.validate([hkp])
     return header, header_signature
 

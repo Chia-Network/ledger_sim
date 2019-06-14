@@ -19,9 +19,9 @@ class BLSPublicKey(bytes48):
 class BLSSignature(bin_methods):
 
     @streamable
-    class pair:
-        message_hash: MessageHash
+    class aggsig_pair:
         public_key: BLSPublicKey
+        message_hash: MessageHash
 
     sig: bytes96
 
@@ -34,7 +34,7 @@ class BLSSignature(bin_methods):
             sig = blspy.PrependSignature.aggregate(wrapped_sigs).serialize()
         return cls(sig)
 
-    def validate(self, hash_key_pairs: List[pair]) -> bool:
+    def validate(self, hash_key_pairs: List[aggsig_pair]) -> bool:
         # check for special case of 0
         if len(hash_key_pairs) == 0:
             return True

@@ -51,5 +51,5 @@ def hash_key_pairs_for_conditions_dict(conditions_dict):
     for _ in conditions_dict.get(ConditionOpcode.AGG_SIG, []):
         # TODO: check types
         assert len(_) == 3
-        pairs.append(BLSSignature.pair(_[2], _[1]))
+        pairs.append(BLSSignature.aggsig_pair(*_[1:]))
     return pairs

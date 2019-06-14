@@ -15,14 +15,14 @@ def test_BLSSignature():
     msg_hash = bls_hash(msg)
     sig = bls_prv_k.sign(msg_hash)
     print(sig)
-    pair = sig.pair(msg_hash, BLSPublicKey(pub_k.serialize()))
+    pair = sig.aggsig_pair(BLSPublicKey(pub_k.serialize()), msg_hash)
     ok = sig.validate([pair])
     assert ok
 
     eprv_k2 = blspy.ExtendedPrivateKey.from_seed(b"foobar")
     prv_k2 = eprv_k2.get_private_key()
     pub_k2 = prv_k2.get_public_key()
-    pair = sig.pair(msg_hash, BLSPublicKey(pub_k2.serialize()))
+    pair = sig.aggsig_pair(BLSPublicKey(pub_k2.serialize()), msg_hash)
     ok = sig.validate([pair])
     assert not ok
 
@@ -41,11 +41,11 @@ def test_BLSSignature_aggregate():
 
     sig_0 = bls_prv_0.sign(msg_0_hash)
     print(sig_0)
-    pair_0 = sig_0.pair(msg_0_hash, BLSPublicKey(pub_0.serialize()))
+    pair_0 = sig_0.aggsig_pair(BLSPublicKey(pub_0.serialize()), msg_0_hash)
     ok = sig_0.validate([pair_0])
     assert ok
 
-    pair_0_bad = sig_0.pair(msg_0_hash, BLSPublicKey(pub_1.serialize()))
+    pair_0_bad = sig_0.aggsig_pair(BLSPublicKey(pub_1.serialize()), msg_0_hash)
     ok = sig_0.validate([pair_0_bad])
     assert not ok
 
@@ -55,7 +55,7 @@ def test_BLSSignature_aggregate():
 
     sig_1 = bls_prv_1.sign(msg_1_hash)
     print(sig_1)
-    pair_1 = sig_1.pair(msg_1_hash, BLSPublicKey(pub_1.serialize()))
+    pair_1 = sig_1.aggsig_pair(BLSPublicKey(pub_1.serialize()), msg_1_hash)
     ok = sig_1.validate([pair_1])
     assert ok
 
