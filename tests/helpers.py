@@ -6,22 +6,10 @@ import clvm
 
 from opacity import binutils
 
-from chiasim.atoms import bytes32
 from chiasim.coin.Conditions import conditions_to_sexp, make_create_coin_condition
 from chiasim.hashable import Coin, CoinSolution, Program, SpendBundle, std_hash
-from chiasim.hashable.BLSSignature import BLSSignature, BLSPublicKey
 
-
-@dataclasses.dataclass
-class BLSPrivateKey:
-
-    pk: blspy.PrivateKey
-
-    def sign(self, message_hash: bytes32) -> BLSSignature:
-        return BLSSignature(self.pk.sign_prepend_prehashed(message_hash).serialize())
-
-    def public_key(self) -> BLSPublicKey:
-        return BLSPublicKey(self.pk.get_public_key())
+from .BLSPrivateKey import BLSPrivateKey
 
 
 def prv_key_for_seed(seed):
