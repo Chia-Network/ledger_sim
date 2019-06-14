@@ -2,8 +2,8 @@ import binascii
 
 from typing import Any, BinaryIO
 
+from .bin_methods import bin_methods
 from .hexbytes import hexbytes
-from .struct_stream import struct_stream
 
 
 def make_sized_bytes(size):
@@ -33,7 +33,7 @@ def make_sized_bytes(size):
 
     namespace = dict(__new__=__new__, parse=parse, stream=stream, __str__=__str__, __repr__=__repr__)
 
-    cls = type(name, (hexbytes, struct_stream), namespace)
+    cls = type(name, (hexbytes, bin_methods), namespace)
 
     return cls
 
