@@ -5,15 +5,13 @@ from chiasim.hashable import std_hash
 from tests.helpers import (
     make_simple_puzzle_program,
     make_solution_to_simple_puzzle_program,
-    pub_key_for_seed,
+    PUBLIC_KEYS,
     trace_eval,
 )
 
 
 def test_1():
-    pub_key_0 = pub_key_for_seed(b"foo")
-    pub_key_1 = pub_key_for_seed(b"bar")
-    pub_key_2 = pub_key_for_seed(b"baz")
+    pub_key_0, pub_key_1, pub_key_2 = PUBLIC_KEYS[:3]
 
     puzzle_program_0 = make_simple_puzzle_program(pub_key_0)
     puzzle_program_1 = make_simple_puzzle_program(pub_key_1)

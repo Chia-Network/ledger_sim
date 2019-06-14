@@ -12,14 +12,10 @@ from chiasim.hashable import Coin, CoinSolution, Program, SpendBundle, std_hash
 from .BLSPrivateKey import BLSPrivateKey
 
 
-def prv_key_for_seed(seed):
-    eprv = blspy.ExtendedPrivateKey.from_seed(seed)
-    return eprv.get_private_key()
-
-
-def pub_key_for_seed(seed):
-    eprv = blspy.ExtendedPrivateKey.from_seed(seed)
-    return eprv.get_public_key()
+HIERARCHICAL_PRIVATE_KEY = blspy.ExtendedPrivateKey.from_seed(b"foo")
+PRIVATE_KEYS = [HIERARCHICAL_PRIVATE_KEY.private_child(_).get_private_key() for _ in range(10)]
+PUBLIC_KEYS = [_.get_public_key() for _ in PRIVATE_KEYS]
+KEYCHAIN = {_.get_public_key().serialize() : BLSPrivateKey(_) for _ in PRIVATE_KEYS}
 
 
 def make_simple_puzzle_program(pub_key):
@@ -47,11 +43,8 @@ def make_solution_to_simple_puzzle_program(puzzle_program, conditions):
 
 
 def build_conditions():
-    pub_key_0 = pub_key_for_seed(b"foo")
-    pub_key_1 = pub_key_for_seed(b"bar")
-
-    puzzle_program_0 = make_simple_puzzle_program(pub_key_0)
-    puzzle_program_1 = make_simple_puzzle_program(pub_key_1)
+    puzzle_program_0 = make_simple_puzzle_program(PUBLIC_KEYS[0])
+    puzzle_program_1 = make_simple_puzzle_program(PUBLIC_KEYS[1])
 
     conditions = [make_create_coin_condition(std_hash(pp.as_bin()), amount) for pp, amount in [
         (puzzle_program_0, 1000), (puzzle_program_1, 2000),
@@ -59,28 +52,21 @@ def build_conditions():
     return conditions
 
 
-def prv_key_for_pub_key(pub_key, d):
-    return d.get(pub_key)
+def build_spend_bundle(coin=None):
+    if coin is None:
+        puzzle_program = make_simple_puzzle_program(PUBLIC_KEYS[0])
+        parent = bytes(([0] * 31) + [1])
+        coin = Coin(parent, std_hash(puzzle_program.as_bin()), 50000)
 
-
-def build_spend_bundle():
-    prvkey = prv_key_for_seed(b"foo")
-    pubkey = prvkey.get_public_key()
-
-    lookup = {pubkey.serialize(): prvkey}
-
-    puzzle = Program(make_simple_puzzle_program(pubkey))
-    parent = bytes(([0] * 31) + [1])
-    coin = Coin(parent, puzzle, 50000)
     conditions = build_conditions()
-    solution = Program(make_solution_to_simple_puzzle_program(puzzle.code, conditions))
+    solution = Program(make_solution_to_simple_puzzle_program(puzzle_program, conditions))
     coin_solution = CoinSolution(coin, solution)
 
     signatures = []
     for _ in coin_solution.hash_key_pairs():
         print(_)
-        prvkey = prv_key_for_pub_key(_.public_key, lookup)
-        signature = BLSPrivateKey(prvkey).sign(_.message_hash)
+        bls_private_key = KEYCHAIN.get(_.public_key)
+        signature = bls_private_key.sign(_.message_hash)
         signatures.append(signature)
 
     signature = signatures[0].aggregate(signatures)

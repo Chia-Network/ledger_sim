@@ -7,7 +7,7 @@ from chiasim.hashable import (
 )
 from chiasim.farming import Mempool
 
-from .helpers import build_spend_bundle
+from .helpers import build_spend_bundle, make_simple_puzzle_program, PRIVATE_KEYS, PUBLIC_KEYS
 
 
 # pool manager function
@@ -47,18 +47,11 @@ def farm_block(mempool, block_number):
 
     header_signature = plot_private_key.sign(header.hash())
 
-    print(header)
-    print(body)
-    print(additions)
-    print(removals)
-    print(header.hash())
-    print(header_signature)
-
-    bad_bls_public_key = BLSPublicKey.from_bin(eprv_k.private_child(1).get_public_key().serialize())
+    bad_bls_public_key = BLSPublicKey.from_bin(PRIVATE_KEYS[1].get_public_key().serialize())
 
     bad_eor_public_key = EORPrivateKey(fake_hash(5)).public_key()
 
-    hkp = header_signature.pair(header.hash(), plot_public_key)
+    hkp = header_signature.pair(header.hash(), proof_of_space.plot_public_key)
     _ = header_signature.validate([hkp])
     assert _
 
@@ -70,6 +63,7 @@ def farm_block(mempool, block_number):
 
     hkp = body.coinbase_signature.pair(body.coinbase_coin.hash(), bad_bls_public_key)
     assert not body.coinbase_signature.validate([hkp])
+    return header, header_signature
 
 
 def test_farm_block_empty():
