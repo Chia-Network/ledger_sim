@@ -23,6 +23,9 @@ class Mempool:
     A mempool contains a list of consistent removals and solutions
     """
     def __init__(self, tip: HeaderHash):
+        self.reset_tip(tip)
+
+    def reset_tip(self, tip: HeaderHash):
         self._bundles = set()
         self._tip = tip
 
@@ -69,6 +72,9 @@ class Mempool:
         header = Header(
             self._tip, timestamp, additions, removal_names,
             proof_of_space, body, extension_data)
+
+        self.reset_tip(header)
+
         return header, body, additions, removals
 
         # still need to do the following:
@@ -79,3 +85,7 @@ class Mempool:
         # TODO: validate that this bundle is correct and consistent
         # with the current mempool state
         self._bundles.add(spend_bundle)
+
+    def next_block_number(self):
+        # TODO: fix this
+        return 1

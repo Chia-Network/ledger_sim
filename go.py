@@ -25,7 +25,8 @@ def client_command(args):
 
 
 def wallet_command(args):
-    wallet = wallet_api.WalletAPI()
+    INITIAL_BLOCK_HASH = bytes(([0] * 31) + [1])
+    wallet = wallet_api.WalletAPI(INITIAL_BLOCK_HASH, None)
     return api_server(args.port, wallet)
 
 
