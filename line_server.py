@@ -1,49 +1,41 @@
 import argparse
 import asyncio
-import json
 import logging
 import sys
 
-from chiasim import wallet_api
-from chiasim.api_server import api_server
-from chiasim.utils.cbor_messages import send_cbor_message, reader_to_cbor_stream
+from chiasim.utils.event_stream import rws_to_event_aiter
+from chiasim.utils.readline_messages import reader_to_readline_stream
+from chiasim.utils.server import readers_writers_server_for_port
 
 
-async def run_client(host, port, msg):
-    reader, writer = await asyncio.open_connection(host, port)
-    message = json.loads(msg)
-    send_cbor_message(message, writer)
-    await writer.drain()
-    async for _ in reader_to_cbor_stream(reader):
-        break
-    print(_)
-    writer.close()
+async def run_server(port):
+    """
+    Run a server on the port, and process the messages from them one at a time.
+    """
+    rws_aiter = readers_writers_server_for_port(port)
+    event_aiter = rws_to_event_aiter(rws_aiter, reader_to_readline_stream)
+    async for event in event_aiter:
+        line = event["message"]
+        writer = event["writer"]
+        writer.write(line)
+        if line.startswith(b"close"):
+            writer.close()
+        if line.startswith(b"stop"):
+            server = event["server"]
+            server.close()
 
 
-def client_command(args):
-    return run_client(args.host, args.port, args.message)
-
-
-def wallet_command(args):
-    wallet = wallet_api.WalletAPI()
-    return api_server(args.port, wallet)
+def server_command(args):
+    return run_server(args.port)
 
 
 def main(args=sys.argv):
     parser = argparse.ArgumentParser(
         description="Launch an asyncio loop."
     )
-    subparsers = parser.add_subparsers(dest="subcommand", help="sub-command help")
 
-    client_subparser = subparsers.add_parser(name="client", help="client")
-    client_subparser.add_argument("host", help="remote host")
-    client_subparser.add_argument("port", help="remote port")
-    client_subparser.add_argument("message", help="message")
-    client_subparser.set_defaults(func=client_command)
-
-    wallet_subparser = subparsers.add_parser(name="wallet", help="wallet server")
-    wallet_subparser.add_argument("port", help="remote port")
-    wallet_subparser.set_defaults(func=wallet_command)
+    parser.add_argument("port", type=int, help="port number to listen on")
+    parser.set_defaults(func=server_command)
 
     args = parser.parse_args(args=args[1:])
 
