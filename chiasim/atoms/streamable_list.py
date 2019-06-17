@@ -22,7 +22,7 @@ def streamable_list(the_type):
         for _ in range(count):
             item = the_type.parse(f)
             items.append(item)
-        return cls(count, items)
+        return cls(items)
 
     def stream(self, f: BinaryIO) -> None:
         count = uint16(len(self._items))
