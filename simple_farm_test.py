@@ -2,10 +2,10 @@ import asyncio
 import logging
 import sys
 
-from chiasim.hashable import Body, Header
+from chiasim.hashable import Body, Coin, Header, Program
 from chiasim.utils.cbor_messages import send_cbor_message, reader_to_cbor_stream
 
-from tests.helpers import build_spend_bundle
+from tests.helpers import build_spend_bundle, make_simple_puzzle_program, PUBLIC_KEYS
 
 
 async def run_client(host, port):
@@ -17,6 +17,7 @@ async def run_client(host, port):
             return _
 
     reader, writer = await asyncio.open_connection(host, port)
+
     # add a SpendBundle
     spend_bundle = build_spend_bundle()
 
@@ -32,6 +33,17 @@ async def run_client(host, port):
     })
     print(_)
 
+
+    # add a SpendBundle
+    pp = make_simple_puzzle_program(PUBLIC_KEYS[5])
+    input_coin = Coin(bytes([55] * 32), Program(pp), 50000)
+    spend_bundle = build_spend_bundle(coin=input_coin, puzzle_program=pp)
+    _ = await send({
+        "c": "push_tx",
+        "tx": spend_bundle.as_bin()
+    })
+    print(_)
+
     _ = await send({
         "c": "farm_block",
     })
@@ -40,6 +52,7 @@ async def run_client(host, port):
         (Body, "body"),
     ]:
         _[k] = t.from_bin(_.get(k))
+
     import pprint
     pprint.pprint(_)
 
