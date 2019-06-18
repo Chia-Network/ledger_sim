@@ -40,5 +40,10 @@ class BLSSignature(bin_methods):
             return True
         message_hashes = [_.message_hash for _ in hash_key_pairs]
         public_keys = [blspy.PublicKey.from_bytes(_.public_key) for _ in hash_key_pairs]
-        signature = blspy.PrependSignature.from_bytes(self.sig)
-        return signature.verify(message_hashes, public_keys)
+        try:
+            # when the signature is invalid, this method chokes
+            # TODO submit a bug report to blspy
+            signature = blspy.PrependSignature.from_bytes(self.sig)
+            return signature.verify(message_hashes, public_keys)
+        except Exception as ex:
+            return False

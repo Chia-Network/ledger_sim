@@ -56,6 +56,7 @@ class Mempool:
 
         program_cost = 0
         best_bundle = self.collect_best_bundle()
+        assert best_bundle.validate_signature()
         additions = best_bundle.additions()
         removals = best_bundle.removals()
         solution_program = best_solution_program(best_bundle)
