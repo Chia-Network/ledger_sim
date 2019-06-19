@@ -22,6 +22,7 @@ async def api_server(port, api):
                 r = dict(error="Missing or invalid command: %s" % c)
                 logging.error("failure in %s message" % c)
         except Exception as ex:
+            logging.exception("failure in %s message" % c)
             r = dict(error="exception: %s" % ex)
         send_cbor_message(r, event["writer"])
 
