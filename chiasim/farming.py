@@ -3,6 +3,7 @@ import time
 from clvm import to_sexp_f
 
 from .atoms import hexbytes
+from .storage.Storage import Storage
 
 
 from .hashable import (
@@ -20,10 +21,12 @@ def best_solution_program(bundle: SpendBundle):
 
 class Mempool:
     """
-    A mempool contains a list of consistent removals and solutions
+    A mempool contains a list of consistent removals and solutions.
     """
-    def __init__(self, tip: HeaderHash):
+    def __init__(self, tip: HeaderHash, storage: Storage = None):
         self.reset_tip(tip)
+        self._storage = storage
+        self._block_index = 0
 
     def reset_tip(self, tip: HeaderHash):
         self._bundles = set()
@@ -86,9 +89,23 @@ class Mempool:
         # header_signature = private_key.sign(std_hash(header.as_bin()))
 
     def accept_spend_bundle(self, spend_bundle):
-        # TODO: validate that this bundle is correct and consistent
-        # with the current mempool state
         self._bundles.add(spend_bundle)
+
+    async def validate_spend_bundle(self, spend_bundle):
+        # validate that this bundle is correct and consistent
+        # with the current mempool state
+        if not spend_bundle.validate_signature():
+            raise ValueError("bad signature")
+        for coin_solution in spend_bundle.coin_solutions:
+            coin = coin_solution.coin
+            coin_name = coin.coin_name()
+            unspent = await self._storage.unspent_for_coin_name(coin_name)
+            if unspent is None:
+                raise ValueError("unknown spendable %s" % coin_name)
+            if unspent.confirmed_block_index > self._block_index:
+                raise ValueError("spendable %s not confirmed at index %d" % (coin_name, self._block_index))
+            if unspent.spend_block != 0:
+                raise ValueError("spendable %s already spent" % coin_name)
 
     def next_block_number(self):
         # TODO: fix this

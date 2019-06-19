@@ -6,6 +6,7 @@ import sys
 
 from chiasim import wallet_api
 from chiasim.api_server import api_server
+from chiasim.storage import RAM_DB
 from chiasim.utils.cbor_messages import send_cbor_message, reader_to_cbor_stream
 
 
@@ -26,7 +27,7 @@ def client_command(args):
 
 def wallet_command(args):
     INITIAL_BLOCK_HASH = bytes(([0] * 31) + [1])
-    wallet = wallet_api.WalletAPI(INITIAL_BLOCK_HASH, None)
+    wallet = wallet_api.WalletAPI(INITIAL_BLOCK_HASH, RAM_DB())
     return api_server(args.port, wallet)
 
 

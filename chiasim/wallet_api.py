@@ -8,7 +8,8 @@ from .farming import Mempool
 
 class WalletAPI:
     def __init__(self, block_tip, storage):
-        self._mempool = Mempool(block_tip)
+        self._mempool = Mempool(block_tip, storage)
+        self._storage = storage
 
     async def do_ping(self, message):
         logging.info("ping")
