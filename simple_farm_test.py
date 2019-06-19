@@ -2,10 +2,11 @@ import asyncio
 import logging
 import sys
 
-from chiasim.hashable import Body, Coin, Header, Program
+from chiasim.hashable import Body, Coin, Header, Program, ProgramHash
 from chiasim.utils.cbor_messages import send_cbor_message, reader_to_cbor_stream
 
-from tests.helpers import build_spend_bundle, make_simple_puzzle_program, PUBLIC_KEYS
+from tests.helpers import build_spend_bundle, make_simple_puzzle_program, PRIVATE_KEYS, PUBLIC_KEYS
+from tests.test_farmblock import fake_proof_of_space, make_coinbase_coin_and_signature
 
 
 async def run_client(host, port):
@@ -16,10 +17,43 @@ async def run_client(host, port):
         async for _ in reader_to_cbor_stream(reader):
             return _
 
+    async def farm_block(coinbase_coin, coinbase_signature, fees_puzzle_hash, proof_of_space=None):
+        if proof_of_space is None:
+            proof_of_space = fake_proof_of_space()
+        _ = await send({
+            "c": "farm_block",
+            "pos": proof_of_space.as_bin(),
+            "coinbase_coin": coinbase_coin.as_bin(),
+            "coinbase_signature": coinbase_signature.as_bin(),
+            "fees_puzzle_hash": ProgramHash(fees_puzzle_hash).as_bin(),
+        })
+        r = []
+        for t, k in [
+            (Header, "header"),
+            (Body, "body"),
+            #(CoinList, "additions"),
+            #(CoinList, "removals"),
+        ]:
+            r.append(t.from_bin(_.get(k)))
+        return r
+
     reader, writer = await asyncio.open_connection(host, port)
 
+    pool_private_key = PRIVATE_KEYS[0]
+    puzzle_program = make_simple_puzzle_program(PUBLIC_KEYS[1])
+    coinbase_coin, coinbase_signature = make_coinbase_coin_and_signature(
+        1, puzzle_program, pool_private_key)
+
+    fees_puzzle_program = Program(make_simple_puzzle_program(PUBLIC_KEYS[2]))
+
+    header, body, *rest = await farm_block(coinbase_coin, coinbase_signature, fees_puzzle_program)
+
+    coinbase_coin1 = body.coinbase_coin
+    print(coinbase_coin)
+    print(coinbase_coin1)
+
     # add a SpendBundle
-    spend_bundle = build_spend_bundle()
+    spend_bundle = build_spend_bundle(coinbase_coin, puzzle_program)
 
     # break the signature
     if 0:
@@ -33,28 +67,33 @@ async def run_client(host, port):
     })
     print(_)
 
+    my_new_coins = spend_bundle.additions()
+
+    pool_private_key = PRIVATE_KEYS[0]
+    puzzle_program = make_simple_puzzle_program(PUBLIC_KEYS[2])
+    coinbase_coin, coinbase_signature = make_coinbase_coin_and_signature(
+        2, puzzle_program, pool_private_key)
+
+    header, body, *rest = await farm_block(coinbase_coin, coinbase_signature, fees_puzzle_program)
+
+    print(header)
+    print(body)
 
     # add a SpendBundle
-    pp = make_simple_puzzle_program(PUBLIC_KEYS[5])
-    input_coin = Coin(bytes([55] * 32), Program(pp), 50000)
-    spend_bundle = build_spend_bundle(coin=input_coin, puzzle_program=pp)
+    pp = make_simple_puzzle_program(PUBLIC_KEYS[0])
+    input_coin = my_new_coins[0]
+    spend_bundle = build_spend_bundle(coin=input_coin, puzzle_program=pp, conditions=[])
     _ = await send({
         "c": "push_tx",
         "tx": spend_bundle.as_bin()
     })
-    print(_)
-
-    _ = await send({
-        "c": "farm_block",
-    })
-    for t, k in [
-        (Header, "header"),
-        (Body, "body"),
-    ]:
-        _[k] = t.from_bin(_.get(k))
-
     import pprint
     pprint.pprint(_)
+
+    header, body, *rest = await farm_block(coinbase_coin, coinbase_signature, fees_puzzle_program)
+
+    print(header)
+    print(body)
 
     writer.close()
 
