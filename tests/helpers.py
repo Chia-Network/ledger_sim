@@ -51,13 +51,15 @@ def build_conditions():
     return conditions
 
 
-def build_spend_bundle(coin=None, puzzle_program=None):
+def build_spend_bundle(coin=None, puzzle_program=None, conditions=None):
     if coin is None:
         puzzle_program = make_simple_puzzle_program(PUBLIC_KEYS[0])
         parent = bytes(([0] * 31) + [1])
         coin = Coin(parent, std_hash(puzzle_program.as_bin()), 50000)
 
-    conditions = build_conditions()
+    if conditions is None:
+        conditions = build_conditions()
+
     solution = Program(make_solution_to_simple_puzzle_program(puzzle_program, conditions))
     coin_solution = CoinSolution(coin, solution)
 
