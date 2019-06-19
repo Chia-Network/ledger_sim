@@ -31,8 +31,9 @@ class Mempool:
 
     def collect_best_bundle(self) -> SpendBundle:
         # this is way too simple
-        total = SpendBundle.aggregate(self._bundles)
-        return total
+        spend_bundle = SpendBundle.aggregate(self._bundles)
+        assert spend_bundle.fees() >= 0
+        return spend_bundle
 
     def minimum_legal_timestamp(self):
         return 0
