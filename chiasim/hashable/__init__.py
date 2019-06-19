@@ -9,3 +9,4 @@ from .ProofOfSpace import ProofOfSpace  # noqa
 from .Program import Program, ProgramHash  # noqa
 from .Signature import EORPrivateKey, PublicKey, Signature  # noqa
 from .SpendBundle import SpendBundle  # noqa
+from .Unspent import Unspent  # noqa
