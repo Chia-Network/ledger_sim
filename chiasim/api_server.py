@@ -16,7 +16,7 @@ async def api_server(port, api):
             c = message.get("c")
             f = getattr(api, "do_%s" % c, None)
             if f:
-                r = await f(message)
+                r = await f(**message)
                 logging.debug("handled %s message" % c)
             else:
                 r = dict(error="Missing or invalid command: %s" % c)

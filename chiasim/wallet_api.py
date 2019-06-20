@@ -1,6 +1,7 @@
 import datetime
 import logging
 
+from .api_decorators import api_request
 from .farming import Mempool
 from .hashable import BLSSignature, Coin, ProgramHash, ProofOfSpace, SpendBundle
 
@@ -10,39 +11,38 @@ class WalletAPI:
         self._mempool = Mempool(block_tip, storage)
         self._storage = storage
 
-    async def do_ping(self, message):
+    async def do_ping(self, **message):
         logging.info("ping")
         return dict(response="got ping message %r at time %s" % (
             message.get("m"), datetime.datetime.utcnow()))
 
-    async def do_push_tx(self, message):
-        logging.info("push_tx %s", message)
-        tx_blob = message.get("tx")
-        spend_bundle = SpendBundle.from_bin(tx_blob)
-        if not spend_bundle.validate_signature():
-            raise ValueError("bad signature on %s" % spend_bundle)
+    @api_request(tx=SpendBundle.from_bin)
+    async def do_push_tx(self, tx, **kwargs):
+        logging.info("push_tx %s", tx)
+        if not tx.validate_signature():
+            raise ValueError("bad signature on %s" % tx)
 
         # TODO: uncomment this
-        # await self._mempool.validate_spend_bundle(spend_bundle)
+        # await self._mempool.validate_spend_bundle(tx)
 
-        self._mempool.accept_spend_bundle(spend_bundle)
-        return dict(response="accepted %s" % spend_bundle)
+        self._mempool.accept_spend_bundle(tx)
+        return dict(response="accepted %s" % tx)
 
-    async def do_farm_block(self, message):
-        logging.info("farm_block")
+    @api_request(
+        pos=ProofOfSpace.from_bin,
+        coinbase_coin=Coin.from_bin,
+        coinbase_signature=BLSSignature.from_bin,
+        fees_puzzle_hash=ProgramHash.from_bin
+    )
+    async def do_farm_block(self, pos, coinbase_coin, coinbase_signature, fees_puzzle_hash, **message):
         block_number = self._mempool.next_block_number()
-        proof_of_space = ProofOfSpace.from_bin(message.get("pos"))
 
-        coinbase_coin = Coin.from_bin(message.get("coinbase_coin"))
-        coinbase_signature = BLSSignature.from_bin(message.get("coinbase_signature"))
-
-        fees_puzzle_hash = ProgramHash.from_bin(message.get("fees_puzzle_hash"))
-
+        logging.info("farm_block")
         logging.info("coinbase_coin: %s", coinbase_coin)
         logging.info("fees_puzzle_hash: %s", fees_puzzle_hash)
 
         header, body, additions, removals = self._mempool.farm_new_block(
-            block_number, proof_of_space, coinbase_coin, coinbase_signature, fees_puzzle_hash)
+            block_number, pos, coinbase_coin, coinbase_signature, fees_puzzle_hash)
 
         await self._mempool.accept_new_block(block_number, additions, removals)
 

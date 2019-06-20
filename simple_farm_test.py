@@ -2,16 +2,30 @@ import asyncio
 import logging
 import sys
 
-from chiasim.hashable import Body, Coin, Header, Program, ProgramHash
+from chiasim.hashable import Body, Header, Program, ProgramHash
 from chiasim.utils.cbor_messages import send_cbor_message, reader_to_cbor_stream
 
 from tests.helpers import build_spend_bundle, make_simple_puzzle_program, PRIVATE_KEYS, PUBLIC_KEYS
 from tests.test_farmblock import fake_proof_of_space, make_coinbase_coin_and_signature
 
 
+def transform_to_streamable(d):
+    if hasattr(d, "as_bin"):
+        return d.as_bin()
+    if isinstance(d, (str, bytes, int)):
+        return d
+    if isinstance(d, dict):
+        new_d = {}
+        for k, v in d.items():
+            new_d[transform_to_streamable(k)] = transform_to_streamable(v)
+        return new_d
+    return [transform_to_streamable(_) for _ in d]
+
+
 async def run_client(host, port):
 
     async def send(msg):
+        msg = transform_to_streamable(msg)
         send_cbor_message(msg, writer)
         await writer.drain()
         async for _ in reader_to_cbor_stream(reader):
@@ -22,17 +36,15 @@ async def run_client(host, port):
             proof_of_space = fake_proof_of_space()
         _ = await send({
             "c": "farm_block",
-            "pos": proof_of_space.as_bin(),
-            "coinbase_coin": coinbase_coin.as_bin(),
-            "coinbase_signature": coinbase_signature.as_bin(),
-            "fees_puzzle_hash": ProgramHash(fees_puzzle_hash).as_bin(),
+            "pos": proof_of_space,
+            "coinbase_coin": coinbase_coin,
+            "coinbase_signature": coinbase_signature,
+            "fees_puzzle_hash": ProgramHash(fees_puzzle_hash),
         })
         r = []
         for t, k in [
             (Header, "header"),
             (Body, "body"),
-            #(CoinList, "additions"),
-            #(CoinList, "removals"),
         ]:
             r.append(t.from_bin(_.get(k)))
         return r
@@ -63,7 +75,7 @@ async def run_client(host, port):
 
     _ = await send({
         "c": "push_tx",
-        "tx": spend_bundle.as_bin()
+        "tx": spend_bundle
     })
     print(_)
 
@@ -85,7 +97,7 @@ async def run_client(host, port):
     spend_bundle = build_spend_bundle(coin=input_coin, puzzle_program=pp, conditions=[])
     _ = await send({
         "c": "push_tx",
-        "tx": spend_bundle.as_bin()
+        "tx": spend_bundle
     })
     import pprint
     pprint.pprint(_)
