@@ -1,12 +1,10 @@
 import logging
 
-from .utils.server import readers_writers_server_for_port
 from .utils.cbor_messages import reader_to_cbor_stream, send_cbor_message
 from .utils.event_stream import rws_to_event_aiter
 
 
-async def api_server(port, api):
-    rws_aiter = readers_writers_server_for_port(port)
+async def api_server(rws_aiter, api):
     event_aiter = rws_to_event_aiter(rws_aiter, reader_to_cbor_stream)
 
     async for event in event_aiter:

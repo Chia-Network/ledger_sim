@@ -4,10 +4,13 @@ import json
 import logging
 import sys
 
+from aiter import map_aiter
+
 from chiasim import wallet_api
 from chiasim.api_server import api_server
 from chiasim.storage import RAM_DB
 from chiasim.utils.cbor_messages import send_cbor_message, reader_to_cbor_stream
+from chiasim.utils.server import start_server_aiter
 
 
 async def run_client(host, port, msg):
@@ -25,10 +28,16 @@ def client_command(args):
     return run_client(args.host, args.port, args.message)
 
 
-def wallet_command(args):
+def run_wallet_api(server, aiter):
     INITIAL_BLOCK_HASH = bytes(([0] * 31) + [1])
     wallet = wallet_api.WalletAPI(INITIAL_BLOCK_HASH, RAM_DB())
-    return api_server(args.port, wallet)
+    rws_aiter = map_aiter(lambda rw: dict(reader=rw[0], writer=rw[1], server=server), aiter)
+    return api_server(rws_aiter, wallet)
+
+
+def wallet_command(args):
+    server, aiter = asyncio.get_event_loop().run_until_complete(start_server_aiter(args.port))
+    return run_wallet_api(server, aiter)
 
 
 def main(args=sys.argv):
