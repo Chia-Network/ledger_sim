@@ -1,15 +1,14 @@
+import collections
 import time
 
 from clvm import to_sexp_f
 
 from .atoms import hexbytes
-from .storage.Storage import Storage
-
-
 from .hashable import (
-    BLSSignature, Body, Coin, Header,
-    HeaderHash, Program, ProgramHash, ProofOfSpace, SpendBundle
+    BLSSignature, Body, Coin, Header, HeaderHash,
+    Program, ProgramHash, ProofOfSpace, SpendBundle, Unspent
 )
+from .storage.Storage import Storage
 
 
 def best_solution_program(bundle: SpendBundle):
@@ -101,9 +100,24 @@ class Mempool:
                 raise ValueError("unknown spendable %s" % coin_name)
             if unspent.confirmed_block_index > self._block_index:
                 raise ValueError("spendable %s not confirmed at index %d" % (coin_name, self._block_index))
-            if unspent.spend_block != 0:
+            if unspent.spent_block_index != 0:
                 raise ValueError("spendable %s already spent" % coin_name)
 
     def next_block_number(self):
         # TODO: fix this
         return 1
+
+    async def accept_new_block(self, block_index, additions, removals):
+        if removals and max(collections.Counter(removals).values()) > 1:
+            raise ValueError("double spend")
+
+        for coin in additions:
+            coin_name = coin.coin_name()
+            unspent = Unspent(coin.amount, block_index, 0)
+            await self._storage.set_unspent_for_coin_name(coin_name, unspent)
+
+        for coin in removals:
+            coin_name = coin.coin_name()
+            unspent = await self._storage.unspent_for_coin_name(coin_name)
+            unspent = Unspent(unspent.amount, unspent.confirmed_block_index, block_index)
+            await self._storage.set_unspent_for_coin_name(coin_name, unspent)
