@@ -75,10 +75,7 @@ class Mempool:
 
         additions = (coinbase_coin, fees_coin) + additions
 
-        removal_names = tuple(_.coin_name() for _ in removals)
-        header = Header(
-            self._tip, timestamp, additions, removal_names,
-            proof_of_space, body, extension_data)
+        header = Header(self._tip, timestamp, proof_of_space, body, extension_data)
 
         self.reset_tip(header)
 
