@@ -6,19 +6,13 @@ from aiter import map_aiter
 
 from chiasim import wallet_api
 from chiasim.api_server import api_server
-from chiasim.hashable import Body, Header, Program, ProgramHash
+from chiasim.hashable import Body, CoinName, Header, Program, ProgramHash
 from chiasim.storage import RAM_DB
 from chiasim.utils.cbor_messages import send_cbor_message, reader_to_cbor_stream
 from chiasim.utils.server import start_unix_server_aiter
 
 from tests.helpers import build_spend_bundle, make_simple_puzzle_program, PRIVATE_KEYS, PUBLIC_KEYS
 from tests.test_farmblock import fake_proof_of_space, make_coinbase_coin_and_signature
-
-
-async def unix_server_aiter():
-    path = pathlib.Path(tempfile.mkdtemp(), "port")
-    server, aiter = await start_unix_server_aiter(path)
-    return server, aiter, path
 
 
 def transform_to_streamable(d):
@@ -76,6 +70,10 @@ async def client_test(path):
     print(coinbase_coin)
     print(coinbase_coin1)
 
+    r = await send(dict(c="all_unspents"))
+    unspents = [CoinName.from_bin(_) for _ in r.get("unspents")]
+    print(unspents)
+
     # add a SpendBundle
     spend_bundle = build_spend_bundle(coinbase_coin, puzzle_program)
 
@@ -132,7 +130,10 @@ def test_client_server():
     logging.getLogger("asyncio").setLevel(logging.INFO)
 
     run = asyncio.get_event_loop().run_until_complete
-    server, aiter, path = run(unix_server_aiter())
+
+    path = pathlib.Path(tempfile.mkdtemp(), "port")
+
+    server, aiter = run(start_unix_server_aiter(path))
 
     rws_aiter = map_aiter(lambda rw: dict(reader=rw[0], writer=rw[1], server=server), aiter)
 

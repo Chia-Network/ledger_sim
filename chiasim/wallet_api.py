@@ -22,8 +22,7 @@ class WalletAPI:
         if not tx.validate_signature():
             raise ValueError("bad signature on %s" % tx)
 
-        # TODO: uncomment this
-        # await self._mempool.validate_spend_bundle(tx)
+        await self._mempool.validate_spend_bundle(tx)
 
         self._mempool.accept_spend_bundle(tx)
         return dict(response="accepted %s" % tx)
@@ -35,7 +34,7 @@ class WalletAPI:
         fees_puzzle_hash=ProgramHash.from_bin
     )
     async def do_farm_block(self, pos, coinbase_coin, coinbase_signature, fees_puzzle_hash, **message):
-        block_number = self._mempool.next_block_number()
+        block_number = self._mempool.next_block_index()
 
         logging.info("farm_block")
         logging.info("coinbase_coin: %s", coinbase_coin)
@@ -48,6 +47,10 @@ class WalletAPI:
 
         return dict(
             header=header.as_bin(), body=body.as_bin())
+
+    async def do_all_unspents(self, **kwargs):
+        all_unspents = [_[0].as_bin() async for _ in self._storage.all_unspents()]
+        return dict(unspents=all_unspents)
 
 
 """

@@ -25,7 +25,7 @@ class Mempool:
     def __init__(self, tip: HeaderHash, storage: Storage = None):
         self.reset_tip(tip)
         self._storage = storage
-        self._block_index = 0
+        self._next_block_index = 1
 
     def reset_tip(self, tip: HeaderHash):
         self._bundles = set()
@@ -98,14 +98,14 @@ class Mempool:
             unspent = await self._storage.unspent_for_coin_name(coin_name)
             if unspent is None:
                 raise ValueError("unknown spendable %s" % coin_name)
-            if unspent.confirmed_block_index > self._block_index:
-                raise ValueError("spendable %s not confirmed at index %d" % (coin_name, self._block_index))
+            if unspent.confirmed_block_index >= self._next_block_index:
+                raise ValueError("spendable %s not confirmed at index %d" % (
+                    coin_name, self._next_block_index - 1))
             if unspent.spent_block_index != 0:
                 raise ValueError("spendable %s already spent" % coin_name)
 
-    def next_block_number(self):
-        # TODO: fix this
-        return 1
+    def next_block_index(self):
+        return self._next_block_index
 
     async def accept_new_block(self, block_index, additions, removals):
         if removals and max(collections.Counter(removals).values()) > 1:
@@ -121,3 +121,5 @@ class Mempool:
             unspent = await self._storage.unspent_for_coin_name(coin_name)
             unspent = Unspent(unspent.amount, unspent.confirmed_block_index, block_index)
             await self._storage.set_unspent_for_coin_name(coin_name, unspent)
+
+        self._next_block_index = block_index + 1

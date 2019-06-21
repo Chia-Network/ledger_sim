@@ -29,3 +29,7 @@ class RAM_DB(Storage, UnspentDB):
 
     async def set_unspent_for_coin_name(self, coin_name: Hash, unspent: Unspent) -> None:
         self._unspent_db[coin_name] = unspent
+
+    async def all_unspents(self):
+        for coin_name, unspent in self._unspent_db.items():
+            yield coin_name, unspent
