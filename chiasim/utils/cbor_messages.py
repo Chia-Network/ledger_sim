@@ -22,8 +22,24 @@ async def reader_to_cbor_stream(reader):
             break
 
 
+def transform_to_streamable(d):
+    """
+    Drill down through dictionaries and lists and transform objects with "as_bin" to bytes.
+    """
+    if hasattr(d, "as_bin"):
+        return d.as_bin()
+    if isinstance(d, (str, bytes, int)):
+        return d
+    if isinstance(d, dict):
+        new_d = {}
+        for k, v in d.items():
+            new_d[transform_to_streamable(k)] = transform_to_streamable(v)
+        return new_d
+    return [transform_to_streamable(_) for _ in d]
+
+
 def send_cbor_message(msg, writer):
-    msg_blob = cbor.dumps(msg)
+    msg_blob = cbor.dumps(transform_to_streamable(msg))
     length_blob = struct.pack(">L", len(msg_blob))
     writer.write(length_blob)
     writer.write(msg_blob)

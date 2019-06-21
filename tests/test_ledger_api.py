@@ -8,45 +8,38 @@ from chiasim import wallet_api
 from chiasim.api_server import api_server
 from chiasim.hashable import Body, CoinName, Header, Program, ProgramHash
 from chiasim.storage import RAM_DB
-from chiasim.utils.cbor_messages import send_cbor_message, reader_to_cbor_stream
+from chiasim.utils.cbor_messages import reader_to_cbor_stream, send_cbor_message
 from chiasim.utils.server import start_unix_server_aiter
 
 from tests.helpers import build_spend_bundle, make_simple_puzzle_program, PRIVATE_KEYS, PUBLIC_KEYS
 from tests.test_farmblock import fake_proof_of_space, make_coinbase_coin_and_signature
 
 
-def transform_to_streamable(d):
-    if hasattr(d, "as_bin"):
-        return d.as_bin()
-    if isinstance(d, (str, bytes, int)):
-        return d
-    if isinstance(d, dict):
-        new_d = {}
-        for k, v in d.items():
-            new_d[transform_to_streamable(k)] = transform_to_streamable(v)
-        return new_d
-    return [transform_to_streamable(_) for _ in d]
+from chiasim.remote.meta import make_proxy
+
+
+async def invoke_remote(method, remote, *args, **kwargs):
+    reader, writer = remote.get("reader"), remote.get("writer")
+    msg = dict(c=method)
+    msg.update(kwargs)
+    send_cbor_message(msg, writer)
+    await writer.drain()
+    async for _ in reader_to_cbor_stream(reader):
+        return _
 
 
 async def client_test(path):
 
-    async def send(msg):
-        msg = transform_to_streamable(msg)
-        send_cbor_message(msg, writer)
-        await writer.drain()
-        async for _ in reader_to_cbor_stream(reader):
-            return _
+    reader, writer = await asyncio.open_unix_connection(path)
+    remote = make_proxy(invoke_remote, dict(reader=reader, writer=writer))
 
     async def farm_block(coinbase_coin, coinbase_signature, fees_puzzle_hash, proof_of_space=None):
         if proof_of_space is None:
             proof_of_space = fake_proof_of_space()
-        _ = await send({
-            "c": "farm_block",
-            "pos": proof_of_space,
-            "coinbase_coin": coinbase_coin,
-            "coinbase_signature": coinbase_signature,
-            "fees_puzzle_hash": ProgramHash(fees_puzzle_hash),
-        })
+        _ = await remote.farm_block(
+            pos=proof_of_space, coinbase_coin=coinbase_coin,
+            coinbase_signature=coinbase_signature, fees_puzzle_hash=ProgramHash(fees_puzzle_hash))
+
         r = []
         for t, k in [
             (Header, "header"),
@@ -54,8 +47,6 @@ async def client_test(path):
         ]:
             r.append(t.from_bin(_.get(k)))
         return r
-
-    reader, writer = await asyncio.open_unix_connection(path)
 
     pool_private_key = PRIVATE_KEYS[0]
     puzzle_program = make_simple_puzzle_program(PUBLIC_KEYS[1])
@@ -70,9 +61,9 @@ async def client_test(path):
     print(coinbase_coin)
     print(coinbase_coin1)
 
-    r = await send(dict(c="all_unspents"))
+    r = await remote.all_unspents()
     unspents = [CoinName.from_bin(_) for _ in r.get("unspents")]
-    print(unspents)
+    print("unspents = %s" % unspents)
 
     # add a SpendBundle
     spend_bundle = build_spend_bundle(coinbase_coin, puzzle_program)
@@ -83,10 +74,7 @@ async def client_test(path):
         sig = sig[:-1] + bytes([0])
         spend_bundle = spend_bundle.__class__(spend_bundle.coin_solutions, sig)
 
-    _ = await send({
-        "c": "push_tx",
-        "tx": spend_bundle
-    })
+    _ = await remote.push_tx(tx=spend_bundle)
     print(_)
 
     my_new_coins = spend_bundle.additions()
@@ -105,10 +93,7 @@ async def client_test(path):
     pp = make_simple_puzzle_program(PUBLIC_KEYS[0])
     input_coin = my_new_coins[0]
     spend_bundle = build_spend_bundle(coin=input_coin, puzzle_program=pp, conditions=[])
-    _ = await send({
-        "c": "push_tx",
-        "tx": spend_bundle
-    })
+    _ = await remote.push_tx(tx=spend_bundle)
     import pprint
     pprint.pprint(_)
 
