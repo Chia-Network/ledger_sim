@@ -5,8 +5,10 @@ import tempfile
 from aiter import map_aiter
 
 from chiasim import wallet_api
+from chiasim.api_decorators import transform_args
 from chiasim.api_server import api_server
 from chiasim.hashable import Body, CoinName, Header, Program, ProgramHash
+from chiasim.remote.meta import make_proxy
 from chiasim.storage import RAM_DB
 from chiasim.utils.cbor_messages import reader_to_cbor_stream, send_cbor_message
 from chiasim.utils.server import start_unix_server_aiter
@@ -15,55 +17,59 @@ from tests.helpers import build_spend_bundle, make_simple_puzzle_program, PRIVAT
 from tests.test_farmblock import fake_proof_of_space, make_coinbase_coin_and_signature
 
 
-from chiasim.remote.meta import make_proxy
-
-
 async def invoke_remote(method, remote, *args, **kwargs):
     reader, writer = remote.get("reader"), remote.get("writer")
+    signatures = remote.get("signatures")
     msg = dict(c=method)
     msg.update(kwargs)
     send_cbor_message(msg, writer)
     await writer.drain()
+    return await accept_response(reader, signatures.get(method))
+
+
+async def accept_response(reader, transformation):
     async for _ in reader_to_cbor_stream(reader):
-        return _
+        break
+    if transformation:
+        _ = transform_args(transformation, _)
+    return _
+
+
+async def proxy_for_unix_connection(path):
+    signatures = dict(
+        farm_block=dict(header=Header.from_bin, body=Body.from_bin),
+        all_unspents=dict(unspents=lambda u: [CoinName.from_bin(_) for _ in u]),
+    )
+
+    reader, writer = await asyncio.open_unix_connection(path)
+    d = dict(reader=reader, writer=writer, signatures=signatures)
+    return make_proxy(invoke_remote, d)
 
 
 async def client_test(path):
 
-    reader, writer = await asyncio.open_unix_connection(path)
-    remote = make_proxy(invoke_remote, dict(reader=reader, writer=writer))
+    remote = await proxy_for_unix_connection(path)
 
-    async def farm_block(coinbase_coin, coinbase_signature, fees_puzzle_hash, proof_of_space=None):
-        if proof_of_space is None:
-            proof_of_space = fake_proof_of_space()
-        _ = await remote.farm_block(
-            pos=proof_of_space, coinbase_coin=coinbase_coin,
-            coinbase_signature=coinbase_signature, fees_puzzle_hash=ProgramHash(fees_puzzle_hash))
-
-        r = []
-        for t, k in [
-            (Header, "header"),
-            (Body, "body"),
-        ]:
-            r.append(t.from_bin(_.get(k)))
-        return r
-
+    pos = fake_proof_of_space()
     pool_private_key = PRIVATE_KEYS[0]
     puzzle_program = make_simple_puzzle_program(PUBLIC_KEYS[1])
     coinbase_coin, coinbase_signature = make_coinbase_coin_and_signature(
         1, puzzle_program, pool_private_key)
 
-    fees_puzzle_program = Program(make_simple_puzzle_program(PUBLIC_KEYS[2]))
+    fees_puzzle_hash = ProgramHash(Program(make_simple_puzzle_program(PUBLIC_KEYS[2])))
 
-    header, body, *rest = await farm_block(coinbase_coin, coinbase_signature, fees_puzzle_program)
+    r = await remote.farm_block(
+        pos=pos, coinbase_coin=coinbase_coin, coinbase_signature=coinbase_signature,
+        fees_puzzle_hash=fees_puzzle_hash)
+    header = r.get("header")
+    body = r.get("body")
 
     coinbase_coin1 = body.coinbase_coin
     print(coinbase_coin)
     print(coinbase_coin1)
 
     r = await remote.all_unspents()
-    unspents = [CoinName.from_bin(_) for _ in r.get("unspents")]
-    print("unspents = %s" % unspents)
+    print("unspents = %s" % r.get("unspents"))
 
     # add a SpendBundle
     spend_bundle = build_spend_bundle(coinbase_coin, puzzle_program)
@@ -84,7 +90,11 @@ async def client_test(path):
     coinbase_coin, coinbase_signature = make_coinbase_coin_and_signature(
         2, puzzle_program, pool_private_key)
 
-    header, body, *rest = await farm_block(coinbase_coin, coinbase_signature, fees_puzzle_program)
+    r = await remote.farm_block(
+        pos=pos, coinbase_coin=coinbase_coin, coinbase_signature=coinbase_signature,
+        fees_puzzle_hash=fees_puzzle_hash)
+    header = r.get("header")
+    body = r.get("body")
 
     print(header)
     print(body)
@@ -97,12 +107,17 @@ async def client_test(path):
     import pprint
     pprint.pprint(_)
 
-    header, body, *rest = await farm_block(coinbase_coin, coinbase_signature, fees_puzzle_program)
+    r = await remote.farm_block(
+        pos=pos, coinbase_coin=coinbase_coin, coinbase_signature=coinbase_signature,
+        fees_puzzle_hash=fees_puzzle_hash)
+    header = r.get("header")
+    body = r.get("body")
 
     print(header)
     print(body)
 
-    writer.close()
+    r = await remote.all_unspents()
+    print("unspents = %s" % r.get("unspents"))
 
 
 def test_client_server():

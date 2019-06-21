@@ -1,6 +1,13 @@
 import functools
 
 
+def transform_args(kwarg_transformers, message):
+    new_message = dict(message)
+    for k, v in kwarg_transformers.items():
+        new_message[k] = v(message[k])
+    return new_message
+
+
 def api_request(**kwarg_transformers):
     """
     This decorator will transform the values for the given keywords by the corresponding
@@ -13,9 +20,6 @@ def api_request(**kwarg_transformers):
     def inner(f):
         @functools.wraps(f)
         def f_substitute(*args, **message):
-            new_message = dict(message)
-            for k, v in kwarg_transformers.items():
-                new_message[k] = v(message[k])
-            return f(*args, **new_message)
+            return f(*args, **transform_args(kwarg_transformers, message))
         return f_substitute
     return inner
