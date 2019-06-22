@@ -3,6 +3,8 @@ import time
 
 from clvm import to_sexp_f
 
+from opacity import binutils
+
 from .atoms import hexbytes
 from .hashable import (
     BLSSignature, Body, Coin, Header, HeaderHash,
@@ -12,10 +14,17 @@ from .storage.Storage import Storage
 
 
 def best_solution_program(bundle: SpendBundle):
-    # this could potentially get very complicated and clever
-    # the first attempt should just return a quoted version of all the solutions
-    # for now, return a (bad) blank solution
-    return Program(to_sexp_f([]))
+    """
+    This could potentially do a lot of clever and complicated compression
+    optimizations in conjunction with choosing the set of SpendBundles to include.
+
+    For now, we just quote the solutions we know.
+    """
+    r = []
+    for coin_solution in bundle.coin_solutions:
+        entry = [coin_solution.coin.coin_name(), coin_solution.solution.code]
+        r.append(entry)
+    return Program(to_sexp_f([binutils.assemble("#q"), r]))
 
 
 class Mempool:
