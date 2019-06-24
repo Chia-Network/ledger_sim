@@ -6,6 +6,7 @@ from clvm import to_sexp_f
 from opacity import binutils
 
 from .atoms import hexbytes
+from .coin.consensus import additions_for_body, removals_for_body
 from .hashable import (
     BLSSignature, Body, Coin, Header, HeaderHash,
     Program, ProgramHash, ProofOfSpace, SpendBundle, Unspent
@@ -73,8 +74,6 @@ class Mempool:
             await self._storage.add_preimage(coin.as_bin())
 
         assert best_bundle.validate_signature()
-        additions = best_bundle.additions()
-        removals = best_bundle.removals()
         solution_program = best_solution_program(best_bundle)
         extension_data = hexbytes(b'')
 
@@ -85,13 +84,11 @@ class Mempool:
             solution_program, program_cost, best_bundle.aggregated_signature)
         timestamp = self.generate_timestamp()
 
-        additions = (coinbase_coin, fees_coin) + additions
-
         header = Header(self._tip, timestamp, proof_of_space, body, extension_data)
 
         self.reset_tip(header)
 
-        return header, body, additions, removals
+        return header, body
 
         # still need to do the following:
         # private_key = private_for_public(proof_of_space.plot_pubkey)
@@ -120,18 +117,23 @@ class Mempool:
     def next_block_index(self):
         return self._next_block_index
 
-    async def accept_new_block(self, block_index, additions, removals):
+    async def accept_new_block(self, block_index, body):
+        additions = additions_for_body(body, self._storage)
+        removals = removals_for_body(body)
+
         if removals and max(collections.Counter(removals).values()) > 1:
             raise ValueError("double spend")
 
-        for coin in additions:
+        await self._storage.add_preimage(body.coinbase_coin.coin_name_data().as_bin())
+        await self._storage.add_preimage(body.fees_coin.coin_name_data().as_bin())
+
+        async for coin in additions:
             coin_name = coin.coin_name()
             unspent = Unspent(coin.amount, block_index, 0)
             await self._storage.set_unspent_for_coin_name(coin_name, unspent)
             await self._storage.add_preimage(coin.coin_name_data().as_bin())
 
-        for coin in removals:
-            coin_name = coin.coin_name()
+        for coin_name in removals:
             unspent = await self._storage.unspent_for_coin_name(coin_name)
             unspent = Unspent(unspent.amount, unspent.confirmed_block_index, block_index)
             await self._storage.set_unspent_for_coin_name(coin_name, unspent)

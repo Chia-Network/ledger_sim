@@ -40,10 +40,10 @@ class WalletAPI:
         logging.info("coinbase_coin: %s", coinbase_coin)
         logging.info("fees_puzzle_hash: %s", fees_puzzle_hash)
 
-        header, body, additions, removals = await self._mempool.farm_new_block(
+        header, body = await self._mempool.farm_new_block(
             block_number, pos, coinbase_coin, coinbase_signature, fees_puzzle_hash)
 
-        await self._mempool.accept_new_block(block_number, additions, removals)
+        await self._mempool.accept_new_block(block_number, body)
 
         return dict(
             header=header.as_bin(), body=body.as_bin())
