@@ -3,7 +3,10 @@ import math
 from typing import get_type_hints, BinaryIO, Type
 
 from .bin_methods import bin_methods
-from . import uint8, bytes32
+from . import make_sized_bytes, uint8
+
+
+bytes32 = make_sized_bytes(32)
 
 
 def pad_to_power_of_2(leaves, pad):

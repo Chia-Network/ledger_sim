@@ -2,8 +2,7 @@ import dataclasses
 
 import blspy
 
-from chiasim.atoms import bytes32
-from chiasim.hashable.BLSSignature import BLSSignature, BLSPublicKey
+from chiasim.hashable import bytes32, BLSSignature, BLSPublicKey
 
 
 @dataclasses.dataclass

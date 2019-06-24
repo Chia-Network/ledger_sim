@@ -1,6 +1,8 @@
 from typing import List
 
-from ..atoms import bytes32, streamable
+from ..atoms import streamable
+
+from .sized_bytes import bytes32
 
 from .Message import MessageHash
 

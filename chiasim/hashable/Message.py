@@ -1,6 +1,8 @@
 import blspy
 
-from ..atoms import streamable, hash_pointer, hexbytes, bytes32
+from ..atoms import streamable, hash_pointer, hexbytes
+
+from .sized_bytes import bytes32
 
 
 def bls_hash(s) -> bytes32:

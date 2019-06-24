@@ -1,6 +1,7 @@
 import hashlib
 
-from ..atoms import bytes32
+from .sized_bytes import bytes32
+
 
 Hash = bytes32
 

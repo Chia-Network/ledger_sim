@@ -2,8 +2,10 @@ from typing import List
 
 import blspy
 
-from ..atoms import bytes48, bytes96, streamable
+from ..atoms import streamable
 from ..atoms.bin_methods import bin_methods
+
+from .sized_bytes import bytes48, bytes96
 
 from .Message import MessageHash
 
