@@ -52,7 +52,7 @@ class Mempool:
     def generate_timestamp(self):
         return max(self.minimum_legal_timestamp(), int(time.time()))
 
-    def farm_new_block(
+    async def farm_new_block(
             self, block_index: int, proof_of_space: ProofOfSpace,
             coinbase_coin: Coin, coinbase_signature: BLSSignature,
             fees_puzzle_hash: ProgramHash):
@@ -68,6 +68,10 @@ class Mempool:
 
         program_cost = 0
         best_bundle = self.collect_best_bundle()
+
+        for coin in best_bundle.additions():
+            await self._storage.add_preimage(coin.as_bin())
+
         assert best_bundle.validate_signature()
         additions = best_bundle.additions()
         removals = best_bundle.removals()
@@ -124,6 +128,7 @@ class Mempool:
             coin_name = coin.coin_name()
             unspent = Unspent(coin.amount, block_index, 0)
             await self._storage.set_unspent_for_coin_name(coin_name, unspent)
+            await self._storage.add_preimage(coin.coin_name_data().as_bin())
 
         for coin in removals:
             coin_name = coin.coin_name()

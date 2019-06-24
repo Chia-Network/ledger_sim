@@ -47,8 +47,9 @@ def farm_block(mempool, block_number, proof_of_space, coinbase_coin, coinbase_si
     # TODO: fix this
     fees_puzzle_hash = fake_hash(100)
 
-    header, body, additions, removals = mempool.farm_new_block(
-        block_number, proof_of_space, coinbase_coin, coinbase_signature, fees_puzzle_hash)
+    run = asyncio.get_event_loop().run_until_complete
+    header, body, *rest = run(mempool.farm_new_block(
+        block_number, proof_of_space, coinbase_coin, coinbase_signature, fees_puzzle_hash))
 
     header_signature = plot_private_key.sign(header.hash())
 
