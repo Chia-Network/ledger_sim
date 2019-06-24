@@ -11,5 +11,8 @@ class Coin(Hashable):
     puzzle_hash: ProgramHash
     amount: uint64
 
+    def coin_name_data(self) -> CoinNameData:
+        return CoinNameData(self.parent_coin_info, self.puzzle_hash)
+
     def coin_name(self) -> CoinName:
-        return CoinName(CoinNameData(self.parent_coin_info, self.puzzle_hash))
+        return CoinName(self.coin_name_data())

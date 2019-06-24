@@ -1,7 +1,7 @@
 from .BLSSignature import BLSSignature, BLSPublicKey  # noqa
 from .Body import Body  # noqa
 from .Coin import Coin  # noqa
-from .CoinName import CoinName  # noqa
+from .CoinName import CoinName, CoinNameData  # noqa
 from .CoinSolution import CoinSolution  # noqa
 from .Hash import Hash, std_hash  # noqa
 from .Header import Header, HeaderHash  # noqa
