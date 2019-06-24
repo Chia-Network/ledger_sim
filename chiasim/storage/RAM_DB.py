@@ -1,5 +1,5 @@
 from ..atoms.merkle_list import merkle_hash
-from ..hashable import Hash
+from ..hashable import Hash, std_hash
 
 from .Storage import Storage, Unspent, UnspentDB
 
@@ -18,7 +18,7 @@ class RAM_DB(Storage, UnspentDB):
         return self._merkle_db.get(hash)
 
     async def add_preimage(self, blob: bytes) -> None:
-        self._preimage_db[Hash(blob)] = blob
+        self._preimage_db[std_hash(blob)] = blob
 
     async def add_merkle_preimage(self, tree) -> None:
         mth = merkle_hash(tree)

@@ -1,11 +1,13 @@
+import asyncio
 import blspy
 
 from chiasim.atoms import uint64
+from chiasim.farming import Mempool
 from chiasim.hashable import (
     std_hash, Coin, EORPrivateKey,
     ProofOfSpace, BLSSignature, BLSPublicKey
 )
-from chiasim.farming import Mempool
+from chiasim.storage import RAM_DB
 
 from .helpers import build_spend_bundle, make_simple_puzzle_program, PRIVATE_KEYS, PUBLIC_KEYS
 
@@ -71,9 +73,10 @@ def farm_block(mempool, block_number, proof_of_space, coinbase_coin, coinbase_si
 
 def test_farm_block_empty():
     # TODO: fix
+    db = RAM_DB()
     FIRST_BLOCK = fake_hash(0)
 
-    mempool = Mempool(FIRST_BLOCK)
+    mempool = Mempool(FIRST_BLOCK, db)
     mempool.minimum_legal_timestamp = lambda: int(1e10)
 
     pos = fake_proof_of_space()
@@ -90,9 +93,10 @@ def test_farm_block_empty():
 
 
 def test_farm_block_one_spendbundle():
+    db = RAM_DB()
     FIRST_BLOCK = fake_hash(0)
 
-    mempool = Mempool(FIRST_BLOCK)
+    mempool = Mempool(FIRST_BLOCK, db)
     mempool.minimum_legal_timestamp = lambda: int(1e10)
 
     spend_bundle = build_spend_bundle()
@@ -116,9 +120,10 @@ def test_farm_two_blocks():
     In this test, we farm two blocks: one empty block,
     then one block which spends the coinbase transaction from the empty block.
     """
+    db = RAM_DB()
     FIRST_BLOCK = fake_hash(0)
 
-    mempool = Mempool(FIRST_BLOCK)
+    mempool = Mempool(FIRST_BLOCK, db)
     mempool.minimum_legal_timestamp = lambda: int(1e10)
     pos_1 = fake_proof_of_space()
 
@@ -132,7 +137,7 @@ def test_farm_two_blocks():
     header_1, header_signature_1 = farm_block(
         mempool, 1, pos_1, coinbase_coin, coinbase_signature, plot_private_key)
 
-    mempool = Mempool(header_1)
+    mempool = Mempool(header_1, db)
     mempool.minimum_legal_timestamp = lambda: int(1e10)
 
     spend_bundle = build_spend_bundle(coinbase_coin, puzzle_program)

@@ -31,7 +31,7 @@ class Mempool:
     """
     A mempool contains a list of consistent removals and solutions.
     """
-    def __init__(self, tip: HeaderHash, storage: Storage = None):
+    def __init__(self, tip: HeaderHash, storage: Storage):
         self.reset_tip(tip)
         self._storage = storage
         self._next_block_index = 1
