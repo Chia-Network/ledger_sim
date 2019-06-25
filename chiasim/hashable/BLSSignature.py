@@ -19,7 +19,9 @@ class BLSPublicKey(bytes48):
 
 @streamable
 class BLSSignature(bin_methods):
-
+    """
+    This wraps the blspy.BLSPublicKey and resolves a couple edge cases around aggregation and validation.
+    """
     @streamable
     class aggsig_pair:
         public_key: BLSPublicKey
@@ -44,7 +46,6 @@ class BLSSignature(bin_methods):
         public_keys = [blspy.PublicKey.from_bytes(_.public_key) for _ in hash_key_pairs]
         try:
             # when the signature is invalid, this method chokes
-            # TODO submit a bug report to blspy
             signature = blspy.PrependSignature.from_bytes(self.sig)
             return signature.verify(message_hashes, public_keys)
         except Exception as ex:

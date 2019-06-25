@@ -10,6 +10,9 @@ from ..atoms.bin_methods import bin_methods
 
 @streamable
 class Program(bin_methods):
+    """
+    A thin wrapper around s-expression data intended to be invoked with "eval".
+    """
     code: BaseSExp
 
     @classmethod

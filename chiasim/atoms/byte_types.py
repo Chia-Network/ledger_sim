@@ -7,7 +7,10 @@ from .hexbytes import hexbytes
 
 
 def make_sized_bytes(size):
-
+    """
+    Create a streamable type that subclasses "hexbytes" but requires instances
+    to be a certain, fixed size.
+    """
     name = "bytes%d" % size
 
     def __new__(self, v):

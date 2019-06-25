@@ -6,6 +6,9 @@ from .Program import ProgramHash
 
 @streamable
 class CoinNameData:
+    """
+    The elements that contribute to the name of a coin.
+    """
     parent_coin_info: "CoinName"
     puzzle_hash: ProgramHash
 

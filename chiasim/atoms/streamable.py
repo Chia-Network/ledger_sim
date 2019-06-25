@@ -6,6 +6,12 @@ from .bin_methods import bin_methods
 
 
 def streamable(cls):
+    """
+    This is a decorator for class definitions. It applies the dataclasses.dataclass
+    decorator, and also allows fields to be cast to their expected type. The resulting
+    class also gets parse and stream for free, as long as all its constituent elements
+    have it.
+    """
 
     class _local:
         def __init__(self, *args):

@@ -17,6 +17,9 @@ PublicKey = EORPublicKey
 
 @streamable
 class EORSignature:
+    """
+    This implements a simple signature api. It is not cryptographically secure.
+    """
 
     @streamable
     class aggsig_pair:
@@ -43,6 +46,9 @@ class EORSignature:
 
 @streamable
 class EORPrivateKey:
+    """
+    This implements a simple signature api. It is not cryptographically secure.
+    """
     val: bytes32
 
     def sign(self, message_hash: MessageHash) -> EORSignature:

@@ -6,6 +6,10 @@ from .bin_methods import bin_methods
 
 
 def streamable_list(the_type):
+    """
+    This creates a streamable homogenous list of the given streamable object. It has
+    a 16-bit unsigned prefix length, so lists are limited to a length of 65535.
+    """
 
     cls_name = "%sList" % the_type.__name__
 

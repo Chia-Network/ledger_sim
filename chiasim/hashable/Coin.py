@@ -7,6 +7,9 @@ from .Program import ProgramHash
 
 @streamable
 class Coin(Hashable):
+    """
+    This structure is used in the body for the reward and fees genesis coins.
+    """
     parent_coin_info: CoinName
     puzzle_hash: ProgramHash
     amount: uint64

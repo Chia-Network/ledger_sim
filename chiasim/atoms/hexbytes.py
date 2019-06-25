@@ -2,6 +2,10 @@ import binascii
 
 
 class hexbytes(bytes):
+    """
+    This is a subclass of bytes that prints itself out as hex,
+    which is much easier on the eyes for binary data that is very non-ascii .
+    """
     def as_bin(self) -> "hexbytes":
         return self
 
