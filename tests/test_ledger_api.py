@@ -5,45 +5,25 @@ import tempfile
 from aiter import map_aiter
 
 from chiasim import wallet_api
-from chiasim.api_decorators import transform_args
 from chiasim.api_server import api_server
 from chiasim.hashable import Body, CoinName, Header, Program, ProgramHash
-from chiasim.remote.meta import make_proxy
 from chiasim.storage import RAM_DB
-from chiasim.utils.cbor_messages import reader_to_cbor_stream, send_cbor_message
+from chiasim.utils.client import request_response_proxy
 from chiasim.utils.server import start_unix_server_aiter
 
 from tests.helpers import build_spend_bundle, make_simple_puzzle_program, PRIVATE_KEYS, PUBLIC_KEYS
 from tests.test_farmblock import fake_proof_of_space, make_coinbase_coin_and_signature
 
 
-async def invoke_remote(method, remote, *args, **kwargs):
-    reader, writer = remote.get("reader"), remote.get("writer")
-    signatures = remote.get("signatures")
-    msg = dict(c=method)
-    msg.update(kwargs)
-    send_cbor_message(msg, writer)
-    await writer.drain()
-    return await accept_response(reader, signatures.get(method))
-
-
-async def accept_response(reader, transformation):
-    async for _ in reader_to_cbor_stream(reader):
-        break
-    if transformation:
-        _ = transform_args(transformation, _)
-    return _
+REMOTE_SIGNATURES = dict(
+    farm_block=dict(header=Header.from_bin, body=Body.from_bin),
+    all_unspents=dict(unspents=lambda u: [CoinName.from_bin(_) for _ in u]),
+)
 
 
 async def proxy_for_unix_connection(path):
-    signatures = dict(
-        farm_block=dict(header=Header.from_bin, body=Body.from_bin),
-        all_unspents=dict(unspents=lambda u: [CoinName.from_bin(_) for _ in u]),
-    )
-
     reader, writer = await asyncio.open_unix_connection(path)
-    d = dict(reader=reader, writer=writer, signatures=signatures)
-    return make_proxy(invoke_remote, d)
+    return request_response_proxy(reader, writer, REMOTE_SIGNATURES)
 
 
 async def client_test(path):
