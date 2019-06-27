@@ -16,7 +16,7 @@ class CoinSolution:
 
     def conditions(self):
         # TODO: this (and the ones below) are in the wrong spot. Fix them
-        from chiasim.coin.Conditions import conditions_for_puzzle_hash_solution
+        from chiasim.coin.consensus import conditions_for_puzzle_hash_solution
         return conditions_for_puzzle_hash_solution(self.coin.puzzle_hash, self.solution.code)
 
     def conditions_dict(self):
@@ -24,11 +24,11 @@ class CoinSolution:
         return conditions_by_opcode(self.conditions())
 
     def additions(self):
-        from chiasim.coin.Conditions import created_outputs_for_conditions_dict
+        from chiasim.coin.consensus import created_outputs_for_conditions_dict
         return created_outputs_for_conditions_dict(self.conditions_dict(), self.coin.coin_name())
 
     def hash_key_pairs(self):
-        from chiasim.coin.Conditions import hash_key_pairs_for_conditions_dict
+        from chiasim.coin.consensus import hash_key_pairs_for_conditions_dict
         return hash_key_pairs_for_conditions_dict(self.conditions_dict())
 
 
