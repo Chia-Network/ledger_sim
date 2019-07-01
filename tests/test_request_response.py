@@ -20,15 +20,27 @@ async def client_test(path):
 
     remote = await proxy_for_unix_connection(path)
 
-    vals = [10, 20, 30]
-    total = await remote.add_numbers(vals=vals, delay=1)
-    assert total == sum(vals)
+    vals = [[_*10 for _ in range(count)] for count in range(10)]
+
+    time = asyncio.get_event_loop().time
+
+    now = time()
+    # spin up 10 remote requests
+    tasks = [asyncio.ensure_future(remote.add_numbers(vals=_, delay=500)) for _ in vals]
+    totals = [await _ for _ in tasks]
+    later = time()
+    for total, val in zip(totals, vals):
+        assert total == sum(val)
+    delay = later - now
+    assert delay < 0.600
 
 
 class test_api:
     async def do_add_numbers(self, vals, delay, **kwargs):
         total = sum(vals)
-        await asyncio.sleep(delay)
+        # tweak the delay so the responses come out of order
+        delay -= total
+        await asyncio.sleep(delay/1000)
         return total
 
 
@@ -36,7 +48,7 @@ def serve_api_on_unix_port(api, path):
     run = asyncio.get_event_loop().run_until_complete
     server, aiter = run(start_unix_server_aiter(path))
     rws_aiter = map_aiter(lambda rw: dict(reader=rw[0], writer=rw[1], server=server), aiter)
-    return asyncio.ensure_future(api_server(rws_aiter, api))
+    return asyncio.ensure_future(api_server(rws_aiter, api, 20))
 
 
 def test_client_server():
