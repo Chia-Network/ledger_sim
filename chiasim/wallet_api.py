@@ -5,6 +5,8 @@ from .farming import Mempool
 from .hashable import BLSSignature, Coin, ProgramHash, ProofOfSpace, SpendBundle
 from .remote.api_decorators import api_request
 
+log = logging.getLogger(__name__)
+
 
 class WalletAPI:
     def __init__(self, block_tip, storage):
@@ -12,13 +14,13 @@ class WalletAPI:
         self._storage = storage
 
     async def do_ping(self, m=None):
-        logging.info("ping")
+        log.info("ping")
         return dict(response="got ping message %r at time %s" % (
             m, datetime.datetime.utcnow()))
 
     @api_request(tx=SpendBundle.from_bin)
     async def do_push_tx(self, tx):
-        logging.info("push_tx %s", tx)
+        log.info("push_tx %s", tx)
         if not tx.validate_signature():
             raise ValueError("bad signature on %s" % tx)
 
@@ -36,9 +38,9 @@ class WalletAPI:
     async def do_farm_block(self, pos, coinbase_coin, coinbase_signature, fees_puzzle_hash):
         block_number = self._mempool.next_block_index()
 
-        logging.info("farm_block")
-        logging.info("coinbase_coin: %s", coinbase_coin)
-        logging.info("fees_puzzle_hash: %s", fees_puzzle_hash)
+        log.info("farm_block")
+        log.info("coinbase_coin: %s", coinbase_coin)
+        log.info("fees_puzzle_hash: %s", fees_puzzle_hash)
 
         header, body = await self._mempool.farm_new_block(
             block_number, pos, coinbase_coin, coinbase_signature, fees_puzzle_hash)

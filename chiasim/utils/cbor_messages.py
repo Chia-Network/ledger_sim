@@ -4,6 +4,8 @@ import struct
 
 import cbor
 
+log = logging.getLogger(__name__)
+
 
 async def reader_to_cbor_stream(reader):
     """
@@ -18,7 +20,7 @@ async def reader_to_cbor_stream(reader):
         except asyncio.IncompleteReadError:
             break
         except ValueError:
-            logging.info("badly formatted cbor from stream %s", reader)
+            log.info("badly formatted cbor from stream %s", reader)
             break
 
 
