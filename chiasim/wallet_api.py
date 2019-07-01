@@ -45,11 +45,10 @@ class WalletAPI:
 
         await self._mempool.accept_new_block(block_number, body)
 
-        return dict(
-            header=header.as_bin(), body=body.as_bin())
+        return dict(header=header, body=body)
 
     async def do_all_unspents(self, **kwargs):
-        all_unspents = [_[0].as_bin() async for _ in self._storage.all_unspents()]
+        all_unspents = [_[0] async for _ in self._storage.all_unspents()]
         return dict(unspents=all_unspents)
 
 
