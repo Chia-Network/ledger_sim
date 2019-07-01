@@ -5,13 +5,14 @@ import tempfile
 from aiter import map_aiter
 
 from chiasim import wallet_api
-from chiasim.api_server import api_server
 from chiasim.hashable import Body, CoinName, Header, Program, ProgramHash
+from chiasim.remote.api_server import api_server
+from chiasim.remote.client import request_response_proxy
 from chiasim.storage import RAM_DB
-from chiasim.utils.client import request_response_proxy
 from chiasim.utils.server import start_unix_server_aiter
 
 from tests.helpers import build_spend_bundle, make_simple_puzzle_program, PRIVATE_KEYS, PUBLIC_KEYS
+from tests.log import init_logging
 from tests.test_farmblock import fake_proof_of_space, make_coinbase_coin_and_signature
 
 
@@ -101,13 +102,7 @@ async def client_test(path):
 
 
 def test_client_server():
-    import logging
-    LOG_FORMAT = ('%(asctime)s [%(process)d] [%(levelname)s] '
-                  '%(filename)s:%(lineno)d %(message)s')
-
-    asyncio.tasks._DEBUG = True
-    logging.basicConfig(level=logging.DEBUG, format=LOG_FORMAT)
-    logging.getLogger("asyncio").setLevel(logging.INFO)
+    init_logging()
 
     run = asyncio.get_event_loop().run_until_complete
 

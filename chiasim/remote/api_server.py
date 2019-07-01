@@ -1,7 +1,7 @@
 import logging
 
-from .utils.cbor_messages import reader_to_cbor_stream, send_cbor_message
-from .utils.event_stream import rws_to_event_aiter
+from ..utils.cbor_messages import reader_to_cbor_stream, send_cbor_message
+from ..utils.event_stream import rws_to_event_aiter
 
 
 async def api_server(rws_aiter, api):
@@ -12,17 +12,22 @@ async def api_server(rws_aiter, api):
             # {"c": "command"}
             message = event["message"]
             c = message.get("c")
+            nonce = message.get("n")
             f = getattr(api, "do_%s" % c, None)
             if f:
-                r = await f(**message)
+                args = message.get("q", {})
+                r = await f(**args)
                 logging.debug("handled %s message" % c)
+                d = dict(r=r)
             else:
-                r = dict(error="Missing or invalid command: %s" % c)
+                d = dict(e="Missing or invalid command: %s" % c)
                 logging.error("failure in %s message" % c)
         except Exception as ex:
             logging.exception("failure in %s message" % c)
-            r = dict(error="exception: %s" % ex)
-        send_cbor_message(r, event["writer"])
+            d = dict(e="exception: %s" % ex)
+        if nonce is not None:
+            d["n"] = nonce
+            send_cbor_message(d, event["writer"])
 
 
 """

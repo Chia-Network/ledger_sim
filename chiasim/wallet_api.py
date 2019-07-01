@@ -1,9 +1,9 @@
 import datetime
 import logging
 
-from .api_decorators import api_request
 from .farming import Mempool
 from .hashable import BLSSignature, Coin, ProgramHash, ProofOfSpace, SpendBundle
+from .remote.api_decorators import api_request
 
 
 class WalletAPI:

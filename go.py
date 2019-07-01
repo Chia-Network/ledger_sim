@@ -7,7 +7,7 @@ import sys
 from aiter import map_aiter
 
 from chiasim import wallet_api
-from chiasim.api_server import api_server
+from chiasim.remote.api_server import api_server
 from chiasim.storage import RAM_DB
 from chiasim.utils.cbor_messages import send_cbor_message, reader_to_cbor_stream
 from chiasim.utils.server import start_server_aiter
@@ -44,6 +44,8 @@ def main(args=sys.argv):
     parser = argparse.ArgumentParser(
         description="Launch an asyncio loop."
     )
+    parser.set_defaults(func=help)
+
     subparsers = parser.add_subparsers(dest="subcommand", help="sub-command help")
 
     client_subparser = subparsers.add_parser(name="client", help="client")
