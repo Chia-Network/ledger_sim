@@ -11,13 +11,13 @@ class WalletAPI:
         self._mempool = Mempool(block_tip, storage)
         self._storage = storage
 
-    async def do_ping(self, **message):
+    async def do_ping(self, m=None):
         logging.info("ping")
         return dict(response="got ping message %r at time %s" % (
-            message.get("m"), datetime.datetime.utcnow()))
+            m, datetime.datetime.utcnow()))
 
     @api_request(tx=SpendBundle.from_bin)
-    async def do_push_tx(self, tx, **kwargs):
+    async def do_push_tx(self, tx):
         logging.info("push_tx %s", tx)
         if not tx.validate_signature():
             raise ValueError("bad signature on %s" % tx)
@@ -33,7 +33,7 @@ class WalletAPI:
         coinbase_signature=BLSSignature.from_bin,
         fees_puzzle_hash=ProgramHash.from_bin
     )
-    async def do_farm_block(self, pos, coinbase_coin, coinbase_signature, fees_puzzle_hash, **message):
+    async def do_farm_block(self, pos, coinbase_coin, coinbase_signature, fees_puzzle_hash):
         block_number = self._mempool.next_block_index()
 
         logging.info("farm_block")

@@ -8,7 +8,7 @@ from .Program import Program
 class CoinSolution:
     """
     This is a rather disparate data structure that validates coin transfers. It's generally populated
-    with data from a different sources, since burned coins are identified by name, so it is built up
+    with data from different sources, since burned coins are identified by name, so it is built up
     more often that it is streamed.
     """
     coin: Coin

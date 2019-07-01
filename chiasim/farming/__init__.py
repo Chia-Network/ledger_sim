@@ -5,13 +5,13 @@ from clvm import to_sexp_f
 
 from opacity import binutils
 
-from .atoms import hexbytes
-from .coin.consensus import additions_for_body, removals_for_body
-from .hashable import (
+from chiasim.atoms import hexbytes
+from chiasim.coin.consensus import additions_for_body, removals_for_body
+from chiasim.hashable import (
     BLSSignature, Body, Coin, Header, HeaderHash,
     Program, ProgramHash, ProofOfSpace, SpendBundle, Unspent
 )
-from .storage.Storage import Storage
+from chiasim.storage.Storage import Storage
 
 
 def best_solution_program(bundle: SpendBundle):
