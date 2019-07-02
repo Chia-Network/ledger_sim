@@ -5,6 +5,7 @@ import logging
 import sys
 
 from chiasim.utils.cbor_messages import send_cbor_message, reader_to_cbor_stream
+from chiasim.utils.log import init_logging
 from chiasim.remote.client import request_response_proxy
 
 
@@ -37,12 +38,7 @@ def main(args=sys.argv):
 
     args = parser.parse_args(args=args[1:])
 
-    LOG_FORMAT = ('%(asctime)s [%(process)d] [%(levelname)s] '
-                  '%(filename)s:%(lineno)d %(message)s')
-
-    asyncio.tasks._DEBUG = True
-    logging.basicConfig(level=logging.DEBUG, format=LOG_FORMAT)
-    logging.getLogger("asyncio").setLevel(logging.INFO)
+    init_logging()
 
     run = asyncio.get_event_loop().run_until_complete
 

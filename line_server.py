@@ -4,6 +4,7 @@ import logging
 import sys
 
 from chiasim.utils.event_stream import rws_to_event_aiter
+from chiasim.utils.log import init_logging
 from chiasim.utils.readline_messages import reader_to_readline_stream
 from chiasim.utils.server import readers_writers_server_for_port
 
@@ -39,12 +40,7 @@ def main(args=sys.argv):
 
     args = parser.parse_args(args=args[1:])
 
-    LOG_FORMAT = ('%(asctime)s [%(process)d] [%(levelname)s] '
-                  '%(filename)s:%(lineno)d %(message)s')
-
-    asyncio.tasks._DEBUG = True
-    logging.basicConfig(level=logging.DEBUG, format=LOG_FORMAT)
-    logging.getLogger("asyncio").setLevel(logging.INFO)
+    init_logging()
 
     loop = asyncio.get_event_loop()
 

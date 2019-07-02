@@ -8,6 +8,7 @@ from aiter import map_aiter
 from chiasim import wallet_api
 from chiasim.remote.api_server import api_server
 from chiasim.storage import RAM_DB
+from chiasim.utils.log import init_logging
 from chiasim.utils.server import start_server_aiter
 
 log = logging.getLogger(__name__)
@@ -35,12 +36,7 @@ def main(args=sys.argv):
 
     args = parser.parse_args(args=args[1:])
 
-    LOG_FORMAT = ('%(asctime)s [%(process)d] [%(levelname)s] '
-                  '%(filename)s:%(lineno)d %(message)s')
-
-    asyncio.tasks._DEBUG = True
-    logging.basicConfig(level=logging.DEBUG, format=LOG_FORMAT)
-    logging.getLogger("asyncio").setLevel(logging.INFO)
+    init_logging()
 
     run = asyncio.get_event_loop().run_until_complete
 

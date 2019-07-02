@@ -6,9 +6,8 @@ from aiter import map_aiter
 
 from chiasim.remote.api_server import api_server
 from chiasim.remote.client import request_response_proxy
+from chiasim.utils.log import init_logging
 from chiasim.utils.server import start_unix_server_aiter
-
-from tests.log import init_logging
 
 
 async def proxy_for_unix_connection(path):

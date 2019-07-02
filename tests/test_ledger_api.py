@@ -9,10 +9,10 @@ from chiasim.hashable import Body, CoinName, Header, Program, ProgramHash
 from chiasim.remote.api_server import api_server
 from chiasim.remote.client import request_response_proxy
 from chiasim.storage import RAM_DB
+from chiasim.utils.log import init_logging
 from chiasim.utils.server import start_unix_server_aiter
 
 from tests.helpers import build_spend_bundle, make_simple_puzzle_program, PRIVATE_KEYS, PUBLIC_KEYS
-from tests.log import init_logging
 from tests.test_farmblock import fake_proof_of_space, make_coinbase_coin_and_signature
 
 
