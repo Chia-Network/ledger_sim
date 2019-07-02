@@ -44,9 +44,8 @@ def main(args=sys.argv):
     parser = argparse.ArgumentParser(
         description="Launch an asyncio loop."
     )
-    parser.set_defaults(func=help)
 
-    subparsers = parser.add_subparsers(dest="subcommand", help="sub-command help")
+    subparsers = parser.add_subparsers(required=True, dest="subcommand", help="sub-command help")
 
     client_subparser = subparsers.add_parser(name="client", help="client")
     client_subparser.add_argument("host", help="remote host")

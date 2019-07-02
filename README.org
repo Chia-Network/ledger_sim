@@ -1,0 +1,32 @@
+#+TITLE: Ledger Simulator
+#+STARTUP: indent
+
+
+* Ledger Simulator
+
+There is a simple simulator of a ledger that will use the same transaction rules
+as the final chia network. It's intended to be used by those creating and testing
+smart transactions.
+
+Python 3.7 or later is required.
+
+* Launching
+
+- create a virtual environment
+
+#+BEGIN_SRC bash
+$ python3 -m venv env
+$ ln -s env/bin/activate
+$ . activate
+$ pip install -r requirements.txt
+#+END_SRC
+
+*Note* The requirements.txt is currently incomplete. Read the notes there to finish set-up.
+
+- launch
+#+BEGIN_SRC bash
+$ ledger-sim -h
+$ ledger-sim
+#+END_SRC
+
+If you don't specify a port, one will be selected automatically.
