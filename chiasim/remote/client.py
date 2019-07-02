@@ -6,7 +6,7 @@ from aiter import map_aiter
 from chiasim.utils.cbor_messages import reader_to_cbor_stream, send_cbor_message
 
 from .api_decorators import transform_args
-from .meta import make_proxy
+from .proxy import make_proxy
 
 
 class RemoteError(Exception):
