@@ -29,4 +29,4 @@ $ ledger-sim -h
 $ ledger-sim
 #+END_SRC
 
-If you don't specify a port, one will be selected automatically.
+If you don't specify a port, the default of 9868 will be selected automatically.

@@ -10,6 +10,8 @@ from chiasim.remote.api_server import api_server
 from chiasim.storage import RAM_DB
 from chiasim.utils.server import start_server_aiter
 
+log = logging.getLogger(__name__)
+
 
 def run_wallet_api(server, aiter):
     INITIAL_BLOCK_HASH = bytes(([0] * 31) + [1])
@@ -20,6 +22,7 @@ def run_wallet_api(server, aiter):
 
 def wallet_command(args):
     server, aiter = asyncio.get_event_loop().run_until_complete(start_server_aiter(args.port))
+    log.info("listening on %s", args.port)
     return run_wallet_api(server, aiter)
 
 
@@ -27,7 +30,7 @@ def main(args=sys.argv):
     parser = argparse.ArgumentParser(
         description="Chia ledger simulator."
     )
-    parser.add_argument("port", help="remote port")
+    parser.add_argument("-p", "--port", help="remote port", default=9868)
     parser.set_defaults(func=wallet_command)
 
     args = parser.parse_args(args=args[1:])
@@ -39,13 +42,13 @@ def main(args=sys.argv):
     logging.basicConfig(level=logging.DEBUG, format=LOG_FORMAT)
     logging.getLogger("asyncio").setLevel(logging.INFO)
 
-    loop = asyncio.get_event_loop()
+    run = asyncio.get_event_loop().run_until_complete
 
     tasks = set()
 
     tasks.add(asyncio.ensure_future(args.func(args)))
 
-    loop.run_until_complete(asyncio.wait(tasks))
+    run(asyncio.wait(tasks))
 
 
 if __name__ == "__main__":
