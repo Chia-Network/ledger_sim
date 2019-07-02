@@ -1,34 +1,36 @@
 import argparse
 import asyncio
+import json
 import logging
 import sys
 
-from aiter import map_aiter
-
-from chiasim import wallet_api
-from chiasim.remote.api_server import api_server
-from chiasim.storage import RAM_DB
-from chiasim.utils.server import start_server_aiter
+from chiasim.utils.cbor_messages import send_cbor_message, reader_to_cbor_stream
 
 
-def run_wallet_api(server, aiter):
-    INITIAL_BLOCK_HASH = bytes(([0] * 31) + [1])
-    wallet = wallet_api.WalletAPI(INITIAL_BLOCK_HASH, RAM_DB())
-    rws_aiter = map_aiter(lambda rw: dict(reader=rw[0], writer=rw[1], server=server), aiter)
-    return api_server(rws_aiter, wallet)
+async def run_client(host, port, msg):
+    reader, writer = await asyncio.open_connection(host, port)
+    message = json.loads(msg)
+    send_cbor_message(message, writer)
+    await writer.drain()
+    async for _ in reader_to_cbor_stream(reader):
+        break
+    writer.close()
+    return _
 
 
-def wallet_command(args):
-    server, aiter = asyncio.get_event_loop().run_until_complete(start_server_aiter(args.port))
-    return run_wallet_api(server, aiter)
+def client_command(args):
+    return run_client(args.host, args.port, args.message)
 
 
 def main(args=sys.argv):
     parser = argparse.ArgumentParser(
-        description="Chia ledger simulator."
+        description="Chia client."
     )
+
+    parser.add_argument("host", help="remote host")
     parser.add_argument("port", help="remote port")
-    parser.set_defaults(func=wallet_command)
+    parser.add_argument("message", help="message")
+    parser.set_defaults(func=client_command)
 
     args = parser.parse_args(args=args[1:])
 
@@ -40,12 +42,8 @@ def main(args=sys.argv):
     logging.getLogger("asyncio").setLevel(logging.INFO)
 
     loop = asyncio.get_event_loop()
-
-    tasks = set()
-
-    tasks.add(asyncio.ensure_future(args.func(args)))
-
-    loop.run_until_complete(asyncio.wait(tasks))
+    r = loop.run_until_complete(args.func(args))
+    print(r)
 
 
 if __name__ == "__main__":
