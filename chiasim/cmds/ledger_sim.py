@@ -5,7 +5,7 @@ import sys
 
 from aiter import map_aiter
 
-from chiasim import wallet_api
+from chiasim.ledger import ledger_api
 from chiasim.remote.api_server import api_server
 from chiasim.storage import RAM_DB
 from chiasim.utils.log import init_logging
@@ -14,17 +14,17 @@ from chiasim.utils.server import start_server_aiter
 log = logging.getLogger(__name__)
 
 
-def run_wallet_api(server, aiter):
+def run_ledger_api(server, aiter):
     INITIAL_BLOCK_HASH = bytes(([0] * 31) + [1])
-    wallet = wallet_api.WalletAPI(INITIAL_BLOCK_HASH, RAM_DB())
+    ledger = ledger_api.LedgerAPI(INITIAL_BLOCK_HASH, RAM_DB())
     rws_aiter = map_aiter(lambda rw: dict(reader=rw[0], writer=rw[1], server=server), aiter)
-    return api_server(rws_aiter, wallet)
+    return api_server(rws_aiter, ledger)
 
 
-def wallet_command(args):
+def ledger_command(args):
     server, aiter = asyncio.get_event_loop().run_until_complete(start_server_aiter(args.port))
     log.info("listening on %s", args.port)
-    return run_wallet_api(server, aiter)
+    return run_ledger_api(server, aiter)
 
 
 def main(args=sys.argv):
@@ -32,7 +32,7 @@ def main(args=sys.argv):
         description="Chia ledger simulator."
     )
     parser.add_argument("-p", "--port", help="remote port", default=9868)
-    parser.set_defaults(func=wallet_command)
+    parser.set_defaults(func=ledger_command)
 
     args = parser.parse_args(args=args[1:])
 

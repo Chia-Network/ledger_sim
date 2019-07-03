@@ -1,27 +1,10 @@
 import argparse
 import asyncio
 import json
-import logging
 import sys
 
-from chiasim.utils.cbor_messages import send_cbor_message, reader_to_cbor_stream
 from chiasim.utils.log import init_logging
 from chiasim.remote.client import request_response_proxy
-
-
-async def run_client(host, port, msg):
-    reader, writer = await asyncio.open_connection(host, port)
-    message = json.loads(msg)
-    send_cbor_message(message, writer)
-    await writer.drain()
-    async for _ in reader_to_cbor_stream(reader):
-        break
-    writer.close()
-    return _
-
-
-def client_command(args):
-    return run_client(args.host, args.port, args.message)
 
 
 def main(args=sys.argv):
@@ -34,7 +17,6 @@ def main(args=sys.argv):
     parser.add_argument("function", help="function")
     parser.add_argument(
         "arguments", help="arguments (as json)", type=json.loads)
-    parser.set_defaults(func=client_command)
 
     args = parser.parse_args(args=args[1:])
 
@@ -43,9 +25,9 @@ def main(args=sys.argv):
     run = asyncio.get_event_loop().run_until_complete
 
     reader, writer = run(asyncio.open_connection(args.host, args.port))
-    wallet_api = request_response_proxy(reader, writer)
+    ledger_api = request_response_proxy(reader, writer)
 
-    r = run(getattr(wallet_api, args.function)(**args.arguments))
+    r = run(getattr(ledger_api, args.function)(**args.arguments))
     print(r)
 
 

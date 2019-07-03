@@ -1,14 +1,14 @@
 import datetime
 import logging
 
-from .farming import Mempool
-from .hashable import BLSSignature, Coin, ProgramHash, ProofOfSpace, SpendBundle
-from .remote.api_decorators import api_request
+from chiasim.farming import Mempool
+from chiasim.hashable import BLSSignature, Coin, ProgramHash, ProofOfSpace, SpendBundle
+from chiasim.remote.api_decorators import api_request
 
 log = logging.getLogger(__name__)
 
 
-class WalletAPI:
+class LedgerAPI:
     def __init__(self, block_tip, storage):
         self._mempool = Mempool(block_tip, storage)
         self._storage = storage

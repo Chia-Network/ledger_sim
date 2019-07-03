@@ -4,7 +4,7 @@ import tempfile
 
 from aiter import map_aiter
 
-from chiasim import wallet_api
+from chiasim.ledger import ledger_api
 from chiasim.hashable import Body, CoinName, Header, Program, ProgramHash
 from chiasim.remote.api_server import api_server
 from chiasim.remote.client import request_response_proxy
@@ -113,8 +113,8 @@ def test_client_server():
     rws_aiter = map_aiter(lambda rw: dict(reader=rw[0], writer=rw[1], server=server), aiter)
 
     initial_block_hash = bytes(([0] * 31) + [1])
-    wallet = wallet_api.WalletAPI(initial_block_hash, RAM_DB())
-    server_task = asyncio.ensure_future(api_server(rws_aiter, wallet))
+    ledger = ledger_api.LedgerAPI(initial_block_hash, RAM_DB())
+    server_task = asyncio.ensure_future(api_server(rws_aiter, ledger))
 
     run(client_test(path))
     server_task.cancel()
