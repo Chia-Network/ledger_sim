@@ -1,17 +1,24 @@
 import datetime
 import logging
+import time
 
-from chiasim.farming import Mempool
-from chiasim.hashable import BLSSignature, Coin, ProgramHash, ProofOfSpace, SpendBundle
+from chiasim.atoms import uint64
+from chiasim.farming import farm_new_block
+from chiasim.hashable import (
+    BLSSignature, Body, Coin, Header, HeaderHash,
+    ProgramHash, ProofOfSpace, SpendBundle
+)
 from chiasim.remote.api_decorators import api_request
 
 log = logging.getLogger(__name__)
 
 
 class LedgerAPI:
-    def __init__(self, block_tip, storage):
-        self._mempool = Mempool(block_tip, storage)
+    def __init__(self, block_tip: HeaderHash, block_index: uint64, storage):
+        self._tip = block_tip
+        self._block_index = block_index
         self._storage = storage
+        self._spend_bundles = []
 
     async def do_ping(self, m=None):
         log.info("ping")
@@ -24,9 +31,7 @@ class LedgerAPI:
         if not tx.validate_signature():
             raise ValueError("bad signature on %s" % tx)
 
-        await self._mempool.validate_spend_bundle(tx)
-
-        self._mempool.accept_spend_bundle(tx)
+        self._spend_bundles.append(tx)
         return dict(response="accepted %s" % tx)
 
     @api_request(
@@ -36,16 +41,23 @@ class LedgerAPI:
         fees_puzzle_hash=ProgramHash.from_bin
     )
     async def do_farm_block(self, pos, coinbase_coin, coinbase_signature, fees_puzzle_hash):
-        block_number = self._mempool.next_block_index()
+        block_number = self._block_index
 
         log.info("farm_block")
         log.info("coinbase_coin: %s", coinbase_coin)
         log.info("fees_puzzle_hash: %s", fees_puzzle_hash)
 
-        header, body = await self._mempool.farm_new_block(
-            block_number, pos, coinbase_coin, coinbase_signature, fees_puzzle_hash)
+        timestamp = uint64(time.time())
 
-        await self._mempool.accept_new_block(block_number, body)
+        spend_bundle = SpendBundle.aggregate(self._spend_bundles)
+        self._spend_bundles = []
+
+        header, body = farm_new_block(
+            self._tip, block_number, pos, spend_bundle, coinbase_coin,
+            coinbase_signature, fees_puzzle_hash, timestamp)
+
+        self._block_index += 1
+        self._tip = HeaderHash(header)
 
         return dict(header=header, body=body)
 

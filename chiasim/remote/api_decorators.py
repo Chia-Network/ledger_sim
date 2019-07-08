@@ -2,6 +2,8 @@ import functools
 
 
 def transform_args(kwarg_transformers, message):
+    if not isinstance(message, dict):
+        return message
     new_message = dict(message)
     for k, v in kwarg_transformers.items():
         new_message[k] = v(message[k])

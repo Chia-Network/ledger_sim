@@ -1,7 +1,8 @@
 from ..atoms.merkle_list import merkle_hash
 from ..hashable import Hash, std_hash
 
-from .Storage import Storage, Unspent, UnspentDB
+from .Storage import Storage
+from .UnspentDB import Unspent, UnspentDB
 
 
 class RAM_DB(Storage, UnspentDB):

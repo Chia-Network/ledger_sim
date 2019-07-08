@@ -113,7 +113,7 @@ def test_client_server():
     rws_aiter = map_aiter(lambda rw: dict(reader=rw[0], writer=rw[1], server=server), aiter)
 
     initial_block_hash = bytes(([0] * 31) + [1])
-    ledger = ledger_api.LedgerAPI(initial_block_hash, RAM_DB())
+    ledger = ledger_api.LedgerAPI(initial_block_hash, 1, RAM_DB())
     server_task = asyncio.ensure_future(api_server(rws_aiter, ledger))
 
     run(client_test(path))

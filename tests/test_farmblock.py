@@ -1,13 +1,12 @@
-import asyncio
 import blspy
 
 from chiasim.atoms import uint64
-from chiasim.farming import Mempool
+from chiasim.coin.consensus import removals_for_body
 from chiasim.hashable import (
     std_hash, Coin, EORPrivateKey,
-    ProofOfSpace, BLSSignature, BLSPublicKey
+    ProofOfSpace, BLSSignature, BLSPublicKey, SpendBundle
 )
-from chiasim.storage import RAM_DB
+from chiasim.farming import farm_new_block
 
 from .helpers import build_spend_bundle, make_simple_puzzle_program, PRIVATE_KEYS, PUBLIC_KEYS
 
@@ -43,13 +42,16 @@ def fake_proof_of_space(plot_public_key=None, pool_public_key=None):
     return ProofOfSpace(pool_public_key, plot_public_key)
 
 
-def farm_block(mempool, block_number, proof_of_space, coinbase_coin, coinbase_signature, plot_private_key):
+def farm_block(
+        previous_header, block_number, proof_of_space, spend_bundle,
+        coinbase_coin, coinbase_signature, plot_private_key):
     # TODO: fix this
     fees_puzzle_hash = fake_hash(100)
 
-    run = asyncio.get_event_loop().run_until_complete
-    header, body, *rest = run(mempool.farm_new_block(
-        block_number, proof_of_space, coinbase_coin, coinbase_signature, fees_puzzle_hash))
+    timestamp = int(1e10) + 300 * block_number
+    header, body, *rest = farm_new_block(
+        previous_header, block_number, proof_of_space, spend_bundle,
+        coinbase_coin, coinbase_signature, fees_puzzle_hash, timestamp)
 
     header_signature = plot_private_key.sign(header.hash())
 
@@ -69,16 +71,12 @@ def farm_block(mempool, block_number, proof_of_space, coinbase_coin, coinbase_si
 
     hkp = body.coinbase_signature.aggsig_pair(bad_bls_public_key, body.coinbase_coin.hash())
     assert not body.coinbase_signature.validate([hkp])
-    return header, header_signature
+    return header, header_signature, body
 
 
 def test_farm_block_empty():
     # TODO: fix
-    db = RAM_DB()
     FIRST_BLOCK = fake_hash(0)
-
-    mempool = Mempool(FIRST_BLOCK, db)
-    mempool.minimum_legal_timestamp = lambda: int(1e10)
 
     pos = fake_proof_of_space()
 
@@ -88,20 +86,19 @@ def test_farm_block_empty():
     coinbase_coin, coinbase_signature = make_coinbase_coin_and_signature(
         1, puzzle_program, pool_private_key)
 
+    spend_bundle = SpendBundle.aggregate([])
+
     plot_private_key = fake_plot_private_key()
-    header, header_signature = farm_block(
-        mempool, 1, pos, coinbase_coin, coinbase_signature, plot_private_key)
+    header, header_signature, body = farm_block(
+        FIRST_BLOCK, 1, pos, spend_bundle, coinbase_coin, coinbase_signature, plot_private_key)
+    removals = removals_for_body(body)
+    assert len(removals) == 0
 
 
 def test_farm_block_one_spendbundle():
-    db = RAM_DB()
     FIRST_BLOCK = fake_hash(0)
 
-    mempool = Mempool(FIRST_BLOCK, db)
-    mempool.minimum_legal_timestamp = lambda: int(1e10)
-
     spend_bundle = build_spend_bundle()
-    mempool.accept_spend_bundle(spend_bundle)
 
     pos = fake_proof_of_space()
 
@@ -112,8 +109,11 @@ def test_farm_block_one_spendbundle():
         1, puzzle_program, pool_private_key)
 
     plot_private_key = fake_plot_private_key()
-    header, header_signature = farm_block(
-        mempool, 2, pos, coinbase_coin, coinbase_signature, plot_private_key)
+    header, header_signature, body = farm_block(
+        FIRST_BLOCK, 2, pos, spend_bundle, coinbase_coin, coinbase_signature, plot_private_key)
+    removals = removals_for_body(body)
+    assert len(removals) == 1
+    assert removals[0] == list(spend_bundle.coin_solutions)[0].coin.coin_name()
 
 
 def test_farm_two_blocks():
@@ -121,11 +121,8 @@ def test_farm_two_blocks():
     In this test, we farm two blocks: one empty block,
     then one block which spends the coinbase transaction from the empty block.
     """
-    db = RAM_DB()
     FIRST_BLOCK = fake_hash(0)
 
-    mempool = Mempool(FIRST_BLOCK, db)
-    mempool.minimum_legal_timestamp = lambda: int(1e10)
     pos_1 = fake_proof_of_space()
 
     pool_private_key = PRIVATE_KEYS[0]
@@ -134,23 +131,29 @@ def test_farm_two_blocks():
     coinbase_coin, coinbase_signature = make_coinbase_coin_and_signature(
         1, puzzle_program, pool_private_key)
 
+    empty_spend_bundle = SpendBundle.aggregate([])
     plot_private_key = fake_plot_private_key()
-    header_1, header_signature_1 = farm_block(
-        mempool, 1, pos_1, coinbase_coin, coinbase_signature, plot_private_key)
+    header, header_signature, body = farm_block(
+        FIRST_BLOCK, 1, pos_1, empty_spend_bundle, coinbase_coin, coinbase_signature, plot_private_key)
 
-    mempool = Mempool(header_1, db)
-    mempool.minimum_legal_timestamp = lambda: int(1e10)
+    removals = removals_for_body(body)
+    assert len(removals) == 0
 
-    spend_bundle = build_spend_bundle(coinbase_coin, puzzle_program)
-    assert spend_bundle.validate_signature()
-    mempool.accept_spend_bundle(spend_bundle)
+    # TODO: check additions
+
+    spend_bundle_2 = build_spend_bundle(coinbase_coin, puzzle_program)
+    assert spend_bundle_2.validate_signature()
 
     pool_private_key_2 = PRIVATE_KEYS[1]
     pos_2 = fake_proof_of_space(pool_public_key=PUBLIC_KEYS[1])
 
     coinbase_coin, coinbase_signature = make_coinbase_coin_and_signature(
         2, puzzle_program, pool_private_key_2)
-    header_2, header_signature_2 = farm_block(
-        mempool, 2, pos_2, coinbase_coin, coinbase_signature, plot_private_key)
+    header_2, header_signature_2, body_2 = farm_block(
+        header, 2, pos_2, spend_bundle_2, coinbase_coin, coinbase_signature, plot_private_key)
     print(header_2)
     print(header_signature_2)
+
+    removals = removals_for_body(body_2)
+    assert len(removals) == 1
+    assert removals[0] == list(spend_bundle_2.coin_solutions)[0].coin.coin_name()
