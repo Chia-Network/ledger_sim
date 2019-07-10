@@ -5,7 +5,7 @@ import time
 from chiasim.atoms import uint64
 from chiasim.farming import farm_new_block
 from chiasim.hashable import (
-    BLSSignature, Body, Coin, Header, HeaderHash,
+    BLSSignature, Coin, HeaderHash,
     ProgramHash, ProofOfSpace, SpendBundle
 )
 from chiasim.remote.api_decorators import api_request

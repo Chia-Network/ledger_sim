@@ -31,6 +31,25 @@ def conditions_for_puzzle_hash_solution(puzzle_hash, solution_blob, eval=clvm.ev
         raise
 
 
+UNVERIFIED_STD_SCRIPT = "(e (f (a)) (f (r (a))))"
+
+UNVERIFIED_STD_SCRIPT = binutils.assemble(UNVERIFIED_STD_SCRIPT)
+
+
+def conditions_for_solution(solution_blob, eval=clvm.eval_f):
+    # get the standard script for a puzzle hash and feed in the solution
+    args = clvm.to_sexp_f(solution_blob)
+    try:
+        r = eval(eval, UNVERIFIED_STD_SCRIPT, args)
+        return parse_sexp_to_conditions(r)
+    except Exception:
+        raise
+
+
+def conditions_dict_for_solution(solution):
+    return conditions_by_opcode(conditions_for_solution(solution))
+
+
 def created_outputs_for_conditions_dict(conditions_dict, input_coin_name):
     output_coins = []
     for _ in conditions_dict.get(ConditionOpcode.CREATE_COIN, []):
@@ -75,12 +94,12 @@ def solution_program_output(body):
     return r
 
 
-async def coin_for_coin_name(coin_name, storage):
+async def coin_for_coin_name(coin_name, storage, unspent_db):
     coin_name_data_blob = await storage.hash_preimage(coin_name)
     if coin_name_data_blob is None:
         return None
     coin_name_data = CoinNameData.from_bin(coin_name_data_blob)
-    unspent = await storage.unspent_for_coin_name(CoinName(coin_name_data))
+    unspent = await unspent_db.unspent_for_coin_name(CoinName(coin_name_data))
     coin = Coin(coin_name_data.parent_coin_info, coin_name_data.puzzle_hash, unspent.amount)
     return coin
 
@@ -97,6 +116,11 @@ async def additions_for_body(body, storage):
         coin = await coin_for_coin_name(coin_name, storage)
         for _ in additions_for_coin_solution(coin, solution):
             yield _
+
+
+def additions_for_solution(coin_name, solution):
+    return created_outputs_for_conditions_dict(
+        conditions_dict_for_solution(solution), coin_name)
 
 
 def removals_for_body(body):
