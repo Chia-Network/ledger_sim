@@ -36,13 +36,13 @@ UNVERIFIED_STD_SCRIPT = "(e (f (a)) (f (r (a))))"
 UNVERIFIED_STD_SCRIPT = binutils.assemble(UNVERIFIED_STD_SCRIPT)
 
 
-def conditions_for_solution(solution_blob, eval=clvm.eval_f):
+def conditions_for_solution(solution_program, eval=clvm.eval_f):
     # get the standard script for a puzzle hash and feed in the solution
-    args = clvm.to_sexp_f(solution_blob)
+    args = clvm.to_sexp_f(solution_program)
     try:
         r = eval(eval, UNVERIFIED_STD_SCRIPT, args)
         return parse_sexp_to_conditions(r)
-    except Exception:
+    except clvm.EvalError.EvalError:
         raise
 
 

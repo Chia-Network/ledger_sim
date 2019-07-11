@@ -47,9 +47,6 @@ def farm_new_block(
 
     program_cost = 0
 
-    #  for coin in spend_bundle.additions():
-    #    await self._storage.add_preimage(coin.as_bin())
-
     assert spend_bundle.validate_signature()
     solution_program = best_solution_program(spend_bundle)
     extension_data = hexbytes(b'')

@@ -129,8 +129,8 @@ def test_farm_block_one_spendbundle():
 
     run = asyncio.get_event_loop().run_until_complete
     additions, removals = run(chain_view.accept_new_block(header, header_signature, unspent_db))
-    assert len(additions) == 3
-    assert len(removals) == 0
+    assert len(additions) == 4
+    assert len(removals) == 1
 
 
 def test_farm_two_blocks():
