@@ -12,5 +12,3 @@ class RAMUnspentDB(UnspentDB):
 
     async def unspent_for_coin_name(self, coin_name: Hash) -> Unspent:
         return self._db.get(coin_name)
-
-

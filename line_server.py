@@ -1,6 +1,5 @@
 import argparse
 import asyncio
-import logging
 import sys
 
 from chiasim.utils.event_stream import rws_to_event_aiter
