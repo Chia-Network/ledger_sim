@@ -8,7 +8,7 @@ from chiasim.hashable import (
 )
 from chiasim.farming import farm_new_block
 from chiasim.storage import RAM_DB
-from chiasim.validation.chainview import ChainView
+from chiasim.validation import ChainView, validate_spend_bundle_signature
 from chiasim.validation.consensus import removals_for_body
 
 from .helpers import build_spend_bundle, make_simple_puzzle_program, PRIVATE_KEYS, PUBLIC_KEYS
@@ -165,7 +165,7 @@ def test_farm_two_blocks():
 
     # TODO: create another chain view
     spend_bundle_2 = build_spend_bundle(coinbase_coin, puzzle_program)
-    assert spend_bundle_2.validate_signature()
+    assert validate_spend_bundle_signature(spend_bundle_2)
 
     pool_private_key_2 = PRIVATE_KEYS[1]
     pos_2 = fake_proof_of_space(pool_public_key=PUBLIC_KEYS[1])

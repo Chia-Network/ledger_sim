@@ -50,6 +50,17 @@ def conditions_dict_for_solution(solution):
     return conditions_by_opcode(conditions_for_solution(solution))
 
 
+def hash_key_pairs_for_solution(solution):
+    return hash_key_pairs_for_conditions_dict(conditions_dict_for_solution(solution))
+
+
+def validate_spend_bundle_signature(spend_bundle) -> bool:
+    hash_key_pairs = []
+    for coin_solution in spend_bundle.coin_solutions:
+        hash_key_pairs += hash_key_pairs_for_solution(coin_solution.solution.code)
+    return spend_bundle.aggregated_signature.validate(hash_key_pairs)
+
+
 def created_outputs_for_conditions_dict(conditions_dict, input_coin_name):
     output_coins = []
     for _ in conditions_dict.get(ConditionOpcode.CREATE_COIN, []):

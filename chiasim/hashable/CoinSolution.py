@@ -27,9 +27,5 @@ class CoinSolution:
         from chiasim.validation.consensus import created_outputs_for_conditions_dict
         return created_outputs_for_conditions_dict(self.conditions_dict(), self.coin.coin_name())
 
-    def hash_key_pairs(self):
-        from chiasim.validation.consensus import hash_key_pairs_for_conditions_dict
-        return hash_key_pairs_for_conditions_dict(self.conditions_dict())
-
 
 CoinSolutionList = streamable_list(CoinSolution)

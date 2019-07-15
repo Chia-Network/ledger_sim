@@ -7,6 +7,7 @@ from chiasim.hashable import (
     BLSSignature, Body, Coin, Header, HeaderHash,
     Program, ProgramHash, ProofOfSpace, SpendBundle
 )
+from chiasim.validation import validate_spend_bundle_signature
 
 
 def best_solution_program(bundle: SpendBundle):
@@ -47,7 +48,7 @@ def farm_new_block(
 
     program_cost = 0
 
-    assert spend_bundle.validate_signature()
+    assert validate_spend_bundle_signature(spend_bundle)
     solution_program = best_solution_program(spend_bundle)
     extension_data = hexbytes(b'')
 
