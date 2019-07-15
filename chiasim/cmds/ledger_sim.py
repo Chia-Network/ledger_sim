@@ -15,8 +15,9 @@ log = logging.getLogger(__name__)
 
 
 def run_ledger_api(server, aiter):
+    db = RAM_DB()
     INITIAL_BLOCK_HASH = bytes(([0] * 31) + [1])
-    ledger = ledger_api.LedgerAPI(INITIAL_BLOCK_HASH, RAM_DB())
+    ledger = ledger_api.LedgerAPI(INITIAL_BLOCK_HASH, db, db)
     rws_aiter = map_aiter(lambda rw: dict(reader=rw[0], writer=rw[1], server=server), aiter)
     return api_server(rws_aiter, ledger)
 
