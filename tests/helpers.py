@@ -6,7 +6,13 @@ import clvm
 from opacity import binutils
 
 from chiasim.hashable import Coin, CoinSolution, Program, SpendBundle, std_hash
-from chiasim.validation.Conditions import conditions_to_sexp, make_create_coin_condition
+from chiasim.validation.Conditions import (
+    ConditionOpcode, conditions_by_opcode, conditions_to_sexp,
+    make_create_coin_condition
+)
+from chiasim.validation.consensus import (
+    conditions_for_puzzle_hash_solution, hash_key_pairs_for_conditions_dict
+)
 
 from .BLSPrivateKey import BLSPrivateKey
 
@@ -20,7 +26,7 @@ KEYCHAIN = {_.get_public_key().serialize(): BLSPrivateKey(_) for _ in PRIVATE_KE
 def make_simple_puzzle_program(pub_key):
     # want to return ((aggsig pub_key SOLN) + SOLN)
     # (cons (list aggsig PUBKEY (sha256 x0)) (call (unwrap (f (a))) (r (a))))
-    aggsig = 50
+    aggsig = ConditionOpcode.AGG_SIG[0]
     STD_SCRIPT = f"(c (c (q {aggsig}) (c (q 0x%s) (c (sha256 (wrap (f (a)))) (q ())))) (e (f (a)) (r (a))))"
     puzzle_script = binutils.assemble(STD_SCRIPT % binascii.hexlify(pub_key).decode("utf8"))
     return clvm.to_sexp_f(puzzle_script)
@@ -64,7 +70,9 @@ def build_spend_bundle(coin=None, puzzle_program=None, conditions=None):
     coin_solution = CoinSolution(coin, solution)
 
     signatures = []
-    for _ in coin_solution.hash_key_pairs():
+    conditions_dict = conditions_by_opcode(
+        conditions_for_puzzle_hash_solution(coin_solution.coin.puzzle_hash, coin_solution.solution.code))
+    for _ in hash_key_pairs_for_conditions_dict(conditions_dict):
         print(_)
         bls_private_key = KEYCHAIN.get(_.public_key)
         signature = bls_private_key.sign(_.message_hash)
