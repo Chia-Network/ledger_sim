@@ -2,7 +2,6 @@ import asyncio
 import blspy
 
 from chiasim.atoms import uint64
-from chiasim.coin.consensus import removals_for_body
 from chiasim.hashable import (
     std_hash, Coin, EORPrivateKey,
     ProofOfSpace, BLSSignature, BLSPublicKey, SpendBundle
@@ -10,6 +9,7 @@ from chiasim.hashable import (
 from chiasim.farming import farm_new_block
 from chiasim.storage import RAM_DB
 from chiasim.validation.chainview import ChainView
+from chiasim.validation.consensus import removals_for_body
 
 from .helpers import build_spend_bundle, make_simple_puzzle_program, PRIVATE_KEYS, PUBLIC_KEYS
 

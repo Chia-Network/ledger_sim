@@ -5,7 +5,7 @@ import time
 
 import clvm
 
-from chiasim.coin.consensus import (
+from .consensus import (
     additions_for_body, coin_for_coin_name, conditions_dict_for_solution,
     created_outputs_for_conditions_dict, hash_key_pairs_for_conditions_dict,
     removals_for_body

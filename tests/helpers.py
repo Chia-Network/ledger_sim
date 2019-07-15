@@ -5,8 +5,8 @@ import clvm
 
 from opacity import binutils
 
-from chiasim.coin.Conditions import conditions_to_sexp, make_create_coin_condition
 from chiasim.hashable import Coin, CoinSolution, Program, SpendBundle, std_hash
+from chiasim.validation.Conditions import conditions_to_sexp, make_create_coin_condition
 
 from .BLSPrivateKey import BLSPrivateKey
 

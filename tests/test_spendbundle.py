@@ -1,6 +1,6 @@
-from chiasim.coin.consensus import conditions_for_puzzle_hash_solution, created_outputs_for_conditions_dict
-from chiasim.coin.Conditions import conditions_by_opcode, make_create_coin_condition
 from chiasim.hashable import std_hash
+from chiasim.validation.consensus import conditions_for_puzzle_hash_solution, created_outputs_for_conditions_dict
+from chiasim.validation.Conditions import conditions_by_opcode, make_create_coin_condition
 
 from tests.helpers import (
     make_simple_puzzle_program,
