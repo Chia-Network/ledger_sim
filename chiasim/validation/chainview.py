@@ -13,7 +13,7 @@ from .consensus import (
 from chiasim.hashable import (
     BLSSignature, CoinName, Hash, HeaderHash, Program, ProgramHash, SpendBundle, Unspent
 )
-from chiasim.storage import RAM_DB, Storage, UnspentDB
+from chiasim.storage import OverlayStorage, OverlayUnspentDB, RAMUnspentDB, RAM_DB, Storage, UnspentDB
 
 from .ConsensusError import ConsensusError, Err
 
@@ -23,41 +23,6 @@ def check_conditions_dict(coin, conditions_dict, chain_view):
     Check all conditions against current state.
     """
     pass
-
-
-class RAMUnspentDB(UnspentDB):
-    def __init__(self, additions, confirmed_block_index):
-        self._db = {}
-        for _ in additions:
-            unspent = Unspent(_.amount, confirmed_block_index, 0)
-            self._db[_.coin_name()] = unspent
-
-    async def unspent_for_coin_name(self, coin_name: Hash) -> Unspent:
-        return self._db.get(coin_name)
-
-
-class OverlayUnspentDB(UnspentDB):
-    def __init__(self, *db_list):
-        self._db_list = db_list
-
-    async def unspent_for_coin_name(self, coin_name: Hash) -> Unspent:
-        for db in self._db_list:
-            v = await db.unspent_for_coin_name(coin_name)
-            if v is not None:
-                return v
-        return None
-
-
-class OverlayStorage(Storage):
-    def __init__(self, *db_list):
-        self._db_list = db_list
-
-    async def hash_preimage(self, hash: Hash) -> bytes:
-        for db in self._db_list:
-            v = await db.hash_preimage(hash)
-            if v is not None:
-                return v
-        return None
 
 
 def name_puzzle_conditions_list(body_program):
