@@ -11,7 +11,7 @@ from chiasim.validation.Conditions import (
     make_create_coin_condition
 )
 from chiasim.validation.consensus import (
-    conditions_for_puzzle_hash_solution, hash_key_pairs_for_conditions_dict
+    conditions_for_solution, hash_key_pairs_for_conditions_dict
 )
 
 from .BLSPrivateKey import BLSPrivateKey
@@ -70,8 +70,7 @@ def build_spend_bundle(coin=None, puzzle_program=None, conditions=None):
     coin_solution = CoinSolution(coin, solution)
 
     signatures = []
-    conditions_dict = conditions_by_opcode(
-        conditions_for_puzzle_hash_solution(coin_solution.coin.puzzle_hash, coin_solution.solution.code))
+    conditions_dict = conditions_by_opcode(conditions_for_solution(coin_solution.solution.code))
     for _ in hash_key_pairs_for_conditions_dict(conditions_dict):
         print(_)
         bls_private_key = KEYCHAIN.get(_.public_key)

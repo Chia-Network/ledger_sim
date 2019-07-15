@@ -69,7 +69,8 @@ class ChainView:
         return cls(genesis_hash, genesis_hash, 0, unspent_db)
 
     async def accept_new_block(
-            self, header: HeaderHash, header_signature: BLSSignature, storage: Storage):
+            self, header: HeaderHash, header_signature: BLSSignature,
+            storage: Storage, coinbase_reward: int):
         """
         Checks the block against the existing ChainView object.
         Returns a list of additions (coins), and removals (coin names).
@@ -183,14 +184,28 @@ class ChainView:
                 if (0 < unspent.spent_block_index <= self.tip_index):
                     raise ConsensusError(Err.DOUBLE_SPEND, coin_name)
 
+            # check fees
+
+            fees = 0
+            for coin, puzzle_hash, conditions_dict in cpc_list:
+                fees -= coin.amount
+
+            for coin in additions:
+                fees += coin.amount
+
+            if fees != coinbase_reward:
+                raise ConsensusError(Err.BAD_COINBASE_REWARD, body.coinbase_coin)
+
             # check solution for each CoinSolution pair
             # this is where CHECKLOCKTIME etc. are verified
+
             hash_key_pairs = []
             for coin, puzzle_hash, conditions_dict in cpc_list:
                 check_conditions_dict(coin, conditions_dict, self)
                 hash_key_pairs.extend(hash_key_pairs_for_conditions_dict(conditions_dict))
 
             # verify aggregated signature
+
             if not body.aggregated_signature.validate(hash_key_pairs):
                 raise ConsensusError(Err.BAD_AGGREGATE_SIGNATURE, body)
 

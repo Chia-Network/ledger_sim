@@ -1,6 +1,6 @@
 from chiasim.hashable import std_hash
 from chiasim.validation.consensus import (
-    conditions_for_puzzle_hash_solution, created_outputs_for_conditions_dict
+    conditions_for_solution, created_outputs_for_conditions_dict
 )
 from chiasim.validation.Conditions import conditions_by_opcode, make_create_coin_condition
 
@@ -25,10 +25,7 @@ def test_1():
 
     puzzle_hash_solution_blob = make_solution_to_simple_puzzle_program(puzzle_program_0, conditions)
 
-    puzzle_hash = std_hash(puzzle_program_0.as_bin())
-
-    output_conditions = conditions_for_puzzle_hash_solution(
-        puzzle_hash, puzzle_hash_solution_blob, trace_eval)
+    output_conditions = conditions_for_solution(puzzle_hash_solution_blob, trace_eval)
     from pprint import pprint
     output_conditions_dict = conditions_by_opcode(output_conditions)
     pprint(output_conditions_dict)

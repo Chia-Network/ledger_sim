@@ -7,30 +7,6 @@ from ..hashable import BLSSignature, Coin, CoinName, CoinNameData
 from .Conditions import conditions_by_opcode, parse_sexp_to_conditions, ConditionOpcode
 
 
-# STD_SCRIPT
-# accepts a puzzle hash, the puzzle program, and the solution to the puzzle program
-# x0 = puzzle_hash
-# x1 = solution = (puzzle_program, solution_to_puzzle_program)
-
-# run '(compile (if (equal (sha256 (wrap (first x1))) x0) (call (first x1) (rest x1)) (raise)))'
-# this compiles to something slightly more complicated that what is below
-
-STD_SCRIPT = ("(e (i (= (sha256 (wrap (f (f (r (a)))))) (f (a))) (f (f (r (a)))) (q (x))) "
-              "(f (r (f (r (a))))))")
-
-STD_SCRIPT_SEXP = binutils.assemble(STD_SCRIPT)
-
-
-def conditions_for_puzzle_hash_solution(puzzle_hash, solution_blob, eval=clvm.eval_f):
-    # get the standard script for a puzzle hash and feed in the solution
-    args = clvm.to_sexp_f([puzzle_hash, solution_blob])
-    try:
-        r = eval(eval, STD_SCRIPT_SEXP, args)
-        return parse_sexp_to_conditions(r)
-    except Exception:
-        raise
-
-
 UNVERIFIED_STD_SCRIPT = "(e (f (a)) (f (r (a))))"
 
 UNVERIFIED_STD_SCRIPT = binutils.assemble(UNVERIFIED_STD_SCRIPT)
