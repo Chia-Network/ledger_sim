@@ -6,6 +6,7 @@ from aiter import map_aiter
 
 from chiasim.ledger import ledger_api
 from chiasim.hashable import Body, CoinName, Header, Program, ProgramHash
+from chiasim.pool import make_coinbase_coin_and_signature
 from chiasim.remote.api_server import api_server
 from chiasim.remote.client import request_response_proxy
 from chiasim.storage import RAM_DB
@@ -13,7 +14,7 @@ from chiasim.utils.log import init_logging
 from chiasim.utils.server import start_unix_server_aiter
 
 from tests.helpers import build_spend_bundle, make_simple_puzzle_program, PRIVATE_KEYS, PUBLIC_KEYS
-from tests.test_farmblock import fake_proof_of_space, make_coinbase_coin_and_signature
+from tests.test_farmblock import fake_proof_of_space
 
 
 REMOTE_SIGNATURES = dict(
@@ -29,13 +30,14 @@ async def proxy_for_unix_connection(path):
 
 async def client_test(path):
 
+    REWARD = 50000
     remote = await proxy_for_unix_connection(path)
 
     pos = fake_proof_of_space()
     pool_private_key = PRIVATE_KEYS[0]
     puzzle_program = make_simple_puzzle_program(PUBLIC_KEYS[1])
     coinbase_coin, coinbase_signature = make_coinbase_coin_and_signature(
-        1, puzzle_program, pool_private_key)
+        1, puzzle_program, pool_private_key, REWARD)
 
     fees_puzzle_hash = ProgramHash(Program(make_simple_puzzle_program(PUBLIC_KEYS[2])))
 
@@ -69,7 +71,7 @@ async def client_test(path):
     pool_private_key = PRIVATE_KEYS[0]
     puzzle_program = make_simple_puzzle_program(PUBLIC_KEYS[2])
     coinbase_coin, coinbase_signature = make_coinbase_coin_and_signature(
-        2, puzzle_program, pool_private_key)
+        2, puzzle_program, pool_private_key, REWARD)
 
     r = await remote.farm_block(
         pos=pos, coinbase_coin=coinbase_coin, coinbase_signature=coinbase_signature,

@@ -4,25 +4,15 @@ import blspy
 from chiasim.atoms import uint64
 from chiasim.hashable import (
     std_hash, Coin, EORPrivateKey,
-    ProofOfSpace, BLSSignature, BLSPublicKey, SpendBundle
+    ProofOfSpace, BLSPublicKey, SpendBundle
 )
 from chiasim.farming import farm_new_block
+from chiasim.pool import make_coinbase_coin_and_signature
 from chiasim.storage import RAM_DB
 from chiasim.validation import ChainView, validate_spend_bundle_signature
 from chiasim.validation.consensus import removals_for_body
 
 from .helpers import build_spend_bundle, make_simple_puzzle_program, PRIVATE_KEYS, PUBLIC_KEYS
-
-
-# pool manager function
-def make_coinbase_coin_and_signature(block_index, puzzle_program, pool_private_key=PRIVATE_KEYS[0]):
-    puzzle_hash = std_hash(puzzle_program.as_bin())
-    block_index_as_hash = block_index.to_bytes(32, "big")
-    coin = Coin(block_index_as_hash, puzzle_hash, uint64(10000))
-    message_hash = blspy.Util.hash256(coin.as_bin())
-    sig = pool_private_key.sign_prepend_prehashed(message_hash)
-    signature = BLSSignature(sig.serialize())
-    return coin, signature
 
 
 def fake_hash(v):
@@ -79,6 +69,7 @@ def farm_block(
 
 def test_farm_block_empty():
     # TODO: fix
+    REWARD = 10000
     FIRST_BLOCK = fake_hash(0)
     unspent_db = RAM_DB()
     chain_view = ChainView.for_genesis_hash(FIRST_BLOCK, unspent_db)
@@ -89,7 +80,7 @@ def test_farm_block_empty():
 
     puzzle_program = make_simple_puzzle_program(PUBLIC_KEYS[1])
     coinbase_coin, coinbase_signature = make_coinbase_coin_and_signature(
-        1, puzzle_program, pool_private_key)
+        1, puzzle_program, pool_private_key, REWARD)
 
     spend_bundle = SpendBundle.aggregate([])
 
@@ -100,12 +91,13 @@ def test_farm_block_empty():
     assert len(removals) == 0
 
     run = asyncio.get_event_loop().run_until_complete
-    additions, removals = run(chain_view.accept_new_block(header, header_signature, unspent_db, 10000))
+    additions, removals = run(chain_view.accept_new_block(header, header_signature, unspent_db, REWARD))
     assert len(additions) == 2
     assert len(removals) == 0
 
 
 def test_farm_block_one_spendbundle():
+    REWARD = 10000
     FIRST_BLOCK = fake_hash(0)
     unspent_db = RAM_DB()
     chain_view = ChainView.for_genesis_hash(FIRST_BLOCK, unspent_db)
@@ -116,7 +108,7 @@ def test_farm_block_one_spendbundle():
 
     puzzle_program = make_simple_puzzle_program(PUBLIC_KEYS[1])
     coinbase_coin, coinbase_signature = make_coinbase_coin_and_signature(
-        1, puzzle_program, pool_private_key)
+        1, puzzle_program, pool_private_key, REWARD)
 
     spend_bundle = build_spend_bundle(coin=coinbase_coin, puzzle_program=puzzle_program)
 
@@ -128,7 +120,7 @@ def test_farm_block_one_spendbundle():
     assert removals[0] == list(spend_bundle.coin_solutions)[0].coin.coin_name()
 
     run = asyncio.get_event_loop().run_until_complete
-    additions, removals = run(chain_view.accept_new_block(header, header_signature, unspent_db, 10000))
+    additions, removals = run(chain_view.accept_new_block(header, header_signature, unspent_db, REWARD))
     assert len(additions) == 4
     assert len(removals) == 1
 
@@ -138,6 +130,7 @@ def test_farm_two_blocks():
     In this test, we farm two blocks: one empty block,
     then one block which spends the coinbase transaction from the empty block.
     """
+    REWARD = 10000
     FIRST_BLOCK = fake_hash(0)
     unspent_db = RAM_DB()
     chain_view = ChainView.for_genesis_hash(FIRST_BLOCK, unspent_db)
@@ -148,7 +141,7 @@ def test_farm_two_blocks():
 
     puzzle_program = make_simple_puzzle_program(PUBLIC_KEYS[1])
     coinbase_coin, coinbase_signature = make_coinbase_coin_and_signature(
-        1, puzzle_program, pool_private_key)
+        1, puzzle_program, pool_private_key, REWARD)
 
     empty_spend_bundle = SpendBundle.aggregate([])
     plot_private_key = fake_plot_private_key()
@@ -156,7 +149,7 @@ def test_farm_two_blocks():
         FIRST_BLOCK, 1, pos_1, empty_spend_bundle, coinbase_coin, coinbase_signature, plot_private_key)
 
     run = asyncio.get_event_loop().run_until_complete
-    additions, removals = run(chain_view.accept_new_block(header, header_signature, unspent_db, 10000))
+    additions, removals = run(chain_view.accept_new_block(header, header_signature, unspent_db, REWARD))
     assert len(additions) == 2
     assert len(removals) == 0
     # TODO: check additions
@@ -171,7 +164,7 @@ def test_farm_two_blocks():
     pos_2 = fake_proof_of_space(pool_public_key=PUBLIC_KEYS[1])
 
     coinbase_coin, coinbase_signature = make_coinbase_coin_and_signature(
-        2, puzzle_program, pool_private_key_2)
+        2, puzzle_program, pool_private_key_2, REWARD)
     header_2, header_signature_2, body_2 = farm_block(
         header, 2, pos_2, spend_bundle_2, coinbase_coin, coinbase_signature, plot_private_key)
     print(header_2)
