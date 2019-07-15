@@ -76,11 +76,6 @@ def created_outputs_for_conditions_dict(conditions_dict, input_coin_name):
     return output_coins
 
 
-def conditions_dict_for_coin_solution(coin, solution):
-    return conditions_by_opcode(conditions_for_puzzle_hash_solution(
-        coin.puzzle_hash, solution))
-
-
 def hash_key_pairs_for_conditions_dict(conditions_dict):
     pairs = []
     for _ in conditions_dict.get(ConditionOpcode.AGG_SIG, []):
@@ -88,11 +83,6 @@ def hash_key_pairs_for_conditions_dict(conditions_dict):
         assert len(_) == 3
         pairs.append(BLSSignature.aggsig_pair(*_[1:]))
     return pairs
-
-
-def hash_key_pairs_for_coin_solution(coin, solution):
-    return hash_key_pairs_for_conditions_dict(
-        conditions_dict_for_coin_solution(coin, solution))
 
 
 def solution_program_output(body):
@@ -115,23 +105,17 @@ async def coin_for_coin_name(coin_name, storage, unspent_db):
     return coin
 
 
-def additions_for_coin_solution(coin, solution):
+def additions_for_solution(coin_name, solution):
     return created_outputs_for_conditions_dict(
-        conditions_dict_for_coin_solution(coin, solution), coin.coin_name())
+        conditions_dict_for_solution(solution), coin_name)
 
 
 async def additions_for_body(body, storage):
     yield body.coinbase_coin
     yield body.fees_coin
     for (coin_name, solution) in solution_program_output(body):
-        coin = await coin_for_coin_name(coin_name, storage)
-        for _ in additions_for_coin_solution(coin, solution):
+        for _ in additions_for_solution(coin_name, solution):
             yield _
-
-
-def additions_for_solution(coin_name, solution):
-    return created_outputs_for_conditions_dict(
-        conditions_dict_for_solution(solution), coin_name)
 
 
 def removals_for_body(body):

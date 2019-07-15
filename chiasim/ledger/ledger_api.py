@@ -9,6 +9,7 @@ from chiasim.hashable import (
     ProgramHash, ProofOfSpace, SpendBundle
 )
 from chiasim.remote.api_decorators import api_request
+from chiasim.validation import validate_spend_bundle_signature
 
 log = logging.getLogger(__name__)
 
@@ -28,7 +29,7 @@ class LedgerAPI:
     @api_request(tx=SpendBundle.from_bin)
     async def do_push_tx(self, tx):
         log.info("push_tx %s", tx)
-        if not tx.validate_signature():
+        if not validate_spend_bundle_signature(tx):
             raise ValueError("bad signature on %s" % tx)
 
         self._spend_bundles.append(tx)
