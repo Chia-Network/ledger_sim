@@ -1,13 +1,31 @@
+import blspy
+
 from clvm import to_sexp_f
 
 from opacity import binutils
 
 from chiasim.atoms import hexbytes, uint64
 from chiasim.hashable import (
-    BLSSignature, Body, Coin, Header, HeaderHash,
-    Program, ProgramHash, ProofOfSpace, SpendBundle
+    BLSSignature, Body, Coin, EORPrivateKey, Header, HeaderHash,
+    Program, ProgramHash, ProofOfSpace, PublicKey, SpendBundle
 )
 from chiasim.validation import validate_spend_bundle_signature
+
+
+PLOT_PRIVATE_KEY = EORPrivateKey(blspy.Util.hash256(bytes([4])))
+PLOT_PUBLIC_KEY = PLOT_PRIVATE_KEY.public_key()
+
+
+def get_plot_public_key() -> PublicKey:
+    # TODO: make this configurable
+    return PLOT_PUBLIC_KEY
+
+
+def sign_header(header: Header, public_key: PublicKey):
+    if public_key != PLOT_PUBLIC_KEY:
+        raise ValueError("unknown public key")
+    message_hash = blspy.Util.hash256(header.as_bin())
+    return PLOT_PRIVATE_KEY.sign(message_hash)
 
 
 def best_solution_program(bundle: SpendBundle):

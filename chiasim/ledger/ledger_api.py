@@ -1,25 +1,33 @@
+import asyncio
 import datetime
 import logging
 import time
 
 from chiasim.atoms import uint64
-from chiasim.farming import farm_new_block
+from chiasim.farming import farm_new_block, get_plot_public_key, sign_header
 from chiasim.hashable import (
     BLSSignature, Coin, HeaderHash,
     ProgramHash, ProofOfSpace, SpendBundle
 )
+from chiasim.pool import create_coinbase_coin_and_signature, get_pool_public_key
 from chiasim.remote.api_decorators import api_request
-from chiasim.validation import validate_spend_bundle_signature
+from chiasim.validation import ChainView, apply_deltas, validate_spend_bundle_signature
 
 log = logging.getLogger(__name__)
+
+
+GENESIS_HASH = bytes([0] * 32)
 
 
 class LedgerAPI:
     def __init__(self, block_tip: HeaderHash, block_index: uint64, storage):
         self._tip = block_tip
         self._block_index = block_index
+
+        self._chain_view = ChainView.for_genesis_hash(GENESIS_HASH, storage)
         self._storage = storage
         self._spend_bundles = []
+        self._next_block_lock = asyncio.Lock()
 
     async def do_ping(self, m=None):
         log.info("ping")
@@ -33,7 +41,51 @@ class LedgerAPI:
             raise ValueError("bad signature on %s" % tx)
 
         self._spend_bundles.append(tx)
+        # TODO: ensure that we can farm a block even after adding this spend_bundle
+        # Otherwise, it's inconsistent with the mempool
         return dict(response="accepted %s" % tx)
+
+    @api_request(
+        coinbase_puzzle_hash=ProgramHash.from_bin,
+        fees_puzzle_hash=ProgramHash.from_bin,
+    )
+    async def do_next_block(self, coinbase_puzzle_hash, fees_puzzle_hash):
+        async with self._next_block_lock:
+            block_number = self._chain_view.tip_index + 1
+
+            REWARD = int(1e9)
+            timestamp = uint64(time.time())
+
+            spend_bundle = SpendBundle.aggregate(self._spend_bundles)
+            self._spend_bundles = []
+
+            pool_public_key = get_pool_public_key()
+            plot_public_key = get_plot_public_key()
+
+            pos = ProofOfSpace(pool_public_key, plot_public_key)
+            coinbase_coin, coinbase_signature = create_coinbase_coin_and_signature(
+                block_number, coinbase_puzzle_hash, REWARD, pool_public_key)
+
+            header, body = farm_new_block(
+                self._chain_view.tip_hash, block_number, pos, spend_bundle, coinbase_coin,
+                coinbase_signature, fees_puzzle_hash, timestamp)
+
+            header_signature = sign_header(header, plot_public_key)
+
+            [await self._storage.add_preimage(_.as_bin()) for _ in (header, body)]
+
+            additions, removals = await self._chain_view.accept_new_block(
+                header, header_signature, self._storage, REWARD)
+
+            await apply_deltas(
+                self._chain_view.tip_index+1, additions, removals, self._storage, self._storage)
+            self._chain_view = ChainView(
+                GENESIS_HASH, header.hash(), self._chain_view.tip_index+1, self._storage)
+
+            self._block_index += 1
+            self._tip = HeaderHash(header)
+
+        return dict(header=header, body=body)
 
     @api_request(
         pos=ProofOfSpace.from_bin,

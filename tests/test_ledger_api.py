@@ -6,19 +6,17 @@ from aiter import map_aiter
 
 from chiasim.ledger import ledger_api
 from chiasim.hashable import Body, CoinName, Header, Program, ProgramHash
-from chiasim.pool import make_coinbase_coin_and_signature
 from chiasim.remote.api_server import api_server
 from chiasim.remote.client import request_response_proxy
 from chiasim.storage import RAM_DB
 from chiasim.utils.log import init_logging
 from chiasim.utils.server import start_unix_server_aiter
 
-from tests.helpers import build_spend_bundle, make_simple_puzzle_program, PRIVATE_KEYS, PUBLIC_KEYS
-from tests.test_farmblock import fake_proof_of_space
+from tests.helpers import build_spend_bundle, make_simple_puzzle_program, PUBLIC_KEYS
 
 
 REMOTE_SIGNATURES = dict(
-    farm_block=dict(header=Header.from_bin, body=Body.from_bin),
+    next_block=dict(header=Header.from_bin, body=Body.from_bin),
     all_unspents=dict(unspents=lambda u: [CoinName.from_bin(_) for _ in u]),
 )
 
@@ -30,32 +28,24 @@ async def proxy_for_unix_connection(path):
 
 async def client_test(path):
 
-    REWARD = 50000
     remote = await proxy_for_unix_connection(path)
 
-    pos = fake_proof_of_space()
-    pool_private_key = PRIVATE_KEYS[0]
-    puzzle_program = make_simple_puzzle_program(PUBLIC_KEYS[1])
-    coinbase_coin, coinbase_signature = make_coinbase_coin_and_signature(
-        1, puzzle_program, pool_private_key, REWARD)
-
+    puzzle_sexp = make_simple_puzzle_program(PUBLIC_KEYS[1])
+    coinbase_puzzle_hash = ProgramHash(Program(puzzle_sexp))
     fees_puzzle_hash = ProgramHash(Program(make_simple_puzzle_program(PUBLIC_KEYS[2])))
 
-    r = await remote.farm_block(
-        pos=pos, coinbase_coin=coinbase_coin, coinbase_signature=coinbase_signature,
-        fees_puzzle_hash=fees_puzzle_hash)
+    r = await remote.next_block(
+        coinbase_puzzle_hash=coinbase_puzzle_hash, fees_puzzle_hash=fees_puzzle_hash)
     header = r.get("header")
     body = r.get("body")
 
-    coinbase_coin1 = body.coinbase_coin
-    print(coinbase_coin)
-    print(coinbase_coin1)
+    coinbase_coin = body.coinbase_coin
 
     r = await remote.all_unspents()
     print("unspents = %s" % r.get("unspents"))
 
     # add a SpendBundle
-    spend_bundle = build_spend_bundle(coinbase_coin, puzzle_program)
+    spend_bundle = build_spend_bundle(coinbase_coin, puzzle_sexp)
 
     # break the signature
     if 0:
@@ -68,14 +58,10 @@ async def client_test(path):
 
     my_new_coins = spend_bundle.additions()
 
-    pool_private_key = PRIVATE_KEYS[0]
-    puzzle_program = make_simple_puzzle_program(PUBLIC_KEYS[2])
-    coinbase_coin, coinbase_signature = make_coinbase_coin_and_signature(
-        2, puzzle_program, pool_private_key, REWARD)
+    coinbase_puzzle_hash = ProgramHash(Program(make_simple_puzzle_program(PUBLIC_KEYS[2])))
 
-    r = await remote.farm_block(
-        pos=pos, coinbase_coin=coinbase_coin, coinbase_signature=coinbase_signature,
-        fees_puzzle_hash=fees_puzzle_hash)
+    r = await remote.next_block(
+        coinbase_puzzle_hash=coinbase_puzzle_hash, fees_puzzle_hash=fees_puzzle_hash)
     header = r.get("header")
     body = r.get("body")
 
@@ -90,9 +76,8 @@ async def client_test(path):
     import pprint
     pprint.pprint(_)
 
-    r = await remote.farm_block(
-        pos=pos, coinbase_coin=coinbase_coin, coinbase_signature=coinbase_signature,
-        fees_puzzle_hash=fees_puzzle_hash)
+    r = await remote.next_block(
+        coinbase_puzzle_hash=coinbase_puzzle_hash, fees_puzzle_hash=fees_puzzle_hash)
     header = r.get("header")
     body = r.get("body")
 

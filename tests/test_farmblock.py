@@ -1,18 +1,28 @@
 import asyncio
+
 import blspy
 
-from chiasim.atoms import uint64
 from chiasim.hashable import (
     std_hash, Coin, EORPrivateKey,
-    ProofOfSpace, BLSPublicKey, SpendBundle
+    ProofOfSpace, BLSPublicKey, BLSSignature, SpendBundle
 )
 from chiasim.farming import farm_new_block
-from chiasim.pool import make_coinbase_coin_and_signature
 from chiasim.storage import RAM_DB
 from chiasim.validation import ChainView, validate_spend_bundle_signature
 from chiasim.validation.consensus import removals_for_body
 
 from .helpers import build_spend_bundle, make_simple_puzzle_program, PRIVATE_KEYS, PUBLIC_KEYS
+
+
+# pool manager function
+def make_coinbase_coin_and_signature(block_index, puzzle_program, pool_private_key, reward):
+    puzzle_hash = std_hash(puzzle_program.as_bin())
+    block_index_as_hash = block_index.to_bytes(32, "big")
+    coin = Coin(block_index_as_hash, puzzle_hash, reward)
+    message_hash = blspy.Util.hash256(coin.as_bin())
+    sig = pool_private_key.sign_prepend_prehashed(message_hash)
+    signature = BLSSignature(sig.serialize())
+    return coin, signature
 
 
 def fake_hash(v):

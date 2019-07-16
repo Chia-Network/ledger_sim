@@ -9,14 +9,14 @@ from .consensus import (
     created_outputs_for_conditions_dict, hash_key_pairs_for_conditions_dict,
 )
 from chiasim.hashable import (
-    BLSSignature, CoinName, HeaderHash, Program, ProgramHash
+    BLSSignature, CoinName, HeaderHash, Program, ProgramHash, Unspent
 )
 from chiasim.storage import OverlayStorage, OverlayUnspentDB, RAMUnspentDB, RAM_DB, Storage, UnspentDB
 
 from .ConsensusError import ConsensusError, Err
 
 
-def check_conditions_dict(coin, conditions_dict, chain_view):
+def check_conditions_dict(coin, conditions_dict, context):
     """
     Check all conditions against current state.
     """
@@ -71,148 +71,171 @@ class ChainView:
     async def accept_new_block(
             self, header: HeaderHash, header_signature: BLSSignature,
             storage: Storage, coinbase_reward: int):
-        """
-        Checks the block against the existing ChainView object.
-        Returns a list of additions (coins), and removals (coin names).
+        r = await accept_new_block(
+            self.tip_hash, self.tip_index+1, header, header_signature,
+            storage, self.unspent_db, coinbase_reward)
+        return r
 
-        Missing blobs must be resolvable by storage.
 
-        If the given block is invalid, a ConsensusError is raised.
-        """
+async def accept_new_block(
+        tip_hash: HeaderHash, tip_index: int, header: HeaderHash,
+        header_signature: BLSSignature, storage: Storage, unspent_db: UnspentDB,
+        coinbase_reward: int):
+    """
+    Checks the block against the existing ChainView object.
+    Returns a list of additions (coins), and removals (coin names).
 
-        try:
-            # verify header extends current view
+    Missing blobs must be resolvable by storage.
 
-            if header.previous_hash != self.tip_hash:
-                raise ConsensusError(Err.DOES_NOT_EXTEND, header)
+    If the given block is invalid, a ConsensusError is raised.
+    """
 
-            # get proof of space
+    try:
+        # verify header extends current view
 
-            pos = await header.proof_of_space_hash.obj(storage)
-            if pos is None:
-                raise ConsensusError(Err.MISSING_FROM_STORAGE, header.proof_of_space_hash)
+        if header.previous_hash != tip_hash:
+            raise ConsensusError(Err.DOES_NOT_EXTEND, header)
 
-            # verify header signature
+        # get proof of space
 
-            hkp = header_signature.aggsig_pair(pos.plot_public_key, header.hash())
-            if not header_signature.validate([hkp]):
-                raise ConsensusError(Err.BAD_HEADER_SIGNATURE, header_signature)
+        pos = await header.proof_of_space_hash.obj(storage)
+        if pos is None:
+            raise ConsensusError(Err.MISSING_FROM_STORAGE, header.proof_of_space_hash)
 
-            # get body
+        # verify header signature
 
-            body = await header.body_hash.obj(storage)
-            if body is None:
-                raise ConsensusError(Err.MISSING_FROM_STORAGE, header.body_hash)
+        hkp = header_signature.aggsig_pair(pos.plot_public_key, header.hash())
+        if not header_signature.validate([hkp]):
+            raise ConsensusError(Err.BAD_HEADER_SIGNATURE, header_signature)
 
-            # verify coinbase signature
+        # get body
 
-            hkp = body.coinbase_signature.aggsig_pair(pos.pool_public_key, body.coinbase_coin.hash())
-            if not body.coinbase_signature.validate([hkp]):
-                raise ConsensusError(Err.BAD_COINBASE_SIGNATURE, body)
+        body = await header.body_hash.obj(storage)
+        if body is None:
+            raise ConsensusError(Err.MISSING_FROM_STORAGE, header.body_hash)
 
-            # ensure block program generates solutions
+        # verify coinbase signature
 
-            npc_list = name_puzzle_conditions_list(body.solution_program)
+        hkp = body.coinbase_signature.aggsig_pair(pos.pool_public_key, body.coinbase_coin.hash())
+        if not body.coinbase_signature.validate([hkp]):
+            raise ConsensusError(Err.BAD_COINBASE_SIGNATURE, body)
 
-            # build removals list
-            removals = tuple(_[0] for _ in npc_list)
+        # ensure block program generates solutions
 
-            # build additions
+        npc_list = name_puzzle_conditions_list(body.solution_program)
 
-            def additions_iter(body, npc_list):
-                yield body.coinbase_coin
-                yield body.fees_coin
-                for coin_name, puzzle_hash, conditions_dict in npc_list:
-                    for _ in created_outputs_for_conditions_dict(conditions_dict, coin_name):
-                        yield _
+        # build removals list
+        removals = tuple(_[0] for _ in npc_list)
 
-            additions = tuple(additions_iter(body, npc_list))
+        # build additions
 
-            #  watch out for duplicate outputs
+        def additions_iter(body, npc_list):
+            yield body.coinbase_coin
+            yield body.fees_coin
+            for coin_name, puzzle_hash, conditions_dict in npc_list:
+                for _ in created_outputs_for_conditions_dict(conditions_dict, coin_name):
+                    yield _
 
-            addition_counter = collections.Counter(additions)
-            for k, v in addition_counter.items():
-                if v > 1:
-                    raise ConsensusError(Err.DUPLICATE_OUTPUT, k)
+        additions = tuple(additions_iter(body, npc_list))
 
-            #  watch out for double-spends
+        #  watch out for duplicate outputs
 
-            removal_counter = collections.Counter(removals)
-            for k, v in removal_counter.items():
-                if v > 1:
-                    raise ConsensusError(Err.DOUBLE_SPEND, k)
+        addition_counter = collections.Counter(additions)
+        for k, v in addition_counter.items():
+            if v > 1:
+                raise ConsensusError(Err.DUPLICATE_OUTPUT, k)
 
-            # create a temporary overlay DB with the additions
+        #  watch out for double-spends
 
-            ram_storage = RAM_DB()
-            for _ in additions:
-                await ram_storage.add_preimage(_.coin_name_data().as_bin())
+        removal_counter = collections.Counter(removals)
+        for k, v in removal_counter.items():
+            if v > 1:
+                raise ConsensusError(Err.DOUBLE_SPEND, k)
 
-            ram_db = RAMUnspentDB(additions, self.tip_index + 1)
-            overlay_storage = OverlayStorage(ram_storage, storage)
-            unspent_db = OverlayUnspentDB(self.unspent_db, ram_db)
+        # create a temporary overlay DB with the additions
 
-            coin_futures = [asyncio.ensure_future(
-                coin_for_coin_name(_[0], overlay_storage, unspent_db)) for _ in npc_list]
+        ram_storage = RAM_DB()
+        for _ in additions:
+            await ram_storage.add_preimage(_.coin_name_data().as_bin())
 
-            # build cpc_list from npc_list
-            cpc_list = []
-            for coin_future, (coin_name, puzzle_hash, conditions_dict) in zip(coin_futures, npc_list):
-                coin = await coin_future
-                if coin is None:
-                    raise ConsensusError(Err.UNKNOWN_UNSPENT, coin_name)
-                cpc_list.append((coin, puzzle_hash, conditions_dict))
+        ram_db = RAMUnspentDB(additions, tip_index + 1)
+        overlay_storage = OverlayStorage(ram_storage, storage)
+        unspent_db = OverlayUnspentDB(unspent_db, ram_db)
 
-            # check that the revealed removal puzzles actually match the puzzle hash
+        coin_futures = [asyncio.ensure_future(
+            coin_for_coin_name(_[0], overlay_storage, unspent_db)) for _ in npc_list]
 
-            for coin, puzzle_hash, conditions_dict in cpc_list:
-                if puzzle_hash != coin.puzzle_hash:
-                    raise ConsensusError(Err.WRONG_PUZZLE_HASH, coin)
+        # build cpc_list from npc_list
+        cpc_list = []
+        for coin_future, (coin_name, puzzle_hash, conditions_dict) in zip(coin_futures, npc_list):
+            coin = await coin_future
+            if coin is None:
+                raise ConsensusError(Err.UNKNOWN_UNSPENT, coin_name)
+            cpc_list.append((coin, puzzle_hash, conditions_dict))
 
-            # check removals against UnspentDB
+        # check that the revealed removal puzzles actually match the puzzle hash
 
-            for coin, puzzle_hash, conditions_dict in cpc_list:
-                if coin in additions:
-                    # it's an ephemeral coin, created and destroyed in the same block
-                    continue
-                coin_name = coin.coin_name()
-                unspent = await unspent_db.unspent_for_coin_name(coin_name)
-                if (unspent is None or
-                        unspent.confirmed_block_index == 0 or
-                        unspent.confirmed_block_index >= self.tip_index):
-                    raise ConsensusError(Err.UNKNOWN_UNSPENT, coin_name)
-                if (0 < unspent.spent_block_index <= self.tip_index):
-                    raise ConsensusError(Err.DOUBLE_SPEND, coin_name)
+        for coin, puzzle_hash, conditions_dict in cpc_list:
+            if puzzle_hash != coin.puzzle_hash:
+                raise ConsensusError(Err.WRONG_PUZZLE_HASH, coin)
 
-            # check fees
+        # check removals against UnspentDB
 
-            fees = 0
-            for coin, puzzle_hash, conditions_dict in cpc_list:
-                fees -= coin.amount
+        for coin, puzzle_hash, conditions_dict in cpc_list:
+            if coin in additions:
+                # it's an ephemeral coin, created and destroyed in the same block
+                continue
+            coin_name = coin.coin_name()
+            unspent = await unspent_db.unspent_for_coin_name(coin_name)
+            if (unspent is None or
+                    unspent.confirmed_block_index == 0 or
+                    unspent.confirmed_block_index >= tip_index):
+                raise ConsensusError(Err.UNKNOWN_UNSPENT, coin_name)
+            if (0 < unspent.spent_block_index <= tip_index):
+                raise ConsensusError(Err.DOUBLE_SPEND, coin_name)
 
-            for coin in additions:
-                fees += coin.amount
+        # check fees
 
-            if fees != coinbase_reward:
-                raise ConsensusError(Err.BAD_COINBASE_REWARD, body.coinbase_coin)
+        fees = 0
+        for coin, puzzle_hash, conditions_dict in cpc_list:
+            fees -= coin.amount
 
-            # check solution for each CoinSolution pair
-            # this is where CHECKLOCKTIME etc. are verified
+        for coin in additions:
+            fees += coin.amount
 
-            hash_key_pairs = []
-            for coin, puzzle_hash, conditions_dict in cpc_list:
-                check_conditions_dict(coin, conditions_dict, self)
-                hash_key_pairs.extend(hash_key_pairs_for_conditions_dict(conditions_dict))
+        if fees != coinbase_reward:
+            raise ConsensusError(Err.BAD_COINBASE_REWARD, body.coinbase_coin)
 
-            # verify aggregated signature
+        # check solution for each CoinSolution pair
+        # this is where CHECKLOCKTIME etc. are verified
 
-            if not body.aggregated_signature.validate(hash_key_pairs):
-                raise ConsensusError(Err.BAD_AGGREGATE_SIGNATURE, body)
+        context = {}
+        hash_key_pairs = []
+        for coin, puzzle_hash, conditions_dict in cpc_list:
+            check_conditions_dict(coin, conditions_dict, context)
+            hash_key_pairs.extend(hash_key_pairs_for_conditions_dict(conditions_dict))
 
-            return additions, removals
+        # verify aggregated signature
 
-        except ConsensusError:
-            raise
-        except Exception as ex:
-            breakpoint()
-            raise ConsensusError(Err.UNKNOWN, ex)
+        if not body.aggregated_signature.validate(hash_key_pairs):
+            raise ConsensusError(Err.BAD_AGGREGATE_SIGNATURE, body)
+
+        return additions, removals
+
+    except ConsensusError:
+        raise
+    except Exception as ex:
+        breakpoint()
+        raise ConsensusError(Err.UNKNOWN, ex)
+
+
+async def apply_deltas(block_index, additions, removals, unspent_db, storage):
+    for coin in additions:
+        new_unspent = Unspent(coin.amount, block_index, 0)
+        await unspent_db.set_unspent_for_coin_name(coin.coin_name(), new_unspent)
+        await storage.add_preimage(coin.coin_name_data().as_bin())
+
+    for coin_name in removals:
+        unspent = await unspent_db.unspent_for_coin_name(coin_name)
+        new_unspent = Unspent(unspent.amount, unspent.confirmed_block_index, block_index)
+        await unspent_db.set_unspent_for_coin_name(coin_name, new_unspent)
