@@ -9,7 +9,7 @@ from .consensus import (
     created_outputs_for_conditions_dict, hash_key_pairs_for_conditions_dict,
 )
 from chiasim.hashable import (
-    BLSSignature, CoinName, HeaderHash, Program, ProgramHash, Unspent
+    BLSSignature, CoinName, Header, HeaderHash, Program, ProgramHash, Unspent
 )
 from chiasim.storage import OverlayStorage, OverlayUnspentDB, RAMUnspentDB, RAM_DB, Storage, UnspentDB
 
@@ -68,19 +68,25 @@ class ChainView:
     def for_genesis_hash(cls, genesis_hash: HeaderHash, unspent_db: UnspentDB):
         return cls(genesis_hash, genesis_hash, 0, unspent_db)
 
+    async def augment_chain_view(self, header, header_signature, storage, new_unspent_db, reward) -> "ChainView":
+        tip_index = self.tip_index + 1
+        additions, removals = await self.accept_new_block(
+            header, header_signature, storage, reward)
+        await apply_deltas(
+            tip_index, additions, removals, storage, new_unspent_db)
+        return self.__class__(
+            self.genesis_hash, HeaderHash(header), tip_index, new_unspent_db)
+
     async def accept_new_block(
-            self, header: HeaderHash, header_signature: BLSSignature,
+            self, header: Header, header_signature: BLSSignature,
             storage: Storage, coinbase_reward: int):
-        r = await accept_new_block(
-            self.tip_hash, self.tip_index+1, header, header_signature,
-            storage, self.unspent_db, coinbase_reward)
-        return r
+        return await accept_new_block(
+            self, header, header_signature, storage, coinbase_reward)
 
 
 async def accept_new_block(
-        tip_hash: HeaderHash, tip_index: int, header: HeaderHash,
-        header_signature: BLSSignature, storage: Storage, unspent_db: UnspentDB,
-        coinbase_reward: int):
+        chain_view: ChainView, header: Header, header_signature: BLSSignature,
+        storage: Storage, coinbase_reward: int):
     """
     Checks the block against the existing ChainView object.
     Returns a list of additions (coins), and removals (coin names).
@@ -93,7 +99,7 @@ async def accept_new_block(
     try:
         # verify header extends current view
 
-        if header.previous_hash != tip_hash:
+        if header.previous_hash != chain_view.tip_hash:
             raise ConsensusError(Err.DOES_NOT_EXTEND, header)
 
         # get proof of space
@@ -158,9 +164,9 @@ async def accept_new_block(
         for _ in additions:
             await ram_storage.add_preimage(_.coin_name_data().as_bin())
 
-        ram_db = RAMUnspentDB(additions, tip_index + 1)
+        ram_db = RAMUnspentDB(additions, chain_view.tip_index + 1)
         overlay_storage = OverlayStorage(ram_storage, storage)
-        unspent_db = OverlayUnspentDB(unspent_db, ram_db)
+        unspent_db = OverlayUnspentDB(chain_view.unspent_db, ram_db)
 
         coin_futures = [asyncio.ensure_future(
             coin_for_coin_name(_[0], overlay_storage, unspent_db)) for _ in npc_list]
@@ -189,9 +195,9 @@ async def accept_new_block(
             unspent = await unspent_db.unspent_for_coin_name(coin_name)
             if (unspent is None or
                     unspent.confirmed_block_index == 0 or
-                    unspent.confirmed_block_index >= tip_index):
+                    unspent.confirmed_block_index > chain_view.tip_index):
                 raise ConsensusError(Err.UNKNOWN_UNSPENT, coin_name)
-            if (0 < unspent.spent_block_index <= tip_index):
+            if (0 < unspent.spent_block_index <= chain_view.tip_index):
                 raise ConsensusError(Err.DOUBLE_SPEND, coin_name)
 
         # check fees

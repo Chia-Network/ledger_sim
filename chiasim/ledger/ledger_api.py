@@ -74,43 +74,13 @@ class LedgerAPI:
 
             [await self._storage.add_preimage(_.as_bin()) for _ in (header, body)]
 
-            additions, removals = await self._chain_view.accept_new_block(
-                header, header_signature, self._storage, REWARD)
+            chain_view = await self._chain_view.augment_chain_view(
+                header, header_signature, self._storage, self._storage, REWARD)
 
-            await apply_deltas(
-                self._chain_view.tip_index+1, additions, removals, self._storage, self._storage)
-            self._chain_view = ChainView(
-                GENESIS_HASH, header.hash(), self._chain_view.tip_index+1, self._storage)
+            self._chain_view = chain_view
 
             self._block_index += 1
             self._tip = HeaderHash(header)
-
-        return dict(header=header, body=body)
-
-    @api_request(
-        pos=ProofOfSpace.from_bin,
-        coinbase_coin=Coin.from_bin,
-        coinbase_signature=BLSSignature.from_bin,
-        fees_puzzle_hash=ProgramHash.from_bin
-    )
-    async def do_farm_block(self, pos, coinbase_coin, coinbase_signature, fees_puzzle_hash):
-        block_number = self._block_index
-
-        log.info("farm_block")
-        log.info("coinbase_coin: %s", coinbase_coin)
-        log.info("fees_puzzle_hash: %s", fees_puzzle_hash)
-
-        timestamp = uint64(time.time())
-
-        spend_bundle = SpendBundle.aggregate(self._spend_bundles)
-        self._spend_bundles = []
-
-        header, body = farm_new_block(
-            self._tip, block_number, pos, spend_bundle, coinbase_coin,
-            coinbase_signature, fees_puzzle_hash, timestamp)
-
-        self._block_index += 1
-        self._tip = HeaderHash(header)
 
         return dict(header=header, body=body)
 
