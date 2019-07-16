@@ -68,7 +68,8 @@ class ChainView:
     def for_genesis_hash(cls, genesis_hash: HeaderHash, unspent_db: UnspentDB):
         return cls(genesis_hash, genesis_hash, 0, unspent_db)
 
-    async def augment_chain_view(self, header, header_signature, storage, new_unspent_db, reward) -> "ChainView":
+    async def augment_chain_view(
+            self, header, header_signature, storage, new_unspent_db, reward) -> "ChainView":
         tip_index = self.tip_index + 1
         additions, removals = await self.accept_new_block(
             header, header_signature, storage, reward)

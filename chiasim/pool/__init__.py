@@ -5,13 +5,14 @@ from chiasim.hashable import BLSPublicKey, BLSSignature, Coin, ProgramHash
 
 
 HIERARCHICAL_PRIVATE_KEY = blspy.ExtendedPrivateKey.from_seed(b"foo")
-POOL_PRIVATE_KEY = HIERARCHICAL_PRIVATE_KEY.private_child(0).get_private_key()
-POOL_PUBLIC_KEY = BLSPublicKey.from_bin(POOL_PRIVATE_KEY.get_public_key().serialize())
+POOL_PRIVATE_KEYS = [HIERARCHICAL_PRIVATE_KEY.private_child(_).get_private_key() for _ in range(100)]
+POOL_PUBLIC_KEYS = [BLSPublicKey.from_bin(_.get_public_key().serialize()) for _ in POOL_PRIVATE_KEYS]
+POOL_LOOKUP = dict(zip(POOL_PUBLIC_KEYS, POOL_PRIVATE_KEYS))
 
 
-def get_pool_public_key() -> BLSPublicKey:
+def get_pool_public_key(index=0) -> BLSPublicKey:
     # TODO: make this configurable
-    return POOL_PUBLIC_KEY
+    return POOL_PUBLIC_KEYS[index]
 
 
 def signature_for_coinbase(coin: Coin, pool_private_key: blspy.PrivateKey):
@@ -20,9 +21,10 @@ def signature_for_coinbase(coin: Coin, pool_private_key: blspy.PrivateKey):
 
 
 def sign_coinbase_coin(coin: Coin, public_key: BLSPublicKey):
-    if public_key != public_key:
+    private_key = POOL_LOOKUP.get(public_key)
+    if private_key is None:
         raise ValueError("unknown public key")
-    return signature_for_coinbase(coin, POOL_PRIVATE_KEY)
+    return signature_for_coinbase(coin, private_key)
 
 
 def create_coinbase_coin(block_index: int, puzzle_hash: ProgramHash, reward: uint64):

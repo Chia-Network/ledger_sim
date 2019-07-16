@@ -6,12 +6,11 @@ import time
 from chiasim.atoms import uint64
 from chiasim.farming import farm_new_block, get_plot_public_key, sign_header
 from chiasim.hashable import (
-    BLSSignature, Coin, HeaderHash,
-    ProgramHash, ProofOfSpace, SpendBundle
+    HeaderHash, ProgramHash, ProofOfSpace, SpendBundle
 )
 from chiasim.pool import create_coinbase_coin_and_signature, get_pool_public_key
 from chiasim.remote.api_decorators import api_request
-from chiasim.validation import ChainView, apply_deltas, validate_spend_bundle_signature
+from chiasim.validation import ChainView, validate_spend_bundle_signature
 
 log = logging.getLogger(__name__)
 

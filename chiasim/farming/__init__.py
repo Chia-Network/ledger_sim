@@ -61,7 +61,7 @@ def farm_new_block(
         - select a timestamp = max(now, minimum_legal_timestamp)
         - create blank extension data
         - collect up coinbase coin with coinbase signature (if solo mining, we get these locally)
-        - return Header, HeaderSignature, Body, Additions and Removals
+        - return Header, Body
     """
 
     program_cost = 0
@@ -78,7 +78,3 @@ def farm_new_block(
 
     header = Header(previous_header, timestamp, proof_of_space, body, extension_data)
     return header, body
-
-    # still need to do the following:
-    # private_key = private_for_public(proof_of_space.plot_pubkey)
-    # header_signature = private_key.sign(std_hash(header.as_bin()))
