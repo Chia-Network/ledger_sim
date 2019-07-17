@@ -1,33 +1,26 @@
 import asyncio
-import binascii
 import pathlib
 import tempfile
 
 from aiter import map_aiter
 
-from chiasim.atoms import hexbytes
+from chiasim.clients import ledger_sim
 from chiasim.ledger import ledger_api
-from chiasim.hashable import Body, CoinName, Header, HeaderHash, Program, ProgramHash
+from chiasim.hashable import Program, ProgramHash
 from chiasim.puzzles import p2_delegated_puzzle
 from chiasim.remote.api_server import api_server
 from chiasim.remote.client import request_response_proxy
 from chiasim.storage import RAM_DB
 from chiasim.utils.log import init_logging
 from chiasim.utils.server import start_unix_server_aiter
+from chiasim.wallet.deltas import additions_for_body, removals_for_body
 
 from tests.helpers import build_spend_bundle, PUBLIC_KEYS
 
 
-REMOTE_SIGNATURES = dict(
-    get_tip=dict(genesis_hash=hexbytes, tip_hash=HeaderHash.from_bin),
-    next_block=dict(header=Header.from_bin, body=Body.from_bin),
-    all_unspents=dict(unspents=lambda u: [CoinName.from_bin(_) for _ in u]),
-)
-
-
 async def proxy_for_unix_connection(path):
     reader, writer = await asyncio.open_unix_connection(path)
-    return request_response_proxy(reader, writer, REMOTE_SIGNATURES)
+    return request_response_proxy(reader, writer, ledger_sim.REMOTE_SIGNATURES)
 
 
 async def client_test(path):
@@ -36,7 +29,7 @@ async def client_test(path):
 
     puzzle_sexp = p2_delegated_puzzle.puzzle_for_pk(PUBLIC_KEYS[1])
     coinbase_puzzle_hash = ProgramHash(Program(puzzle_sexp))
-    fees_puzzle_hash = ProgramHash(Program(p2_delegated_puzzle.puzzle_for_pk(PUBLIC_KEYS[2])))
+    fees_puzzle_hash = ProgramHash(Program(p2_delegated_puzzle.puzzle_for_pk(PUBLIC_KEYS[6])))
 
     r = await remote.next_block(
         coinbase_puzzle_hash=coinbase_puzzle_hash, fees_puzzle_hash=fees_puzzle_hash)
@@ -71,6 +64,12 @@ async def client_test(path):
 
     print(header)
     print(body)
+    my_new_coins_2 = tuple(additions_for_body(body))
+    assert my_new_coins == my_new_coins_2[2:]
+
+    removals = removals_for_body(body)
+    assert len(removals) == 1
+    assert repr(removals[0]) == '<CoinNameDataPointer: 1bf5bbf69b15b052b5b14d39f3a5c4c4e51525172c57f4f05ab184990ea9ab0b>'
 
     # add a SpendBundle
     pp = p2_delegated_puzzle.puzzle_for_pk(PUBLIC_KEYS[0])

@@ -40,13 +40,13 @@ We need ipython because it allows ~await~ syntax on the command-line.
 - test a client
 #+BEGIN_SRC bash
 $ ipython
-In [1]: import asyncio
-In [2]: from chiasim.remote.client import request_response_proxy
-In [3]: reader, writer = await asyncio.open_connection("localhost", 9868)
-In [4]: ledger_api = request_response_proxy(reader, writer)
-In [5]: await ledger_api.ping()
-In [5]: await ledger_api.ping(m="foo")
-Out[5]: {'response': "got ping message 'foo' at time 2019-07-03 00:21:02.741468"}
-In [6]: await ledger_api.all_unspents()
-Out[6]: {'unspents': []}
+In [1]: from chiasim.clients.ledger_sim import connect_to_ledger_sim
+In [2]: ledger_api = await connect_to_ledger_sim("localhost", 9868)
+In [3]: await ledger_api.ping(m="foo")
+Out[3]: {'response': "got ping message 'foo' at time 2019-07-17 21:20:49.133717"}
+In [4]: await ledger_api.all_unspents()
+In [5]: await ledger_api.get_tip()
+{'tip_hash': <HeaderPointer: 0000000000000000000000000000000000000000000000000000000000000000>,
+ 'tip_index': 0,
+ 'genesis_hash': <HeaderPointer: 0000000000000000000000000000000000000000000000000000000000000000>}
 #+END_SRC

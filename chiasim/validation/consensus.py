@@ -61,16 +61,6 @@ def hash_key_pairs_for_conditions_dict(conditions_dict):
     return pairs
 
 
-def solution_program_output(body):
-    sexp = clvm.eval_f(clvm.eval_f, body.solution_program.code, [])
-    r = []
-    for _ in sexp.as_iter():
-        coin_name = CoinName(_.first().as_python())
-        solution = _.rest().first()
-        r.append((coin_name, solution))
-    return r
-
-
 async def coin_for_coin_name(coin_name, storage, unspent_db):
     coin_name_data_blob = await storage.hash_preimage(coin_name)
     if coin_name_data_blob is None:
@@ -79,21 +69,3 @@ async def coin_for_coin_name(coin_name, storage, unspent_db):
     unspent = await unspent_db.unspent_for_coin_name(CoinName(coin_name_data))
     coin = Coin(coin_name_data.parent_coin_info, coin_name_data.puzzle_hash, unspent.amount)
     return coin
-
-
-def additions_for_solution(coin_name, solution):
-    return created_outputs_for_conditions_dict(
-        conditions_dict_for_solution(solution), coin_name)
-
-
-async def additions_for_body(body, storage):
-    yield body.coinbase_coin
-    yield body.fees_coin
-    for (coin_name, solution) in solution_program_output(body):
-        for _ in additions_for_solution(coin_name, solution):
-            yield _
-
-
-def removals_for_body(body):
-    coin_name_solution_pairs = solution_program_output(body)
-    return [_[0] for _ in coin_name_solution_pairs]

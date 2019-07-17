@@ -9,7 +9,7 @@ from chiasim.pool import create_coinbase_coin_and_signature, get_pool_public_key
 from chiasim.puzzles import p2_delegated_puzzle
 from chiasim.storage import RAM_DB
 from chiasim.validation import ChainView, validate_spend_bundle_signature
-from chiasim.validation.consensus import removals_for_body
+from chiasim.wallet.deltas import removals_for_body
 
 from .helpers import build_spend_bundle, PRIVATE_KEYS, PUBLIC_KEYS
 
@@ -134,7 +134,8 @@ def test_farm_two_blocks():
     assert additions[1].puzzle_hash == body.fees_coin.puzzle_hash
     assert additions[1].amount == 0
 
-    chain_view = run(chain_view.augment_chain_view(header, header_signature, unspent_db, unspent_db, REWARD))
+    chain_view = run(chain_view.augment_chain_view(
+        header, header_signature, unspent_db, unspent_db, REWARD))
 
     assert chain_view.genesis_hash == GENESIS_BLOCK
     assert chain_view.tip_hash == HeaderHash(header)

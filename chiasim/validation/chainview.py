@@ -147,7 +147,7 @@ async def accept_new_block(
 
         #  watch out for duplicate outputs
 
-        addition_counter = collections.Counter(additions)
+        addition_counter = collections.Counter(_.coin_name() for _ in additions)
         for k, v in addition_counter.items():
             if v > 1:
                 raise ConsensusError(Err.DUPLICATE_OUTPUT, k)

@@ -8,6 +8,7 @@ from opacity import binutils
 class ConditionOpcode(bytes, enum.Enum):
     AGG_SIG = bytes([50])
     CREATE_COIN = bytes([51])
+    ENSURE_CREATED = bytes([52])
 
 
 def parse_sexp_to_condition(sexp):

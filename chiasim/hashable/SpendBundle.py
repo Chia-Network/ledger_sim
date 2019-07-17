@@ -26,7 +26,7 @@ class SpendBundle:
         return cls(coin_solutions, aggregated_signature)
 
     def additions(self):
-        from chiasim.validation.consensus import additions_for_solution
+        from chiasim.wallet.deltas import additions_for_solution
         items = []
         for coin_solution in self.coin_solutions._items:
             items += additions_for_solution(coin_solution.coin.coin_name(), coin_solution.solution.code)

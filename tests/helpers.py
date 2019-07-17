@@ -1,5 +1,3 @@
-import binascii
-
 import blspy
 import clvm
 
@@ -8,8 +6,7 @@ from opacity import binutils
 from chiasim.hashable import Coin, CoinSolution, Program, SpendBundle, std_hash
 from chiasim.puzzles import p2_delegated_puzzle
 from chiasim.validation.Conditions import (
-    ConditionOpcode, conditions_by_opcode, conditions_to_sexp,
-    make_create_coin_condition
+    conditions_by_opcode, make_create_coin_condition
 )
 from chiasim.validation.consensus import (
     conditions_for_solution, hash_key_pairs_for_conditions_dict
