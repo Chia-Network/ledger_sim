@@ -1,11 +1,13 @@
 import asyncio
+import binascii
 import pathlib
 import tempfile
 
 from aiter import map_aiter
 
+from chiasim.atoms import hexbytes
 from chiasim.ledger import ledger_api
-from chiasim.hashable import Body, CoinName, Header, Program, ProgramHash
+from chiasim.hashable import Body, CoinName, Header, HeaderHash, Program, ProgramHash
 from chiasim.remote.api_server import api_server
 from chiasim.remote.client import request_response_proxy
 from chiasim.storage import RAM_DB
@@ -16,6 +18,7 @@ from tests.helpers import build_spend_bundle, make_simple_puzzle_program, PUBLIC
 
 
 REMOTE_SIGNATURES = dict(
+    get_tip=dict(genesis_hash=hexbytes, tip_hash=HeaderHash.from_bin),
     next_block=dict(header=Header.from_bin, body=Body.from_bin),
     all_unspents=dict(unspents=lambda u: [CoinName.from_bin(_) for _ in u]),
 )
@@ -86,6 +89,13 @@ async def client_test(path):
 
     r = await remote.all_unspents()
     print("unspents = %s" % r.get("unspents"))
+
+    r = await remote.get_tip()
+    print(r)
+    header_hash = r["tip_hash"]
+    header = await header_hash.obj(remote)
+    assert r["tip_index"] == 3
+    assert r["genesis_hash"] == bytes([0] * 32)
 
 
 def test_client_server():

@@ -44,6 +44,13 @@ class LedgerAPI:
         # Otherwise, it's inconsistent with the mempool
         return dict(response="accepted %s" % tx)
 
+    async def do_get_tip(self):
+        log.info("get_tip")
+        chain_view = self._chain_view
+        return dict(
+            tip_hash=chain_view.tip_hash, tip_index=chain_view.tip_index,
+            genesis_hash=chain_view.genesis_hash)
+
     @api_request(
         coinbase_puzzle_hash=ProgramHash.from_bin,
         fees_puzzle_hash=ProgramHash.from_bin,
@@ -86,6 +93,10 @@ class LedgerAPI:
     async def do_all_unspents(self, **kwargs):
         all_unspents = [_[0] async for _ in self._storage.all_unspents()]
         return dict(unspents=all_unspents)
+
+    async def do_hash_preimage(self, id):
+        r = await self._storage.hash_preimage(id)
+        return r
 
 
 """
