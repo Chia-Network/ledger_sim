@@ -8,13 +8,14 @@ from aiter import map_aiter
 from chiasim.atoms import hexbytes
 from chiasim.ledger import ledger_api
 from chiasim.hashable import Body, CoinName, Header, HeaderHash, Program, ProgramHash
+from chiasim.puzzles import p2_delegated_puzzle
 from chiasim.remote.api_server import api_server
 from chiasim.remote.client import request_response_proxy
 from chiasim.storage import RAM_DB
 from chiasim.utils.log import init_logging
 from chiasim.utils.server import start_unix_server_aiter
 
-from tests.helpers import build_spend_bundle, make_simple_puzzle_program, PUBLIC_KEYS
+from tests.helpers import build_spend_bundle, PUBLIC_KEYS
 
 
 REMOTE_SIGNATURES = dict(
@@ -33,9 +34,9 @@ async def client_test(path):
 
     remote = await proxy_for_unix_connection(path)
 
-    puzzle_sexp = make_simple_puzzle_program(PUBLIC_KEYS[1])
+    puzzle_sexp = p2_delegated_puzzle.puzzle_for_pk(PUBLIC_KEYS[1])
     coinbase_puzzle_hash = ProgramHash(Program(puzzle_sexp))
-    fees_puzzle_hash = ProgramHash(Program(make_simple_puzzle_program(PUBLIC_KEYS[2])))
+    fees_puzzle_hash = ProgramHash(Program(p2_delegated_puzzle.puzzle_for_pk(PUBLIC_KEYS[2])))
 
     r = await remote.next_block(
         coinbase_puzzle_hash=coinbase_puzzle_hash, fees_puzzle_hash=fees_puzzle_hash)
@@ -61,7 +62,7 @@ async def client_test(path):
 
     my_new_coins = spend_bundle.additions()
 
-    coinbase_puzzle_hash = ProgramHash(Program(make_simple_puzzle_program(PUBLIC_KEYS[2])))
+    coinbase_puzzle_hash = ProgramHash(Program(p2_delegated_puzzle.puzzle_for_pk(PUBLIC_KEYS[2])))
 
     r = await remote.next_block(
         coinbase_puzzle_hash=coinbase_puzzle_hash, fees_puzzle_hash=fees_puzzle_hash)
@@ -72,7 +73,7 @@ async def client_test(path):
     print(body)
 
     # add a SpendBundle
-    pp = make_simple_puzzle_program(PUBLIC_KEYS[0])
+    pp = p2_delegated_puzzle.puzzle_for_pk(PUBLIC_KEYS[0])
     input_coin = my_new_coins[0]
     spend_bundle = build_spend_bundle(coin=input_coin, puzzle_program=pp, conditions=[])
     _ = await remote.push_tx(tx=spend_bundle)
