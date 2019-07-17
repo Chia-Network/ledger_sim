@@ -22,9 +22,9 @@ def test_1():
         (puzzle_program_1, 1000), (puzzle_program_2, 2000),
     ]]
 
-    puzzle_hash_solution_blob = p2_delegated_puzzle.solution_for_conditions(puzzle_program_0, conditions)
+    puzzle_hash_solution = p2_delegated_puzzle.solution_for_conditions(puzzle_program_0, conditions)
 
-    output_conditions = conditions_for_solution(puzzle_hash_solution_blob, trace_eval)
+    output_conditions = conditions_for_solution(puzzle_hash_solution.code, trace_eval)
     from pprint import pprint
     output_conditions_dict = conditions_by_opcode(output_conditions)
     pprint(output_conditions_dict)

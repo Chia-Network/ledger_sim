@@ -1,7 +1,7 @@
 import asyncio
 
 from chiasim.hashable import (
-    std_hash, EORPrivateKey, HeaderHash, Program, ProgramHash,
+    std_hash, EORPrivateKey, HeaderHash, ProgramHash,
     ProofOfSpace, BLSPublicKey, SpendBundle
 )
 from chiasim.farming import farm_new_block, get_plot_public_key, sign_header
@@ -20,7 +20,7 @@ GENESIS_BLOCK = std_hash(bytes([0]))
 def farm_block(
         previous_header, block_number, proof_of_space, spend_bundle, coinbase_puzzle_hash, reward):
 
-    fees_puzzle_hash = ProgramHash(Program(p2_delegated_puzzle.puzzle_for_pk(PUBLIC_KEYS[3])))
+    fees_puzzle_hash = ProgramHash(p2_delegated_puzzle.puzzle_for_pk(PUBLIC_KEYS[3]))
 
     coinbase_coin, coinbase_signature = create_coinbase_coin_and_signature(
         block_number, coinbase_puzzle_hash, reward, proof_of_space.pool_public_key)
@@ -59,7 +59,7 @@ def test_farm_block_empty():
     pos = ProofOfSpace(get_pool_public_key(), get_plot_public_key())
 
     puzzle_program = p2_delegated_puzzle.puzzle_for_pk(PUBLIC_KEYS[1])
-    puzzle_hash = ProgramHash(Program(puzzle_program))
+    puzzle_hash = ProgramHash(puzzle_program)
 
     spend_bundle = SpendBundle.aggregate([])
 
@@ -82,7 +82,7 @@ def test_farm_block_one_spendbundle():
     pos = ProofOfSpace(get_pool_public_key(), get_plot_public_key())
 
     puzzle_program = p2_delegated_puzzle.puzzle_for_pk(PUBLIC_KEYS[1])
-    puzzle_hash = ProgramHash(Program(puzzle_program))
+    puzzle_hash = ProgramHash(puzzle_program)
 
     empty_spend_bundle = SpendBundle.aggregate([])
     header, header_signature, body = farm_block(
@@ -120,7 +120,7 @@ def test_farm_two_blocks():
     pos_1 = ProofOfSpace(get_pool_public_key(), get_plot_public_key())
 
     puzzle_program = p2_delegated_puzzle.puzzle_for_pk(PUBLIC_KEYS[1])
-    puzzle_hash = ProgramHash(Program(puzzle_program))
+    puzzle_hash = ProgramHash(puzzle_program)
 
     empty_spend_bundle = SpendBundle.aggregate([])
     header, header_signature, body = farm_block(

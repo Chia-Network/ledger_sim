@@ -6,7 +6,7 @@ from aiter import map_aiter
 
 from chiasim.clients import ledger_sim
 from chiasim.ledger import ledger_api
-from chiasim.hashable import Program, ProgramHash
+from chiasim.hashable import ProgramHash
 from chiasim.puzzles import p2_delegated_puzzle
 from chiasim.remote.api_server import api_server
 from chiasim.remote.client import request_response_proxy
@@ -27,9 +27,9 @@ async def client_test(path):
 
     remote = await proxy_for_unix_connection(path)
 
-    puzzle_sexp = p2_delegated_puzzle.puzzle_for_pk(PUBLIC_KEYS[1])
-    coinbase_puzzle_hash = ProgramHash(Program(puzzle_sexp))
-    fees_puzzle_hash = ProgramHash(Program(p2_delegated_puzzle.puzzle_for_pk(PUBLIC_KEYS[6])))
+    coinbase_puzzle = p2_delegated_puzzle.puzzle_for_pk(PUBLIC_KEYS[1])
+    coinbase_puzzle_hash = ProgramHash(coinbase_puzzle)
+    fees_puzzle_hash = ProgramHash(p2_delegated_puzzle.puzzle_for_pk(PUBLIC_KEYS[6]))
 
     r = await remote.next_block(
         coinbase_puzzle_hash=coinbase_puzzle_hash, fees_puzzle_hash=fees_puzzle_hash)
@@ -42,7 +42,7 @@ async def client_test(path):
     print("unspents = %s" % r.get("unspents"))
 
     # add a SpendBundle
-    spend_bundle = build_spend_bundle(coinbase_coin, puzzle_sexp)
+    spend_bundle = build_spend_bundle(coinbase_coin, coinbase_puzzle)
 
     # break the signature
     if 0:
@@ -55,7 +55,7 @@ async def client_test(path):
 
     my_new_coins = spend_bundle.additions()
 
-    coinbase_puzzle_hash = ProgramHash(Program(p2_delegated_puzzle.puzzle_for_pk(PUBLIC_KEYS[2])))
+    coinbase_puzzle_hash = ProgramHash(p2_delegated_puzzle.puzzle_for_pk(PUBLIC_KEYS[2]))
 
     r = await remote.next_block(
         coinbase_puzzle_hash=coinbase_puzzle_hash, fees_puzzle_hash=fees_puzzle_hash)

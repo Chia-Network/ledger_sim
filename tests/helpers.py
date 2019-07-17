@@ -48,7 +48,7 @@ def build_spend_bundle(coin=None, puzzle_program=None, conditions=None):
     if conditions is None:
         conditions = build_conditions()
 
-    solution = Program(p2_delegated_puzzle.solution_for_conditions(puzzle_program, conditions))
+    solution = p2_delegated_puzzle.solution_for_conditions(puzzle_program, conditions)
     coin_solution = CoinSolution(coin, solution)
 
     signatures = []

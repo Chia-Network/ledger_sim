@@ -14,6 +14,8 @@ import clvm
 
 from opacity import binutils
 
+from chiasim.hashable import Program
+
 
 def puzzle_for_conditions(conditions):
-    return clvm.to_sexp_f([binutils.assemble("#q"), conditions])
+    return Program(clvm.to_sexp_f([binutils.assemble("#q"), conditions]))
