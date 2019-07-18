@@ -3,6 +3,7 @@ import clvm
 
 from opacity import binutils
 
+from chiasim.hack.keys import PUBLIC_KEYS, PRIVATE_KEYS, KEYCHAIN
 from chiasim.hashable import Coin, CoinSolution, SpendBundle, std_hash
 from chiasim.puzzles import p2_delegated_puzzle
 from chiasim.validation.Conditions import (
@@ -11,14 +12,6 @@ from chiasim.validation.Conditions import (
 from chiasim.validation.consensus import (
     conditions_for_solution, hash_key_pairs_for_conditions_dict
 )
-
-from .BLSPrivateKey import BLSPrivateKey
-
-
-HIERARCHICAL_PRIVATE_KEY = blspy.ExtendedPrivateKey.from_seed(b"foo")
-PRIVATE_KEYS = [HIERARCHICAL_PRIVATE_KEY.private_child(_).get_private_key() for _ in range(10)]
-PUBLIC_KEYS = [_.get_public_key().serialize() for _ in PRIVATE_KEYS]
-KEYCHAIN = {_.get_public_key().serialize(): BLSPrivateKey(_) for _ in PRIVATE_KEYS}
 
 
 def trace_eval(eval_f, args, env):
@@ -39,12 +32,7 @@ def build_conditions():
     return conditions
 
 
-def build_spend_bundle(coin=None, puzzle_program=None, conditions=None):
-    if coin is None:
-        puzzle_program = p2_delegated_puzzle.puzzle_for_pk(PUBLIC_KEYS[0])
-        parent = bytes(([0] * 31) + [1])
-        coin = Coin(parent, std_hash(puzzle_program.as_bin()), 50000)
-
+def build_spend_bundle(coin, puzzle_program, conditions=None):
     if conditions is None:
         conditions = build_conditions()
 
