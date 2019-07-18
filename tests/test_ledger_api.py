@@ -69,7 +69,9 @@ async def client_test(path):
 
     removals = removals_for_body(body)
     assert len(removals) == 1
-    assert repr(removals[0]) == '<CoinNameDataPointer: 1bf5bbf69b15b052b5b14d39f3a5c4c4e51525172c57f4f05ab184990ea9ab0b>'
+    assert repr(removals[0]) == (
+        '<CoinNameDataPointer: '
+        '1bf5bbf69b15b052b5b14d39f3a5c4c4e51525172c57f4f05ab184990ea9ab0b>')
 
     # add a SpendBundle
     pp = p2_delegated_puzzle.puzzle_for_pk(PUBLIC_KEYS[0])

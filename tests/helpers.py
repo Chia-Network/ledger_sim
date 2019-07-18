@@ -3,7 +3,7 @@ import clvm
 
 from opacity import binutils
 
-from chiasim.hashable import Coin, CoinSolution, Program, SpendBundle, std_hash
+from chiasim.hashable import Coin, CoinSolution, SpendBundle, std_hash
 from chiasim.puzzles import p2_delegated_puzzle
 from chiasim.validation.Conditions import (
     conditions_by_opcode, make_create_coin_condition

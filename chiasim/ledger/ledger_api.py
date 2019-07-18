@@ -15,13 +15,12 @@ from chiasim.validation import ChainView, validate_spend_bundle_signature
 log = logging.getLogger(__name__)
 
 
-GENESIS_HASH = bytes([0] * 32)
+GENESIS_HASH = HeaderHash([0] * 32)
 
 
 class LedgerAPI:
-    def __init__(self, block_tip: HeaderHash, block_index: uint64, storage):
+    def __init__(self, block_tip: HeaderHash, storage):
         self._tip = block_tip
-        self._block_index = block_index
 
         self._chain_view = ChainView.for_genesis_hash(GENESIS_HASH, storage)
         self._storage = storage
@@ -85,7 +84,6 @@ class LedgerAPI:
 
             self._chain_view = chain_view
 
-            self._block_index += 1
             self._tip = HeaderHash(header)
 
         return dict(header=header, body=body)
