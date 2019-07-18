@@ -2,8 +2,8 @@ import clvm
 
 from opacity import binutils
 
-from chiasim.hack.keys import PUBLIC_KEYS, KEYCHAIN, conditions_for_payment
-from chiasim.hashable import CoinSolution, ProgramHash, SpendBundle
+from chiasim.hack.keys import KEYCHAIN, puzzle_hash, conditions_for_payment
+from chiasim.hashable import CoinSolution, SpendBundle
 from chiasim.puzzles import p2_delegated_puzzle
 from chiasim.validation.Conditions import conditions_by_opcode
 from chiasim.validation.consensus import (
@@ -21,8 +21,8 @@ def trace_eval(eval_f, args, env):
 
 def build_spend_bundle(coin, puzzle_program):
     conditions = conditions_for_payment([
-        (ProgramHash(p2_delegated_puzzle.puzzle_for_pk(PUBLIC_KEYS[0])), 1000),
-        (ProgramHash(p2_delegated_puzzle.puzzle_for_pk(PUBLIC_KEYS[1])), 2000),
+        (puzzle_hash(0), 1000),
+        (puzzle_hash(1), 2000),
     ])
 
     solution = p2_delegated_puzzle.solution_for_conditions(puzzle_program, conditions)

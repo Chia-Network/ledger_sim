@@ -1,3 +1,4 @@
+from chiasim.hack.keys import puzzle_program
 from chiasim.hashable import std_hash
 from chiasim.puzzles import p2_delegated_puzzle
 from chiasim.validation.consensus import (
@@ -5,18 +6,13 @@ from chiasim.validation.consensus import (
 )
 from chiasim.validation.Conditions import conditions_by_opcode, make_create_coin_condition
 
-from tests.helpers import (
-    PUBLIC_KEYS,
-    trace_eval,
-)
+from tests.helpers import trace_eval
 
 
 def test_1():
-    pub_key_0, pub_key_1, pub_key_2 = PUBLIC_KEYS[:3]
-
-    puzzle_program_0 = p2_delegated_puzzle.puzzle_for_pk(pub_key_0)
-    puzzle_program_1 = p2_delegated_puzzle.puzzle_for_pk(pub_key_1)
-    puzzle_program_2 = p2_delegated_puzzle.puzzle_for_pk(pub_key_2)
+    puzzle_program_0 = puzzle_program(0)
+    puzzle_program_1 = puzzle_program(1)
+    puzzle_program_2 = puzzle_program(2)
 
     conditions = [make_create_coin_condition(std_hash(pp.as_bin()), amount) for pp, amount in [
         (puzzle_program_1, 1000), (puzzle_program_2, 2000),
