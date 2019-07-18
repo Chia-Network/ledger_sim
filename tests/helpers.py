@@ -1,10 +1,9 @@
-import blspy
 import clvm
 
 from opacity import binutils
 
-from chiasim.hack.keys import PUBLIC_KEYS, PRIVATE_KEYS, KEYCHAIN
-from chiasim.hashable import Coin, CoinSolution, SpendBundle, std_hash
+from chiasim.hack.keys import PUBLIC_KEYS, KEYCHAIN
+from chiasim.hashable import CoinSolution, SpendBundle, std_hash
 from chiasim.puzzles import p2_delegated_puzzle
 from chiasim.validation.Conditions import (
     conditions_by_opcode, make_create_coin_condition
@@ -32,9 +31,8 @@ def build_conditions():
     return conditions
 
 
-def build_spend_bundle(coin, puzzle_program, conditions=None):
-    if conditions is None:
-        conditions = build_conditions()
+def build_spend_bundle(coin, puzzle_program):
+    conditions = build_conditions()
 
     solution = p2_delegated_puzzle.solution_for_conditions(puzzle_program, conditions)
     coin_solution = CoinSolution(coin, solution)

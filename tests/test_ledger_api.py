@@ -5,8 +5,9 @@ import tempfile
 from aiter import map_aiter
 
 from chiasim.clients import ledger_sim
-from chiasim.ledger import ledger_api
+from chiasim.hack.keys import spend_coin
 from chiasim.hashable import ProgramHash
+from chiasim.ledger import ledger_api
 from chiasim.puzzles import p2_delegated_puzzle
 from chiasim.remote.api_server import api_server
 from chiasim.remote.client import request_response_proxy
@@ -76,7 +77,7 @@ async def client_test(path):
     # add a SpendBundle
     pp = p2_delegated_puzzle.puzzle_for_pk(PUBLIC_KEYS[0])
     input_coin = my_new_coins[0]
-    spend_bundle = build_spend_bundle(coin=input_coin, puzzle_program=pp, conditions=[])
+    spend_bundle = build_spend_bundle(coin=input_coin, puzzle_program=pp)
     _ = await remote.push_tx(tx=spend_bundle)
     import pprint
     pprint.pprint(_)
@@ -102,7 +103,7 @@ async def client_test(path):
     # a bad SpendBundle
     pp = p2_delegated_puzzle.puzzle_for_pk(PUBLIC_KEYS[0])
     input_coin = my_new_coins[1]
-    spend_bundle = build_spend_bundle(coin=input_coin, puzzle_program=pp, conditions=[])
+    spend_bundle = spend_coin(input_coin, [], 2)
     _ = await remote.push_tx(tx=spend_bundle)
     assert repr(_) == (
         "RemoteError('exception: (<Err.WRONG_PUZZLE_HASH: 8>, "

@@ -1,5 +1,6 @@
 import asyncio
 
+from chiasim.hack.keys import PUBLIC_KEYS, PRIVATE_KEYS
 from chiasim.hashable import (
     std_hash, EORPrivateKey, HeaderHash, ProgramHash,
     ProofOfSpace, BLSPublicKey, SpendBundle
@@ -11,7 +12,7 @@ from chiasim.storage import RAM_DB
 from chiasim.validation import ChainView, validate_spend_bundle_signature
 from chiasim.wallet.deltas import removals_for_body
 
-from .helpers import build_spend_bundle, PRIVATE_KEYS, PUBLIC_KEYS
+from .helpers import build_spend_bundle
 
 
 GENESIS_BLOCK = std_hash(bytes([0]))
