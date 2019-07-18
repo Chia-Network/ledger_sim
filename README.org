@@ -50,3 +50,20 @@ In [5]: await ledger_api.get_tip()
  'tip_index': 0,
  'genesis_hash': <HeaderPointer: 0000000000000000000000000000000000000000000000000000000000000000>}
 #+END_SRC
+
+
+- create and spend a coin
+#+BEGIN_SRC bash
+$ ipython
+from chiasim.hack.keys import conditions_for_payment, puzzle_hash, spend_coin
+from chiasim.hashable import ProgramHash
+from chiasim.puzzles import p2_delegated_conditions
+
+coinbase_puzzle_hash = puzzle_hash(0)
+fees_puzzle_hash = puzzle_hash(1)
+r = await ledger_api.next_block(coinbase_puzzle_hash=coinbase_puzzle_hash, fees_puzzle_hash=fees_puzzle_hash)
+body = r["body"]
+conditions = conditions_for_payment([(puzzle_hash(2), 1000)])
+tx = spend_coin(body.coinbase_coin, conditions, 0)
+r = await ledger_api.push_tx(tx=tx)
+#+END_SRC
