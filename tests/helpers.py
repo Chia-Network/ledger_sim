@@ -3,11 +3,9 @@ import clvm
 from opacity import binutils
 
 from chiasim.hack.keys import PUBLIC_KEYS, KEYCHAIN, conditions_for_payment
-from chiasim.hashable import CoinSolution, ProgramHash, SpendBundle, std_hash
+from chiasim.hashable import CoinSolution, ProgramHash, SpendBundle
 from chiasim.puzzles import p2_delegated_puzzle
-from chiasim.validation.Conditions import (
-    conditions_by_opcode, make_create_coin_condition
-)
+from chiasim.validation.Conditions import conditions_by_opcode
 from chiasim.validation.consensus import (
     conditions_for_solution, hash_key_pairs_for_conditions_dict
 )

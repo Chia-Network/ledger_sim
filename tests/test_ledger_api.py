@@ -5,10 +5,9 @@ import tempfile
 from aiter import map_aiter
 
 from chiasim.clients import ledger_sim
-from chiasim.hack.keys import spend_coin
+from chiasim.hack.keys import puzzle_program, spend_coin
 from chiasim.hashable import ProgramHash
 from chiasim.ledger import ledger_api
-from chiasim.puzzles import p2_delegated_puzzle
 from chiasim.remote.api_server import api_server
 from chiasim.remote.client import request_response_proxy
 from chiasim.storage import RAM_DB
@@ -16,7 +15,7 @@ from chiasim.utils.log import init_logging
 from chiasim.utils.server import start_unix_server_aiter
 from chiasim.wallet.deltas import additions_for_body, removals_for_body
 
-from tests.helpers import build_spend_bundle, PUBLIC_KEYS
+from tests.helpers import build_spend_bundle
 
 
 async def proxy_for_unix_connection(path):
@@ -28,9 +27,9 @@ async def client_test(path):
 
     remote = await proxy_for_unix_connection(path)
 
-    coinbase_puzzle = p2_delegated_puzzle.puzzle_for_pk(PUBLIC_KEYS[1])
+    coinbase_puzzle = puzzle_program(1)
     coinbase_puzzle_hash = ProgramHash(coinbase_puzzle)
-    fees_puzzle_hash = ProgramHash(p2_delegated_puzzle.puzzle_for_pk(PUBLIC_KEYS[6]))
+    fees_puzzle_hash = ProgramHash(puzzle_program(6))
 
     r = await remote.next_block(
         coinbase_puzzle_hash=coinbase_puzzle_hash, fees_puzzle_hash=fees_puzzle_hash)
@@ -56,7 +55,7 @@ async def client_test(path):
 
     my_new_coins = spend_bundle.additions()
 
-    coinbase_puzzle_hash = ProgramHash(p2_delegated_puzzle.puzzle_for_pk(PUBLIC_KEYS[2]))
+    coinbase_puzzle_hash = ProgramHash(puzzle_program(2))
 
     r = await remote.next_block(
         coinbase_puzzle_hash=coinbase_puzzle_hash, fees_puzzle_hash=fees_puzzle_hash)
@@ -75,7 +74,7 @@ async def client_test(path):
         '1bf5bbf69b15b052b5b14d39f3a5c4c4e51525172c57f4f05ab184990ea9ab0b>')
 
     # add a SpendBundle
-    pp = p2_delegated_puzzle.puzzle_for_pk(PUBLIC_KEYS[0])
+    pp = puzzle_program(0)
     input_coin = my_new_coins[0]
     spend_bundle = build_spend_bundle(coin=input_coin, puzzle_program=pp)
     _ = await remote.push_tx(tx=spend_bundle)
@@ -101,7 +100,7 @@ async def client_test(path):
     assert r["genesis_hash"] == bytes([0] * 32)
 
     # a bad SpendBundle
-    pp = p2_delegated_puzzle.puzzle_for_pk(PUBLIC_KEYS[0])
+    pp = puzzle_program(0)
     input_coin = my_new_coins[1]
     spend_bundle = spend_coin(input_coin, [], 2)
     _ = await remote.push_tx(tx=spend_bundle)
