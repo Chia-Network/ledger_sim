@@ -99,6 +99,17 @@ async def client_test(path):
     assert r["tip_index"] == 3
     assert r["genesis_hash"] == bytes([0] * 32)
 
+    # a bad SpendBundle
+    pp = p2_delegated_puzzle.puzzle_for_pk(PUBLIC_KEYS[0])
+    input_coin = my_new_coins[1]
+    spend_bundle = build_spend_bundle(coin=input_coin, puzzle_program=pp, conditions=[])
+    _ = await remote.push_tx(tx=spend_bundle)
+    assert repr(_) == (
+        "RemoteError('exception: (<Err.WRONG_PUZZLE_HASH: 8>, "
+        "Coin(parent_coin_info=<CoinNameDataPointer: 1bf5bbf69b15b052b5b14d39f3a5c4c4e51525172c57f4f05ab184990ea9ab0b>,"
+        " puzzle_hash=<ProgramPointer: d3477f35ab49aafa48b522d80e586c7bf18b80af23cfd67239d29ea8d3a5f008>, "
+        "amount=2000))')")
+
 
 def test_client_server():
     init_logging()
@@ -112,7 +123,7 @@ def test_client_server():
     rws_aiter = map_aiter(lambda rw: dict(reader=rw[0], writer=rw[1], server=server), aiter)
 
     initial_block_hash = bytes(([0] * 31) + [1])
-    ledger = ledger_api.LedgerAPI(initial_block_hash, 1, RAM_DB())
+    ledger = ledger_api.LedgerAPI(initial_block_hash, RAM_DB())
     server_task = asyncio.ensure_future(api_server(rws_aiter, ledger))
 
     run(client_test(path))
