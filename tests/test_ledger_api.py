@@ -5,8 +5,7 @@ import tempfile
 from aiter import map_aiter
 
 from chiasim.clients import ledger_sim
-from chiasim.hack.keys import puzzle_program, spend_coin
-from chiasim.hashable import ProgramHash
+from chiasim.hack.keys import conditions_for_payment, puzzle_hash, spend_coin
 from chiasim.ledger import ledger_api
 from chiasim.remote.api_server import api_server
 from chiasim.remote.client import request_response_proxy
@@ -15,21 +14,26 @@ from chiasim.utils.log import init_logging
 from chiasim.utils.server import start_unix_server_aiter
 from chiasim.wallet.deltas import additions_for_body, removals_for_body
 
-from tests.helpers import build_spend_bundle
-
 
 async def proxy_for_unix_connection(path):
     reader, writer = await asyncio.open_unix_connection(path)
     return request_response_proxy(reader, writer, ledger_sim.REMOTE_SIGNATURES)
 
 
+def standard_conditions():
+    conditions = conditions_for_payment([
+        (puzzle_hash(0), 1000),
+        (puzzle_hash(1), 2000),
+    ])
+    return conditions
+
+
 async def client_test(path):
 
     remote = await proxy_for_unix_connection(path)
 
-    coinbase_puzzle = puzzle_program(1)
-    coinbase_puzzle_hash = ProgramHash(coinbase_puzzle)
-    fees_puzzle_hash = ProgramHash(puzzle_program(6))
+    coinbase_puzzle_hash = puzzle_hash(1)
+    fees_puzzle_hash = puzzle_hash(6)
 
     r = await remote.next_block(
         coinbase_puzzle_hash=coinbase_puzzle_hash, fees_puzzle_hash=fees_puzzle_hash)
@@ -42,7 +46,8 @@ async def client_test(path):
     print("unspents = %s" % r.get("unspents"))
 
     # add a SpendBundle
-    spend_bundle = build_spend_bundle(coinbase_coin, coinbase_puzzle)
+    conditions = standard_conditions()
+    spend_bundle = spend_coin(coinbase_coin, conditions, 1)
 
     # break the signature
     if 0:
@@ -55,7 +60,7 @@ async def client_test(path):
 
     my_new_coins = spend_bundle.additions()
 
-    coinbase_puzzle_hash = ProgramHash(puzzle_program(2))
+    coinbase_puzzle_hash = puzzle_hash(2)
 
     r = await remote.next_block(
         coinbase_puzzle_hash=coinbase_puzzle_hash, fees_puzzle_hash=fees_puzzle_hash)
@@ -74,9 +79,9 @@ async def client_test(path):
         '1bf5bbf69b15b052b5b14d39f3a5c4c4e51525172c57f4f05ab184990ea9ab0b>')
 
     # add a SpendBundle
-    pp = puzzle_program(0)
     input_coin = my_new_coins[0]
-    spend_bundle = build_spend_bundle(coin=input_coin, puzzle_program=pp)
+    conditions = standard_conditions()
+    spend_bundle = spend_coin(coin=input_coin, conditions=conditions, index=0)
     _ = await remote.push_tx(tx=spend_bundle)
     import pprint
     pprint.pprint(_)
@@ -100,7 +105,6 @@ async def client_test(path):
     assert r["genesis_hash"] == bytes([0] * 32)
 
     # a bad SpendBundle
-    pp = puzzle_program(0)
     input_coin = my_new_coins[1]
     spend_bundle = spend_coin(input_coin, [], 2)
     _ = await remote.push_tx(tx=spend_bundle)

@@ -1,6 +1,8 @@
 import asyncio
 
-from chiasim.hack.keys import PRIVATE_KEYS, puzzle_program, puzzle_hash
+from chiasim.hack.keys import (
+    PRIVATE_KEYS, conditions_for_payment, puzzle_program, puzzle_hash, spend_coin
+)
 from chiasim.hashable import (
     std_hash, EORPrivateKey, HeaderHash, ProgramHash,
     ProofOfSpace, BLSPublicKey, SpendBundle
@@ -10,8 +12,6 @@ from chiasim.pool import create_coinbase_coin_and_signature, get_pool_public_key
 from chiasim.storage import RAM_DB
 from chiasim.validation import ChainView, validate_spend_bundle_signature
 from chiasim.wallet.deltas import removals_for_body
-
-from .helpers import build_spend_bundle
 
 
 GENESIS_BLOCK = std_hash(bytes([0]))
@@ -51,6 +51,14 @@ def farm_block(
     return header, header_signature, body
 
 
+def standard_conditions():
+    conditions = conditions_for_payment([
+        (puzzle_hash(0), 1000),
+        (puzzle_hash(1), 2000),
+    ])
+    return conditions
+
+
 def test_farm_block_empty():
     REWARD = 10000
     unspent_db = RAM_DB()
@@ -87,7 +95,8 @@ def test_farm_block_one_spendbundle():
         GENESIS_BLOCK, 1, pos, empty_spend_bundle, puzzle_hash, REWARD)
     coinbase_coin = body.coinbase_coin
 
-    spend_bundle = build_spend_bundle(coin=coinbase_coin, puzzle_program=puzzle_program(1))
+    conditions = standard_conditions()
+    spend_bundle = spend_coin(coin=coinbase_coin, conditions=conditions, index=1)
 
     header, header_signature, body = farm_block(
         GENESIS_BLOCK, 1, pos, spend_bundle, puzzle_hash, REWARD)
@@ -139,7 +148,9 @@ def test_farm_two_blocks():
     assert chain_view.tip_index == 1
     assert chain_view.unspent_db == unspent_db
 
-    spend_bundle_2 = build_spend_bundle(additions[0], puzzle_program(1))
+    conditions = standard_conditions()
+    spend_bundle_2 = spend_coin(coin=additions[0], conditions=conditions, index=1)
+
     assert validate_spend_bundle_signature(spend_bundle_2)
 
     pos_2 = ProofOfSpace(get_pool_public_key(1), get_plot_public_key())
