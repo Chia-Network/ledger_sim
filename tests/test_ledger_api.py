@@ -5,7 +5,9 @@ import tempfile
 from aiter import map_aiter
 
 from chiasim.clients import ledger_sim
-from chiasim.hack.keys import conditions_for_payment, puzzle_hash, spend_coin
+from chiasim.hack.keys import (
+    conditions_for_payment, puzzle_hash_for_index, spend_coin
+)
 from chiasim.ledger import ledger_api
 from chiasim.remote.api_server import api_server
 from chiasim.remote.client import request_response_proxy
@@ -22,8 +24,8 @@ async def proxy_for_unix_connection(path):
 
 def standard_conditions():
     conditions = conditions_for_payment([
-        (puzzle_hash(0), 1000),
-        (puzzle_hash(1), 2000),
+        (puzzle_hash_for_index(0), 1000),
+        (puzzle_hash_for_index(1), 2000),
     ])
     return conditions
 
@@ -32,8 +34,8 @@ async def client_test(path):
 
     remote = await proxy_for_unix_connection(path)
 
-    coinbase_puzzle_hash = puzzle_hash(1)
-    fees_puzzle_hash = puzzle_hash(6)
+    coinbase_puzzle_hash = puzzle_hash_for_index(1)
+    fees_puzzle_hash = puzzle_hash_for_index(6)
 
     r = await remote.next_block(
         coinbase_puzzle_hash=coinbase_puzzle_hash, fees_puzzle_hash=fees_puzzle_hash)
@@ -60,7 +62,7 @@ async def client_test(path):
 
     my_new_coins = spend_bundle.additions()
 
-    coinbase_puzzle_hash = puzzle_hash(2)
+    coinbase_puzzle_hash = puzzle_hash_for_index(2)
 
     r = await remote.next_block(
         coinbase_puzzle_hash=coinbase_puzzle_hash, fees_puzzle_hash=fees_puzzle_hash)

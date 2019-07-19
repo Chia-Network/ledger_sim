@@ -1,7 +1,8 @@
 import asyncio
 
 from chiasim.hack.keys import (
-    PRIVATE_KEYS, conditions_for_payment, puzzle_program, puzzle_hash, spend_coin
+    conditions_for_payment, public_key_bytes_for_index,
+    puzzle_hash_for_index, spend_coin
 )
 from chiasim.hashable import (
     std_hash, EORPrivateKey, HeaderHash, ProgramHash,
@@ -20,7 +21,7 @@ GENESIS_BLOCK = std_hash(bytes([0]))
 def farm_block(
         previous_header, block_number, proof_of_space, spend_bundle, coinbase_puzzle_hash, reward):
 
-    fees_puzzle_hash = puzzle_hash(3)
+    fees_puzzle_hash = puzzle_hash_for_index(3)
 
     coinbase_coin, coinbase_signature = create_coinbase_coin_and_signature(
         block_number, coinbase_puzzle_hash, reward, proof_of_space.pool_public_key)
@@ -32,7 +33,7 @@ def farm_block(
 
     header_signature = sign_header(header, proof_of_space.plot_public_key)
 
-    bad_bls_public_key = BLSPublicKey.from_bin(PRIVATE_KEYS[9].get_public_key().serialize())
+    bad_bls_public_key = BLSPublicKey.from_bin(public_key_bytes_for_index(9))
 
     bad_eor_public_key = EORPrivateKey(std_hash(bytes([5]))).public_key()
 
@@ -53,8 +54,8 @@ def farm_block(
 
 def standard_conditions():
     conditions = conditions_for_payment([
-        (puzzle_hash(0), 1000),
-        (puzzle_hash(1), 2000),
+        (puzzle_hash_for_index(0), 1000),
+        (puzzle_hash_for_index(1), 2000),
     ])
     return conditions
 
@@ -66,7 +67,7 @@ def test_farm_block_empty():
 
     pos = ProofOfSpace(get_pool_public_key(), get_plot_public_key())
 
-    puzzle_hash = ProgramHash(puzzle_program(1))
+    puzzle_hash = puzzle_hash_for_index(1)
 
     spend_bundle = SpendBundle.aggregate([])
 
@@ -88,7 +89,7 @@ def test_farm_block_one_spendbundle():
 
     pos = ProofOfSpace(get_pool_public_key(), get_plot_public_key())
 
-    puzzle_hash = ProgramHash(puzzle_program(1))
+    puzzle_hash = puzzle_hash_for_index(1)
 
     empty_spend_bundle = SpendBundle.aggregate([])
     header, header_signature, body = farm_block(
@@ -126,7 +127,7 @@ def test_farm_two_blocks():
 
     pos_1 = ProofOfSpace(get_pool_public_key(), get_plot_public_key())
 
-    puzzle_hash = ProgramHash(puzzle_program(1))
+    puzzle_hash = puzzle_hash_for_index(1)
 
     empty_spend_bundle = SpendBundle.aggregate([])
     header, header_signature, body = farm_block(

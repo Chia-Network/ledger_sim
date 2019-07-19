@@ -14,25 +14,23 @@ from tests.BLSPrivateKey import BLSPrivateKey
 
 
 HIERARCHICAL_PRIVATE_KEY = blspy.ExtendedPrivateKey.from_seed(b"foo")
-PRIVATE_KEYS = [HIERARCHICAL_PRIVATE_KEY.private_child(_).get_private_key() for _ in range(10)]
-PUBLIC_KEYS = [_.get_public_key().serialize() for _ in PRIVATE_KEYS]
-KEYCHAIN = {_.get_public_key().serialize(): BLSPrivateKey(_) for _ in PRIVATE_KEYS}
 
 
-def private_key(index):
+def private_key_for_index(index):
     return HIERARCHICAL_PRIVATE_KEY.private_child(index).get_private_key()
 
 
-def public_key_bytes(index):
+def public_key_bytes_for_index(index):
     return HIERARCHICAL_PRIVATE_KEY.private_child(index).get_public_key().serialize()
 
 
-def puzzle_program(index):
-    return p2_delegated_puzzle.puzzle_for_pk(public_key_bytes(index))
+def puzzle_program_for_index(index):
+    return p2_delegated_puzzle.puzzle_for_pk(
+        public_key_bytes_for_index(index))
 
 
-def puzzle_hash(index):
-    return ProgramHash(puzzle_program(index))
+def puzzle_hash_for_index(index):
+    return ProgramHash(puzzle_program_for_index(index))
 
 
 def conditions_for_payment(puzzle_hash_amount_pairs):
@@ -41,12 +39,13 @@ def conditions_for_payment(puzzle_hash_amount_pairs):
 
 
 def spend_coin(coin, conditions, index):
-    solution = p2_delegated_puzzle.solution_for_conditions(puzzle_program(index), conditions)
+    solution = p2_delegated_puzzle.solution_for_conditions(
+        puzzle_program_for_index(index), conditions)
 
     signatures = []
     conditions_dict = conditions_by_opcode(conditions_for_solution(solution.code))
     for _ in hash_key_pairs_for_conditions_dict(conditions_dict):
-        bls_private_key = BLSPrivateKey(private_key(index))
+        bls_private_key = BLSPrivateKey(private_key_for_index(index))
         signature = bls_private_key.sign(_.message_hash)
         signatures.append(signature)
 
