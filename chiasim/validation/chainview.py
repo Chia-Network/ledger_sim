@@ -91,6 +91,29 @@ async def coin_for_coin_name(coin_name, storage):
         return Coin.from_bin(coin_blob)
 
 
+async def check_header_signature(
+        header_hash: HeaderHash, header_signature: BLSSignature, storage: Storage):
+
+    # fetch header for header_hash
+
+    header = await header_hash.obj(storage)
+    if header is None:
+        raise ConsensusError(Err.MISSING_FROM_STORAGE, header_hash)
+
+    # get proof of space
+
+    pos = await header.proof_of_space_hash.obj(storage)
+    if pos is None:
+        raise ConsensusError(Err.MISSING_FROM_STORAGE, header.proof_of_space_hash)
+
+    # verify header signature
+
+    hkp = header_signature.aggsig_pair(pos.plot_public_key, header.hash())
+    if not header_signature.validate([hkp]):
+        raise ConsensusError(Err.BAD_HEADER_SIGNATURE, header_signature)
+
+
+
 async def accept_new_block(
         chain_view: ChainView, header: Header, header_signature: BLSSignature,
         storage: Storage, coinbase_reward: int):
@@ -109,17 +132,10 @@ async def accept_new_block(
         if header.previous_hash != chain_view.tip_hash:
             raise ConsensusError(Err.DOES_NOT_EXTEND, header)
 
-        # get proof of space
-
-        pos = await header.proof_of_space_hash.obj(storage)
-        if pos is None:
-            raise ConsensusError(Err.MISSING_FROM_STORAGE, header.proof_of_space_hash)
-
         # verify header signature
 
-        hkp = header_signature.aggsig_pair(pos.plot_public_key, header.hash())
-        if not header_signature.validate([hkp]):
-            raise ConsensusError(Err.BAD_HEADER_SIGNATURE, header_signature)
+        await check_header_signature(
+            HeaderHash(header), header_signature, storage)
 
         # get body
 
