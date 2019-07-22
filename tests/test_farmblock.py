@@ -5,7 +5,7 @@ from chiasim.hack.keys import (
     puzzle_hash_for_index, spend_coin
 )
 from chiasim.hashable import (
-    std_hash, EORPrivateKey, HeaderHash, ProgramHash,
+    std_hash, EORPrivateKey, HeaderHash,
     ProofOfSpace, BLSPublicKey, SpendBundle
 )
 from chiasim.farming import farm_new_block, get_plot_public_key, sign_header
@@ -44,10 +44,10 @@ def farm_block(
     hkp = header_signature.aggsig_pair(bad_eor_public_key, header.hash())
     assert not header_signature.validate([hkp])
 
-    hkp = body.coinbase_signature.aggsig_pair(proof_of_space.pool_public_key, body.coinbase_coin.hash())
+    hkp = body.coinbase_signature.aggsig_pair(proof_of_space.pool_public_key, body.coinbase_coin.name())
     assert body.coinbase_signature.validate([hkp])
 
-    hkp = body.coinbase_signature.aggsig_pair(bad_bls_public_key, body.coinbase_coin.hash())
+    hkp = body.coinbase_signature.aggsig_pair(bad_bls_public_key, body.coinbase_coin.name())
     assert not body.coinbase_signature.validate([hkp])
     return header, header_signature, body
 
@@ -103,7 +103,7 @@ def test_farm_block_one_spendbundle():
         GENESIS_BLOCK, 1, pos, spend_bundle, puzzle_hash, REWARD)
     removals = removals_for_body(body)
     assert len(removals) == 1
-    assert removals[0] == list(spend_bundle.coin_solutions)[0].coin.coin_name()
+    assert removals[0] == list(spend_bundle.coin_solutions)[0].coin.name()
 
     run = asyncio.get_event_loop().run_until_complete
     additions, removals = run(chain_view.accept_new_block(header, header_signature, unspent_db, REWARD))
@@ -163,4 +163,4 @@ def test_farm_two_blocks():
 
     removals = removals_for_body(body_2)
     assert len(removals) == 1
-    assert removals[0] == list(spend_bundle_2.coin_solutions)[0].coin.coin_name()
+    assert removals[0] == list(spend_bundle_2.coin_solutions)[0].coin.name()

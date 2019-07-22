@@ -25,7 +25,7 @@ class CoinSolution:
 
     def additions(self):
         from chiasim.validation.consensus import created_outputs_for_conditions_dict
-        return created_outputs_for_conditions_dict(self.conditions_dict(), self.coin.coin_name())
+        return created_outputs_for_conditions_dict(self.conditions_dict(), self.coin.name())
 
 
 CoinSolutionList = streamable_list(CoinSolution)

@@ -2,7 +2,7 @@ import clvm
 
 from opacity import binutils
 
-from ..hashable import BLSSignature, Coin, CoinName, CoinNameData
+from ..hashable import BLSSignature, Coin
 
 from .Conditions import conditions_by_opcode, parse_sexp_to_conditions, ConditionOpcode
 
@@ -59,13 +59,3 @@ def hash_key_pairs_for_conditions_dict(conditions_dict):
         assert len(_) == 3
         pairs.append(BLSSignature.aggsig_pair(*_[1:]))
     return pairs
-
-
-async def coin_for_coin_name(coin_name, storage, unspent_db):
-    coin_name_data_blob = await storage.hash_preimage(coin_name)
-    if coin_name_data_blob is None:
-        return None
-    coin_name_data = CoinNameData.from_bin(coin_name_data_blob)
-    unspent = await unspent_db.unspent_for_coin_name(CoinName(coin_name_data))
-    coin = Coin(coin_name_data.parent_coin_info, coin_name_data.puzzle_hash, unspent.amount)
-    return coin

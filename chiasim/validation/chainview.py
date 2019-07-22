@@ -5,11 +5,11 @@ import dataclasses
 import clvm
 
 from .consensus import (
-    coin_for_coin_name, conditions_dict_for_solution,
+    conditions_dict_for_solution,
     created_outputs_for_conditions_dict, hash_key_pairs_for_conditions_dict,
 )
 from chiasim.hashable import (
-    BLSSignature, CoinName, Header, HeaderHash, Program, ProgramHash, Unspent
+    BLSSignature, Coin, CoinName, Header, HeaderHash, Program, ProgramHash, Unspent
 )
 from chiasim.storage import OverlayStorage, OverlayUnspentDB, RAMUnspentDB, RAM_DB, Storage, UnspentDB
 
@@ -85,6 +85,12 @@ class ChainView:
             self, header, header_signature, storage, coinbase_reward)
 
 
+async def coin_for_coin_name(coin_name, storage):
+    coin_blob = await storage.hash_preimage(coin_name)
+    if coin_blob:
+        return Coin.from_bin(coin_blob)
+
+
 async def accept_new_block(
         chain_view: ChainView, header: Header, header_signature: BLSSignature,
         storage: Storage, coinbase_reward: int):
@@ -123,7 +129,7 @@ async def accept_new_block(
 
         # verify coinbase signature
 
-        hkp = body.coinbase_signature.aggsig_pair(pos.pool_public_key, body.coinbase_coin.hash())
+        hkp = body.coinbase_signature.aggsig_pair(pos.pool_public_key, body.coinbase_coin.name())
         if not body.coinbase_signature.validate([hkp]):
             raise ConsensusError(Err.BAD_COINBASE_SIGNATURE, body)
 
@@ -147,7 +153,7 @@ async def accept_new_block(
 
         #  watch out for duplicate outputs
 
-        addition_counter = collections.Counter(_.coin_name() for _ in additions)
+        addition_counter = collections.Counter(_.name() for _ in additions)
         for k, v in addition_counter.items():
             if v > 1:
                 raise ConsensusError(Err.DUPLICATE_OUTPUT, k)
@@ -163,14 +169,14 @@ async def accept_new_block(
 
         ram_storage = RAM_DB()
         for _ in additions:
-            await ram_storage.add_preimage(_.coin_name_data().as_bin())
+            await ram_storage.add_preimage(_.as_bin())
 
         ram_db = RAMUnspentDB(additions, chain_view.tip_index + 1)
         overlay_storage = OverlayStorage(ram_storage, storage)
         unspent_db = OverlayUnspentDB(chain_view.unspent_db, ram_db)
 
         coin_futures = [asyncio.ensure_future(
-            coin_for_coin_name(_[0], overlay_storage, unspent_db)) for _ in npc_list]
+            coin_for_coin_name(_[0], overlay_storage)) for _ in npc_list]
 
         # build cpc_list from npc_list
         cpc_list = []
@@ -192,7 +198,7 @@ async def accept_new_block(
             if coin in additions:
                 # it's an ephemeral coin, created and destroyed in the same block
                 continue
-            coin_name = coin.coin_name()
+            coin_name = coin.name()
             unspent = await unspent_db.unspent_for_coin_name(coin_name)
             if (unspent is None or
                     unspent.confirmed_block_index == 0 or
@@ -238,11 +244,11 @@ async def accept_new_block(
 
 async def apply_deltas(block_index, additions, removals, unspent_db, storage):
     for coin in additions:
-        new_unspent = Unspent(coin.amount, block_index, 0)
-        await unspent_db.set_unspent_for_coin_name(coin.coin_name(), new_unspent)
-        await storage.add_preimage(coin.coin_name_data().as_bin())
+        new_unspent = Unspent(block_index, 0)
+        await unspent_db.set_unspent_for_coin_name(coin.name(), new_unspent)
+        await storage.add_preimage(coin.as_bin())
 
     for coin_name in removals:
         unspent = await unspent_db.unspent_for_coin_name(coin_name)
-        new_unspent = Unspent(unspent.amount, unspent.confirmed_block_index, block_index)
+        new_unspent = Unspent(unspent.confirmed_block_index, block_index)
         await unspent_db.set_unspent_for_coin_name(coin_name, new_unspent)

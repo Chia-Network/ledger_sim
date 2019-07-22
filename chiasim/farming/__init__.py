@@ -37,7 +37,7 @@ def best_solution_program(bundle: SpendBundle):
     """
     r = []
     for coin_solution in bundle.coin_solutions:
-        entry = [coin_solution.coin.coin_name(), coin_solution.solution.code]
+        entry = [coin_solution.coin.name(), coin_solution.solution.code]
         r.append(entry)
     return Program(to_sexp_f([binutils.assemble("#q"), r]))
 
