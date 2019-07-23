@@ -12,11 +12,18 @@ def hash_pointer(the_type, hash_f):
     """
     hash_type = get_type_hints(hash_f)["return"]
 
-    def __new__(self, v):
-        if isinstance(v, the_type):
-            self._obj = v
-            v = hash_f(v.as_bin())
-        return hash_type.__new__(self, v)
+    def __new__(cls, v):
+        has_obj = isinstance(v, the_type)
+        if has_obj:
+            v_ptr = hash_f(v.as_bin())
+        else:
+            v_ptr = v
+        r = hash_type.__new__(cls, v_ptr)
+        if has_obj:
+            r._obj = v
+        else:
+            r._obj = None
+        return r
 
     async def obj(self, data_source=None):
         """
@@ -24,13 +31,10 @@ def hash_pointer(the_type, hash_f):
         it builds it using the blob from the given data source.
         """
         if self._obj is None and data_source:
-            blob = await data_source.blob_for_hash(self)
+            blob = await data_source.hash_preimage(hash=self)
             if hash_f(blob) == self:
                 self._obj = the_type.from_bin(blob)
         return self._obj
-
-    def stream(self, f):
-        f.write(self)
 
     namespace = dict(__new__=__new__, obj=obj)
     hash_pointer_type = type(

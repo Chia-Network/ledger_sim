@@ -114,8 +114,8 @@ class LedgerAPI:
         all_unspents = [_[0] async for _ in self._unspent_db.all_unspents()]
         return dict(unspents=all_unspents)
 
-    async def do_hash_preimage(self, id):
-        r = await self._storage.hash_preimage(id)
+    async def do_hash_preimage(self, hash):
+        r = await self._storage.hash_preimage(hash)
         return r
 
 
