@@ -31,10 +31,11 @@ class BLSSignature(bin_methods):
 
     @classmethod
     def aggregate(cls, sigs):
+        sigs = [_ for _ in sigs if _.sig != ZERO96]
         if len(sigs) == 0:
             sig = ZERO96
         else:
-            wrapped_sigs = [blspy.PrependSignature.from_bytes(_.sig) for _ in sigs if _.sig != ZERO96]
+            wrapped_sigs = [blspy.PrependSignature.from_bytes(_.sig) for _ in sigs]
             sig = blspy.PrependSignature.aggregate(wrapped_sigs).serialize()
         return cls(sig)
 
