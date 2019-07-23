@@ -81,18 +81,19 @@ class ChainView:
             self, header, header_signature, storage, new_unspent_db, reward) -> "ChainView":
         tip_index = self.tip_index + 1
         additions, removals = await self.accept_new_block(
-            header, header_signature, storage, reward)
+            header, storage, reward)
         await apply_deltas(
             tip_index, additions, removals, storage, new_unspent_db)
-        return self.__class__(
+        chain_view = self.__class__(
             self.genesis_hash, HeaderHash(header), header_signature,
             tip_index, new_unspent_db)
+        await chain_view.check_tip_signature(storage)
+        return chain_view
 
     async def accept_new_block(
-            self, header: Header, header_signature: Signature,
-            storage: Storage, coinbase_reward: int):
+            self, header: Header, storage: Storage, coinbase_reward: int):
         return await accept_new_block(
-            self, header, header_signature, storage, coinbase_reward)
+            self, header, storage, coinbase_reward)
 
 
 async def coin_for_coin_name(coin_name, storage):
@@ -122,11 +123,9 @@ async def check_header_signature(
     if not header_signature.validate([hkp]):
         raise ConsensusError(Err.BAD_HEADER_SIGNATURE, header_signature)
 
-    return pos
-
 
 async def accept_new_block(
-        chain_view: ChainView, header: Header, header_signature: Signature,
+        chain_view: ChainView, header: Header,
         storage: Storage, coinbase_reward: int):
     """
     Checks the block against the existing ChainView object.
@@ -143,22 +142,11 @@ async def accept_new_block(
         if header.previous_hash != chain_view.tip_hash:
             raise ConsensusError(Err.DOES_NOT_EXTEND, header)
 
-        # verify header signature
-
-        pos = await check_header_signature(
-            HeaderHash(header), header_signature, storage)
-
         # get body
 
         body = await header.body_hash.obj(storage)
         if body is None:
             raise ConsensusError(Err.MISSING_FROM_STORAGE, header.body_hash)
-
-        # verify coinbase signature
-
-        hkp = body.coinbase_signature.aggsig_pair(pos.pool_public_key, body.coinbase_coin.name())
-        if not body.coinbase_signature.validate([hkp]):
-            raise ConsensusError(Err.BAD_COINBASE_SIGNATURE, body)
 
         # ensure block program generates solutions
 

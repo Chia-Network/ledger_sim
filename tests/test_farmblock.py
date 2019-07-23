@@ -80,7 +80,7 @@ def test_farm_block_empty():
     assert len(removals) == 0
 
     run = asyncio.get_event_loop().run_until_complete
-    additions, removals = run(chain_view.accept_new_block(header, header_signature, unspent_db, REWARD))
+    additions, removals = run(chain_view.accept_new_block(header, unspent_db, REWARD))
     assert len(additions) == 2
     assert len(removals) == 0
 
@@ -109,7 +109,7 @@ def test_farm_block_one_spendbundle():
     assert removals[0] == list(spend_bundle.coin_solutions)[0].coin.name()
 
     run = asyncio.get_event_loop().run_until_complete
-    additions, removals = run(chain_view.accept_new_block(header, header_signature, unspent_db, REWARD))
+    additions, removals = run(chain_view.accept_new_block(header, unspent_db, REWARD))
     assert len(additions) == 4
     assert len(removals) == 1
 
@@ -137,7 +137,7 @@ def test_farm_two_blocks():
         GENESIS_BLOCK, Signature.zero(), 1, pos_1, empty_spend_bundle, puzzle_hash, REWARD)
 
     run = asyncio.get_event_loop().run_until_complete
-    additions, removals = run(chain_view.accept_new_block(header, header_signature, unspent_db, REWARD))
+    additions, removals = run(chain_view.accept_new_block(header, unspent_db, REWARD))
     assert len(additions) == 2
     assert len(removals) == 0
     # TODO: check additions
