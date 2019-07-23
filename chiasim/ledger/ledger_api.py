@@ -38,8 +38,9 @@ async def new_chain_view(
     spend_bundle = SpendBundle.aggregate(spend_bundles)
 
     header, body = farm_new_block(
-        chain_view.tip_hash, block_number, pos, spend_bundle, coinbase_coin,
-        coinbase_signature, fees_puzzle_hash, timestamp)
+        chain_view.tip_hash, chain_view.tip_signature, block_number, pos,
+        spend_bundle, coinbase_coin, coinbase_signature, fees_puzzle_hash,
+        timestamp)
 
     header_signature = sign_header(header, plot_public_key)
 

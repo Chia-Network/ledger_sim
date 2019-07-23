@@ -1,8 +1,9 @@
 from ..atoms import hash_pointer, hexbytes, streamable, uint64
 
-from .Hash import Hashable, std_hash
 from .Body import Body
+from .Hash import Hashable, std_hash
 from .ProofOfSpace import ProofOfSpace
+from .Signature import Signature
 
 
 @streamable
@@ -16,6 +17,7 @@ class Header(Hashable):
     not defined at launch, but might vary in future soft forks.
     """
     previous_hash: "HeaderHash"
+    previous_signature: Signature
     timestamp: uint64
     proof_of_space_hash: hash_pointer(ProofOfSpace, std_hash)
     body_hash: hash_pointer(Body, std_hash)

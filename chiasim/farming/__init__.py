@@ -7,7 +7,8 @@ from opacity import binutils
 from chiasim.atoms import hexbytes, uint64
 from chiasim.hashable import (
     BLSSignature, Body, Coin, EORPrivateKey, Header, HeaderHash,
-    Program, ProgramHash, ProofOfSpace, PublicKey, SpendBundle
+    Program, ProgramHash, ProofOfSpace, PublicKey, Signature,
+    SpendBundle
 )
 from chiasim.validation import validate_spend_bundle_signature
 
@@ -50,10 +51,11 @@ def collect_best_bundle(known_bundles) -> SpendBundle:
 
 
 def farm_new_block(
-        previous_header: HeaderHash, block_index: int,
-        proof_of_space: ProofOfSpace, spend_bundle: SpendBundle,
-        coinbase_coin: Coin, coinbase_signature: BLSSignature,
-        fees_puzzle_hash: ProgramHash, timestamp: uint64):
+        previous_header: HeaderHash, previous_signature: Signature,
+        block_index: int, proof_of_space: ProofOfSpace,
+        spend_bundle: SpendBundle, coinbase_coin: Coin,
+        coinbase_signature: BLSSignature, fees_puzzle_hash: ProgramHash,
+        timestamp: uint64):
     """
     Steps:
         - collect up a consistent set of removals and solutions
@@ -76,5 +78,5 @@ def farm_new_block(
         coinbase_signature, coinbase_coin, fees_coin,
         solution_program, program_cost, spend_bundle.aggregated_signature)
 
-    header = Header(previous_header, timestamp, proof_of_space, body, extension_data)
+    header = Header(previous_header, previous_signature, timestamp, proof_of_space, body, extension_data)
     return header, body

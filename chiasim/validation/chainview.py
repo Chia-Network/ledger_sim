@@ -9,7 +9,8 @@ from .consensus import (
     created_outputs_for_conditions_dict, hash_key_pairs_for_conditions_dict,
 )
 from chiasim.hashable import (
-    BLSSignature, Coin, CoinName, Header, HeaderHash, Program, ProgramHash, Unspent
+    Coin, CoinName, Header, HeaderHash,
+    Program, ProgramHash, Signature, Unspent
 )
 from chiasim.storage import OverlayStorage, OverlayUnspentDB, RAMUnspentDB, RAM_DB, Storage, UnspentDB
 
@@ -61,12 +62,20 @@ def name_puzzle_conditions_list(body_program):
 class ChainView:
     genesis_hash: HeaderHash
     tip_hash: HeaderHash
+    tip_signature: Signature
     tip_index: int
     unspent_db: UnspentDB
 
     @classmethod
     def for_genesis_hash(cls, genesis_hash: HeaderHash, unspent_db: UnspentDB):
-        return cls(genesis_hash, genesis_hash, 0, unspent_db)
+        return cls(genesis_hash, genesis_hash, Signature.zero(), 0, unspent_db)
+
+    async def check_tip_signature(self, storage):
+        if self.tip_hash == self.genesis_hash:
+            if self.tip_signature != Signature.zero():
+                raise ConsensusError(Err.BAD_GENESIS_SIGNATURE, self.tip_signature)
+        else:
+            await check_header_signature(self.tip_hash, self.tip_signature, storage)
 
     async def augment_chain_view(
             self, header, header_signature, storage, new_unspent_db, reward) -> "ChainView":
@@ -76,10 +85,11 @@ class ChainView:
         await apply_deltas(
             tip_index, additions, removals, storage, new_unspent_db)
         return self.__class__(
-            self.genesis_hash, HeaderHash(header), tip_index, new_unspent_db)
+            self.genesis_hash, HeaderHash(header), header_signature,
+            tip_index, new_unspent_db)
 
     async def accept_new_block(
-            self, header: Header, header_signature: BLSSignature,
+            self, header: Header, header_signature: Signature,
             storage: Storage, coinbase_reward: int):
         return await accept_new_block(
             self, header, header_signature, storage, coinbase_reward)
@@ -92,7 +102,7 @@ async def coin_for_coin_name(coin_name, storage):
 
 
 async def check_header_signature(
-        header_hash: HeaderHash, header_signature: BLSSignature, storage: Storage):
+        header_hash: HeaderHash, header_signature: Signature, storage: Storage):
 
     # fetch header for header_hash
 
@@ -116,7 +126,7 @@ async def check_header_signature(
 
 
 async def accept_new_block(
-        chain_view: ChainView, header: Header, header_signature: BLSSignature,
+        chain_view: ChainView, header: Header, header_signature: Signature,
         storage: Storage, coinbase_reward: int):
     """
     Checks the block against the existing ChainView object.

@@ -6,7 +6,8 @@ from chiasim.hack.keys import (
 )
 from chiasim.hashable import (
     std_hash, EORPrivateKey, HeaderHash,
-    ProofOfSpace, BLSPublicKey, SpendBundle
+    ProofOfSpace, BLSPublicKey, Signature,
+    SpendBundle
 )
 from chiasim.farming import farm_new_block, get_plot_public_key, sign_header
 from chiasim.pool import create_coinbase_coin_and_signature, get_pool_public_key
@@ -19,7 +20,8 @@ GENESIS_BLOCK = std_hash(bytes([0]))
 
 
 def farm_block(
-        previous_header, block_number, proof_of_space, spend_bundle, coinbase_puzzle_hash, reward):
+        previous_header, previous_signature, block_number, proof_of_space,
+        spend_bundle, coinbase_puzzle_hash, reward):
 
     fees_puzzle_hash = puzzle_hash_for_index(3)
 
@@ -28,8 +30,9 @@ def farm_block(
 
     timestamp = int(1e10) + 300 * block_number
     header, body = farm_new_block(
-        previous_header, block_number, proof_of_space, spend_bundle,
-        coinbase_coin, coinbase_signature, fees_puzzle_hash, timestamp)
+        previous_header, previous_signature, block_number, proof_of_space,
+        spend_bundle, coinbase_coin, coinbase_signature, fees_puzzle_hash,
+        timestamp)
 
     header_signature = sign_header(header, proof_of_space.plot_public_key)
 
@@ -72,7 +75,7 @@ def test_farm_block_empty():
     spend_bundle = SpendBundle.aggregate([])
 
     header, header_signature, body = farm_block(
-        GENESIS_BLOCK, 1, pos, spend_bundle, puzzle_hash, REWARD)
+        GENESIS_BLOCK, Signature.zero(), 1, pos, spend_bundle, puzzle_hash, REWARD)
     removals = removals_for_body(body)
     assert len(removals) == 0
 
@@ -93,14 +96,14 @@ def test_farm_block_one_spendbundle():
 
     empty_spend_bundle = SpendBundle.aggregate([])
     header, header_signature, body = farm_block(
-        GENESIS_BLOCK, 1, pos, empty_spend_bundle, puzzle_hash, REWARD)
+        GENESIS_BLOCK, Signature.zero(), 1, pos, empty_spend_bundle, puzzle_hash, REWARD)
     coinbase_coin = body.coinbase_coin
 
     conditions = standard_conditions()
     spend_bundle = spend_coin(coin=coinbase_coin, conditions=conditions, index=1)
 
     header, header_signature, body = farm_block(
-        GENESIS_BLOCK, 1, pos, spend_bundle, puzzle_hash, REWARD)
+        GENESIS_BLOCK, Signature.zero(), 1, pos, spend_bundle, puzzle_hash, REWARD)
     removals = removals_for_body(body)
     assert len(removals) == 1
     assert removals[0] == list(spend_bundle.coin_solutions)[0].coin.name()
@@ -131,7 +134,7 @@ def test_farm_two_blocks():
 
     empty_spend_bundle = SpendBundle.aggregate([])
     header, header_signature, body = farm_block(
-        GENESIS_BLOCK, 1, pos_1, empty_spend_bundle, puzzle_hash, REWARD)
+        GENESIS_BLOCK, Signature.zero(), 1, pos_1, empty_spend_bundle, puzzle_hash, REWARD)
 
     run = asyncio.get_event_loop().run_until_complete
     additions, removals = run(chain_view.accept_new_block(header, header_signature, unspent_db, REWARD))
@@ -157,7 +160,7 @@ def test_farm_two_blocks():
     pos_2 = ProofOfSpace(get_pool_public_key(1), get_plot_public_key())
 
     header_2, header_signature_2, body_2 = farm_block(
-        header, 2, pos_2, spend_bundle_2, puzzle_hash, REWARD)
+        header, header_signature, 2, pos_2, spend_bundle_2, puzzle_hash, REWARD)
     print(header_2)
     print(header_signature_2)
 
