@@ -49,7 +49,7 @@ def name_puzzle_conditions_list(body_program):
         puzzle_program = puzzle_solution_program.first()
         puzzle_hash = ProgramHash(Program(puzzle_program))
         try:
-            conditions_dict = conditions_dict_for_solution(puzzle_solution_program.rest().first())
+            conditions_dict = conditions_dict_for_solution(puzzle_solution_program)
         except clvm.EvalError.EvalError:
             raise ConsensusError(Err.INVALID_COIN_SOLUTION, coin_name)
 
