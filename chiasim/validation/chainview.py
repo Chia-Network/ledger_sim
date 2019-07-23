@@ -96,12 +96,6 @@ class ChainView:
             self, header, storage, coinbase_reward)
 
 
-async def coin_for_coin_name(coin_name, storage):
-    coin_blob = await storage.hash_preimage(coin_name)
-    if coin_blob:
-        return Coin.from_bin(coin_blob)
-
-
 async def check_header_signature(
         header_hash: HeaderHash, header_signature: Signature, storage: Storage):
 
@@ -191,7 +185,7 @@ async def accept_new_block(
         unspent_db = OverlayUnspentDB(chain_view.unspent_db, ram_db)
 
         coin_futures = [asyncio.ensure_future(
-            coin_for_coin_name(_[0], overlay_storage)) for _ in npc_list]
+            _[0].obj(overlay_storage)) for _ in npc_list]
 
         # build cpc_list from npc_list
         cpc_list = []
