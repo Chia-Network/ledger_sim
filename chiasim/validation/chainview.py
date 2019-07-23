@@ -112,6 +112,7 @@ async def check_header_signature(
     if not header_signature.validate([hkp]):
         raise ConsensusError(Err.BAD_HEADER_SIGNATURE, header_signature)
 
+    return pos
 
 
 async def accept_new_block(
@@ -134,7 +135,7 @@ async def accept_new_block(
 
         # verify header signature
 
-        await check_header_signature(
+        pos = await check_header_signature(
             HeaderHash(header), header_signature, storage)
 
         # get body
