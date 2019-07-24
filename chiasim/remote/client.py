@@ -5,7 +5,6 @@ from aiter import map_aiter
 
 from chiasim.utils.cbor_messages import reader_to_cbor_stream, send_cbor_message
 
-from .api_decorators import transform_args
 from .proxy import make_proxy
 
 
@@ -58,7 +57,7 @@ async def invoke_remote(method, remote, *args, **kwargs):
     _ = await future
     transformation = remote.get("signatures", {}).get(method)
     if transformation:
-        _ = transform_args(transformation, _)
+        _ = transformation(_)
     return _
 
 
@@ -83,3 +82,12 @@ def request_response_proxy(reader, writer, remote_signatures={}):
     nonce_watcher = NonceWatcher(map_aiter(event_stream_to_nonce_result, reader_to_cbor_stream(reader)))
     d = dict(reader=reader, writer=writer, signatures=remote_signatures, nonce_watcher=nonce_watcher)
     return make_proxy(invoke_remote, d)
+
+
+def xform_dict(**kwargs):
+    def transform(message):
+        new_message = dict(message)
+        for k, v in kwargs.items():
+            new_message[k] = v(message[k])
+        return new_message
+    return transform

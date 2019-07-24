@@ -119,6 +119,10 @@ class LedgerAPI:
         r = await self._storage.hash_preimage(hash)
         return r
 
+    async def do_unspent_for_coin_name(self, coin_name):
+        r = await self._storage.unspent_for_coin_name(coin_name)
+        return r
+
 
 """
 Copyright 2019 Chia Network Inc
