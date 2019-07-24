@@ -19,3 +19,7 @@ from chiasim.hashable import Program
 
 def puzzle_for_conditions(conditions):
     return Program(clvm.to_sexp_f([binutils.assemble("#q"), conditions]))
+
+
+def solution_for_conditions(conditions):
+    return Program(clvm.to_sexp_f([puzzle_for_conditions(conditions).code, []]))

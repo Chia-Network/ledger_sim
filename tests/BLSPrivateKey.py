@@ -14,4 +14,4 @@ class BLSPrivateKey:
         return BLSSignature(self.pk.sign_prepend_prehashed(message_hash).serialize())
 
     def public_key(self) -> BLSPublicKey:
-        return BLSPublicKey(self.pk.get_public_key())
+        return BLSPublicKey(self.pk.get_public_key().serialize())
