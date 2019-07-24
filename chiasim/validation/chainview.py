@@ -9,7 +9,7 @@ from .consensus import (
     created_outputs_for_conditions_dict, hash_key_pairs_for_conditions_dict,
 )
 from chiasim.hashable import (
-    Coin, CoinName, Header, HeaderHash,
+    CoinName, Header, HeaderHash,
     Program, ProgramHash, Signature, Unspent
 )
 from chiasim.storage import OverlayStorage, OverlayUnspentDB, RAMUnspentDB, RAM_DB, Storage, UnspentDB
