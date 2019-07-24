@@ -160,3 +160,22 @@ def test_p2_delegated_puzzle_simple():
     private_keys = [BLSPrivateKey(private_key_for_index(_)) for _ in range(10)]
     keychain = dict((_.public_key(), _) for _ in private_keys)
     run_test(puzzle_hash, solution, payments, sign_f_for_keychain(keychain))
+
+
+def test_p2_delegated_puzzle_graftroot():
+    payments = [
+        (puzzle_hash_for_index(0), 1000),
+        #(puzzle_hash_for_index(1), 2000),
+    ]
+    conditions = conditions_for_payment(payments)
+
+    delegated_puzzle = p2_delegated_conditions.puzzle_for_pk(public_key_bytes_for_index(8))
+    delegated_solution = p2_delegated_conditions.solution_for_conditions(delegated_puzzle, conditions)
+
+    puzzle_program = p2_delegated_puzzle.puzzle_for_pk(public_key_bytes_for_index(1))
+    puzzle_hash = ProgramHash(puzzle_program)
+    solution = p2_delegated_puzzle.solution_for_delegated_puzzle(puzzle_program, delegated_puzzle, delegated_solution)
+
+    private_keys = [BLSPrivateKey(private_key_for_index(_)) for _ in range(10)]
+    keychain = dict((_.public_key(), _) for _ in private_keys)
+    run_test(puzzle_hash, solution, payments, sign_f_for_keychain(keychain))
