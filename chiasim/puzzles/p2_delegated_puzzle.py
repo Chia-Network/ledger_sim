@@ -36,5 +36,5 @@ def solution_for_conditions(puzzle_reveal, conditions):
     return Program(clvm.to_sexp_f([puzzle_reveal.code, [delegated_puzzle.code, solution]]))
 
 
-def solution_for_delegated_puzzle(puzzle_reveal, delegated_puzzle, solution):
-    return Program(clvm.to_sexp_f([puzzle_reveal.code, [delegated_puzzle.code, solution.code]]))
+def solution_for_delegated_puzzle(puzzle_reveal, delegated_solution):
+    return Program(clvm.to_sexp_f([puzzle_reveal.code, delegated_solution.code]))

@@ -17,7 +17,7 @@ def parse_sexp_to_condition(sexp):
     assert sexp.listp()
     items = sexp.as_python()
     if not isinstance(items[0], bytes):
-        raise ConsensusError(Err.INVALID_CONDITION, items[0])
+        raise ConsensusError(Err.INVALID_CONDITION, items)
     assert isinstance(items[0], bytes)
     opcode = items[0]
     try:
