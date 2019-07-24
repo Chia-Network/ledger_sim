@@ -2,6 +2,7 @@ import functools
 
 
 def transform_args(kwarg_transformers, message):
+    # TODO: this may be redundant with xform_dict. Resolve
     if not isinstance(message, dict):
         return message
     new_message = dict(message)

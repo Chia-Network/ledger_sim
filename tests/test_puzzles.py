@@ -31,14 +31,6 @@ async def proxy_for_unix_connection(path):
     return request_response_proxy(reader, writer, ledger_sim.REMOTE_SIGNATURES)
 
 
-def standard_conditions():
-    conditions = conditions_for_payment([
-        (puzzle_hash_for_index(0), 1000),
-        (puzzle_hash_for_index(1), 2000),
-    ])
-    return conditions
-
-
 def make_client_server():
     init_logging()
     run = asyncio.get_event_loop().run_until_complete
