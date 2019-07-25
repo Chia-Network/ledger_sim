@@ -4,8 +4,9 @@ from .ConsensusError import ConsensusError, Err
 
 
 def assert_coin_consumed(condition, coin, context):
-    if coin.name() not in context["removals"]:
-        raise ConsensusError(Err.ASSERT_COIN_CONSUMED_FAILED, (coin, condition))
+    for coin_name in condition[1:]:
+        if coin_name not in context["removals"]:
+            raise ConsensusError(Err.ASSERT_COIN_CONSUMED_FAILED, (coin, coin_name))
 
 
 def assert_my_coin_id(condition, coin, context):

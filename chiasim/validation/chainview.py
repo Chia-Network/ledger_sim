@@ -237,7 +237,9 @@ async def accept_new_block(
         # check solution for each CoinSolution pair
         # this is where CHECKLOCKTIME etc. are verified
 
-        context = {}
+        context = dict(
+            removals=set(removals),
+        )
         hash_key_pairs = []
         for coin, puzzle_hash, conditions_dict in cpc_list:
             check_conditions_dict(coin, conditions_dict, context)
