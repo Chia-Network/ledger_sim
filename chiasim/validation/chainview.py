@@ -15,13 +15,19 @@ from chiasim.hashable import (
 from chiasim.storage import OverlayStorage, OverlayUnspentDB, RAMUnspentDB, RAM_DB, Storage, UnspentDB
 
 from .ConsensusError import ConsensusError, Err
+from .check_conditions import CONDITION_CHECKER_LOOKUP
 
 
 def check_conditions_dict(coin, conditions_dict, context):
     """
     Check all conditions against current state.
     """
-    pass
+    for condition_id, conditions in conditions_dict.items():
+        f = CONDITION_CHECKER_LOOKUP.get(condition_id)
+        if f is None:
+            continue
+        for condition in conditions:
+            f(condition, coin, context)
 
 
 def name_puzzle_conditions_list(body_program):

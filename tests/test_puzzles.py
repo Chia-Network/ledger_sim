@@ -6,10 +6,10 @@ from aiter import map_aiter
 
 from chiasim.clients import ledger_sim
 from chiasim.hack.keys import (
-    conditions_for_payment, private_key_for_index,
+    build_spend_bundle, conditions_for_payment,
     public_key_bytes_for_index, puzzle_hash_for_index
 )
-from chiasim.hashable import BLSSignature, Coin, CoinSolution, ProgramHash, SpendBundle
+from chiasim.hashable import Coin, ProgramHash
 from chiasim.ledger import ledger_api
 from chiasim.puzzles import (
     p2_conditions, p2_delegated_conditions, p2_delegated_puzzle
@@ -19,11 +19,6 @@ from chiasim.remote.client import request_response_proxy
 from chiasim.storage import RAM_DB
 from chiasim.utils.log import init_logging
 from chiasim.utils.server import start_unix_server_aiter
-from chiasim.validation.Conditions import conditions_by_opcode
-from chiasim.validation.consensus import (
-    conditions_for_solution, hash_key_pairs_for_conditions_dict
-)
-from tests.BLSPrivateKey import BLSPrivateKey
 
 
 async def proxy_for_unix_connection(path):
@@ -41,25 +36,9 @@ def make_client_server():
     ledger = ledger_api.LedgerAPI(initial_block_hash, RAM_DB())
     server_task = asyncio.ensure_future(api_server(rws_aiter, ledger))
     remote = run(proxy_for_unix_connection(path))
-    return remote, server_task
-
-
-def sign_f_for_keychain(keychain):
-    def sign_f(aggsig_pair):
-        bls_private_key = keychain.get(aggsig_pair.public_key)
-        if bls_private_key:
-            return bls_private_key.sign(aggsig_pair.message_hash)
-        raise ValueError("unknown pubkey %s" % aggsig_pair.public_key)
-    return sign_f
-
-
-def signature_for_solution(solution, sign_f):
-    signatures = []
-    conditions_dict = conditions_by_opcode(conditions_for_solution(solution.code))
-    for _ in hash_key_pairs_for_conditions_dict(conditions_dict):
-        signature = sign_f(_)
-        signatures.append(signature)
-    return BLSSignature.aggregate(signatures)
+    # make sure server_task isn't garbage collected
+    remote.server_task = server_task
+    return remote
 
 
 def farm_spendable_coin(remote, puzzle_hash=puzzle_hash_for_index(0)):
@@ -73,18 +52,13 @@ def farm_spendable_coin(remote, puzzle_hash=puzzle_hash_for_index(0)):
     return coinbase_coin
 
 
-def run_test(puzzle_hash, solution, payments, sign_f=None):
+def run_test(puzzle_hash, solution, payments):
     run = asyncio.get_event_loop().run_until_complete
 
-    remote, server_task = make_client_server()
+    remote = make_client_server()
 
     coin = farm_spendable_coin(remote, puzzle_hash)
-
-    # create a SpendBundle
-
-    coin_solution = CoinSolution(coin, solution)
-    signature = signature_for_solution(solution, sign_f)
-    spend_bundle = SpendBundle([coin_solution], signature)
+    spend_bundle = build_spend_bundle(coin, solution)
 
     # push it
     r = run(remote.push_tx(tx=spend_bundle))
@@ -98,7 +72,6 @@ def run_test(puzzle_hash, solution, payments, sign_f=None):
     r = run(remote.all_unspents())
     print("unspents = %s" % r.get("unspents"))
     unspents = r["unspents"]
-    assert len(unspents) == 8
 
     # ensure all outputs are there
     for puzzle_hash, amount in payments:
@@ -138,9 +111,7 @@ def test_p2_delegated_conditions():
     puzzle_hash = ProgramHash(puzzle_program)
     solution = p2_delegated_conditions.solution_for_conditions(puzzle_program, conditions)
 
-    private_keys = [BLSPrivateKey(private_key_for_index(_)) for _ in range(10)]
-    keychain = dict((_.public_key(), _) for _ in private_keys)
-    run_test(puzzle_hash, solution, payments, sign_f_for_keychain(keychain))
+    run_test(puzzle_hash, solution, payments)
 
 
 def test_p2_delegated_puzzle_simple():
@@ -157,9 +128,7 @@ def test_p2_delegated_puzzle_simple():
     puzzle_hash = ProgramHash(puzzle_program)
     solution = p2_delegated_puzzle.solution_for_conditions(puzzle_program, conditions)
 
-    private_keys = [BLSPrivateKey(private_key_for_index(_)) for _ in range(10)]
-    keychain = dict((_.public_key(), _) for _ in private_keys)
-    run_test(puzzle_hash, solution, payments, sign_f_for_keychain(keychain))
+    run_test(puzzle_hash, solution, payments)
 
 
 def test_p2_delegated_puzzle_graftroot():
@@ -176,6 +145,4 @@ def test_p2_delegated_puzzle_graftroot():
     puzzle_hash = ProgramHash(puzzle_program)
     solution = p2_delegated_puzzle.solution_for_delegated_puzzle(puzzle_program, delegated_solution)
 
-    private_keys = [BLSPrivateKey(private_key_for_index(_)) for _ in range(10)]
-    keychain = dict((_.public_key(), _) for _ in private_keys)
-    run_test(puzzle_hash, solution, payments, sign_f_for_keychain(keychain))
+    run_test(puzzle_hash, solution, payments)

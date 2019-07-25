@@ -10,7 +10,8 @@ from .ConsensusError import ConsensusError, Err
 class ConditionOpcode(bytes, enum.Enum):
     AGG_SIG = bytes([50])
     CREATE_COIN = bytes([51])
-    ENSURE_CREATED = bytes([52])
+    ASSERT_COIN_CONSUMED = bytes([52])
+    ASSERT_MY_COIN_ID = bytes([53])
 
 
 def parse_sexp_to_condition(sexp):
@@ -33,6 +34,14 @@ def parse_sexp_to_conditions(sexp):
 
 def make_create_coin_condition(puzzle_hash, amount):
     return [ConditionOpcode.CREATE_COIN, puzzle_hash, amount]
+
+
+def make_assert_coin_consumed_condition(coin_name):
+    return [ConditionOpcode.ASSERT_COIN_CONSUMED, coin_name]
+
+
+def make_assert_my_coin_id_condition(coin_name):
+    return [ConditionOpcode.ASSERT_MY_COIN_ID, coin_name]
 
 
 def conditions_by_opcode(conditions):

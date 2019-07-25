@@ -1,8 +1,7 @@
 import blspy
 
 from chiasim.hashable import ProgramHash
-from chiasim.hashable import CoinSolution, SpendBundle
-
+from chiasim.hashable import BLSSignature, CoinSolution, SpendBundle
 from chiasim.puzzles import p2_delegated_puzzle
 from chiasim.validation.Conditions import (
     conditions_by_opcode, make_create_coin_condition
@@ -38,18 +37,40 @@ def conditions_for_payment(puzzle_hash_amount_pairs):
     return conditions
 
 
-def spend_coin(coin, conditions, index):
-    solution = p2_delegated_puzzle.solution_for_conditions(
-        puzzle_program_for_index(index), conditions)
+def sign_f_for_keychain(keychain):
+    def sign_f(aggsig_pair):
+        bls_private_key = keychain.get(aggsig_pair.public_key)
+        if bls_private_key:
+            return bls_private_key.sign(aggsig_pair.message_hash)
+        raise ValueError("unknown pubkey %s" % aggsig_pair.public_key)
+    return sign_f
 
+
+def signature_for_solution(solution, sign_f):
     signatures = []
     conditions_dict = conditions_by_opcode(conditions_for_solution(solution.code))
     for _ in hash_key_pairs_for_conditions_dict(conditions_dict):
-        bls_private_key = BLSPrivateKey(private_key_for_index(index))
-        signature = bls_private_key.sign(_.message_hash)
+        signature = sign_f(_)
         signatures.append(signature)
+    return BLSSignature.aggregate(signatures)
 
-    signature = signatures[0].aggregate(signatures)
+
+def make_default_keychain():
+    private_keys = [BLSPrivateKey(private_key_for_index(_)) for _ in range(10)]
+    return dict((_.public_key(), _) for _ in private_keys)
+
+
+DEFAULT_KEYCHAIN = make_default_keychain()
+DEFAULT_SIGNER = sign_f_for_keychain(DEFAULT_KEYCHAIN)
+
+
+def build_spend_bundle(coin, solution, sign_f=DEFAULT_SIGNER):
     coin_solution = CoinSolution(coin, solution)
-    spend_bundle = SpendBundle([coin_solution], signature)
-    return spend_bundle
+    signature = signature_for_solution(solution, sign_f)
+    return SpendBundle([coin_solution], signature)
+
+
+def spend_coin(coin, conditions, index):
+    solution = p2_delegated_puzzle.solution_for_conditions(
+        puzzle_program_for_index(index), conditions)
+    return build_spend_bundle(coin, solution)
