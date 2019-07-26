@@ -12,6 +12,7 @@ class ConditionOpcode(bytes, enum.Enum):
     CREATE_COIN = bytes([51])
     ASSERT_COIN_CONSUMED = bytes([52])
     ASSERT_MY_COIN_ID = bytes([53])
+    ASSERT_MIN_TIME = bytes([54])
 
 
 def parse_sexp_to_condition(sexp):
@@ -42,6 +43,10 @@ def make_assert_coin_consumed_condition(coin_name):
 
 def make_assert_my_coin_id_condition(coin_name):
     return [ConditionOpcode.ASSERT_MY_COIN_ID, coin_name]
+
+
+def make_assert_min_time_condition(time):
+    return [ConditionOpcode.ASSERT_MIN_TIME, time]
 
 
 def conditions_by_opcode(conditions):
