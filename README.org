@@ -19,9 +19,14 @@ $ python3 -m venv env
 $ ln -s env/bin/activate
 $ . activate
 $ pip install -r requirements.txt
+$ pip install -e .
 #+END_SRC
 
 *Note* The requirements.txt is currently incomplete. Read the notes there to finish set-up.
+
+*Note* The ~-e~ flag installs in "editable mode" so you can quickly iterate with changes to
+ledger-sim code. See [[https://pip.pypa.io/en/stable/reference/pip_install/#options][documentation]]
+for more info.
 
 - launch
 #+BEGIN_SRC bash
@@ -56,8 +61,6 @@ In [5]: await ledger_api.get_tip()
 #+BEGIN_SRC bash
 $ ipython
 from chiasim.hack.keys import conditions_for_payment, puzzle_hash, spend_coin
-from chiasim.hashable import ProgramHash
-from chiasim.puzzles import p2_delegated_conditions
 
 coinbase_puzzle_hash = puzzle_hash(0)
 fees_puzzle_hash = puzzle_hash(1)
