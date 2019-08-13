@@ -22,6 +22,8 @@ class NonceWatcher:
         self._task = asyncio.ensure_future(self.run())
 
     def future_for_nonce(self, nonce):
+        if self._task.done():
+            raise ConnectionResetError()
         if nonce not in self._nonce_to_future:
             f = asyncio.Future()
             self._nonce_to_future[nonce] = f

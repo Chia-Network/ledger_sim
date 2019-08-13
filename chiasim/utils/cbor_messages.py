@@ -16,11 +16,16 @@ async def reader_to_cbor_stream(reader):
             message_size_blob = await reader.readexactly(4)
             message_size, = struct.unpack(">L", message_size_blob)
             blob = await reader.readexactly(message_size)
+            log.info("got msg %s", cbor.loads(blob))
             yield cbor.loads(blob)
-        except asyncio.IncompleteReadError:
+        except (IOError, asyncio.IncompleteReadError):
+            log.info("EOF stream %s", reader)
             break
         except ValueError:
             log.info("badly formatted cbor from stream %s", reader)
+            break
+        except Exception as ex:
+            log.exception("unknown error in stream %s", reader)
             break
 
 
