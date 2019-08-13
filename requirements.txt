@@ -1,10 +1,4 @@
 aiter==0.1.2
 blspy==0.1.8
 cbor==1.0.0
-# currently missing because there is no distribution yet:
-# clvm
-# opacity
-# workaround: clone git@github.com:Chia-Network/Chiascript.git and do
-# ln -s [path-to]/Chiascript/opacity
-# ln -s [path-to]/Chiascript/clvm
-# to put soft links to these modules
+-e git+git@github.com:Chia-Network/Chiascript.git@develop#egg=opacity
