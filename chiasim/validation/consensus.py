@@ -1,22 +1,17 @@
 import clvm
 
-from opacity import binutils
-
 from ..hashable import BLSSignature, Coin
 
 from .Conditions import conditions_by_opcode, parse_sexp_to_conditions, ConditionOpcode
-
-
-UNVERIFIED_STD_SCRIPT = "(e (f (a)) (f (r (a))))"
-
-UNVERIFIED_STD_SCRIPT = binutils.assemble(UNVERIFIED_STD_SCRIPT)
 
 
 def conditions_for_solution(solution_program, eval=clvm.eval_f):
     # get the standard script for a puzzle hash and feed in the solution
     args = clvm.to_sexp_f(solution_program)
     try:
-        r = eval(eval, UNVERIFIED_STD_SCRIPT, args)
+        puzzle_sexp = args.first()
+        solution_sexp = args.rest().first()
+        r = eval(eval, puzzle_sexp, solution_sexp)
         return parse_sexp_to_conditions(r)
     except clvm.EvalError.EvalError:
         raise
