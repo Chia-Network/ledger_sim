@@ -2,8 +2,7 @@ import blspy
 
 from chiasim.hashable.BLSSignature import BLSPublicKey
 from chiasim.hashable.Message import bls_hash
-
-from .BLSPrivateKey import BLSPrivateKey
+from chiasim.wallet.BLSPrivateKey import BLSPrivateKey
 
 
 def test_BLSSignature():

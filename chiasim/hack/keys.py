@@ -9,7 +9,7 @@ from chiasim.validation.Conditions import (
 from chiasim.validation.consensus import (
     conditions_for_solution, hash_key_pairs_for_conditions_dict
 )
-from tests.BLSPrivateKey import BLSPrivateKey
+from chiasim.wallet.BLSPrivateKey import BLSPrivateKey
 
 
 HIERARCHICAL_PRIVATE_KEY = blspy.ExtendedPrivateKey.from_seed(b"foo")
