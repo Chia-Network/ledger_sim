@@ -12,7 +12,8 @@ from chiasim.hack.keys import (
 from chiasim.hashable import Coin, ProgramHash
 from chiasim.ledger import ledger_api
 from chiasim.puzzles import (
-    p2_conditions, p2_delegated_conditions, p2_delegated_puzzle
+    p2_conditions, p2_delegated_conditions, p2_delegated_puzzle,
+    p2_puzzle_hash
 )
 from chiasim.remote.api_server import api_server
 from chiasim.remote.client import request_response_proxy
@@ -144,5 +145,22 @@ def test_p2_delegated_puzzle_graftroot():
     puzzle_program = p2_delegated_puzzle.puzzle_for_pk(public_key_bytes_for_index(1))
     puzzle_hash = ProgramHash(puzzle_program)
     solution = p2_delegated_puzzle.solution_for_delegated_puzzle(puzzle_program, delegated_solution)
+
+    run_test(puzzle_hash, solution, payments)
+
+
+def test_p2_puzzle_hash():
+    payments = [
+        (puzzle_hash_for_index(0), 1000),
+        (puzzle_hash_for_index(1), 2000),
+    ]
+    conditions = conditions_for_payment(payments)
+    underlying_puzzle = p2_delegated_conditions.puzzle_for_pk(public_key_bytes_for_index(4))
+    underlying_solution = p2_delegated_conditions.solution_for_conditions(underlying_puzzle, conditions)
+    underlying_puzzle_hash = ProgramHash(underlying_puzzle)
+
+    puzzle_program = p2_puzzle_hash.puzzle_for_puzzle_hash(underlying_puzzle_hash)
+    puzzle_hash = ProgramHash(puzzle_program)
+    solution = p2_puzzle_hash.solution_for_puzzle_and_solution(underlying_puzzle, underlying_solution)
 
     run_test(puzzle_hash, solution, payments)
