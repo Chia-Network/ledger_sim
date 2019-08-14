@@ -16,8 +16,9 @@ async def reader_to_cbor_stream(reader):
             message_size_blob = await reader.readexactly(4)
             message_size, = struct.unpack(">L", message_size_blob)
             blob = await reader.readexactly(message_size)
-            log.debug("got msg %s", cbor.loads(blob))
-            yield cbor.loads(blob)
+            message = cbor.loads(blob)
+            log.debug("got msg %s", message)
+            yield message
         except (IOError, asyncio.IncompleteReadError):
             log.info("EOF stream %s", reader)
             break
