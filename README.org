@@ -61,13 +61,15 @@ In [5]: await ledger_api.get_tip()
 - create and spend a coin
 #+BEGIN_SRC bash
 $ ipython
-from chiasim.hack.keys import conditions_for_payment, puzzle_hash, spend_coin
+from chiasim.hack.keys import conditions_for_payment, puzzle_hash_for_index, spend_coin
+from chiasim.clients.ledger_sim import connect_to_ledger_sim
 
-coinbase_puzzle_hash = puzzle_hash(0)
-fees_puzzle_hash = puzzle_hash(1)
+ledger_api = await connect_to_ledger_sim("localhost", 9868)
+coinbase_puzzle_hash = puzzle_hash_for_index(0)
+fees_puzzle_hash = puzzle_hash_for_index(1)
 r = await ledger_api.next_block(coinbase_puzzle_hash=coinbase_puzzle_hash, fees_puzzle_hash=fees_puzzle_hash)
 body = r["body"]
-conditions = conditions_for_payment([(puzzle_hash(2), 1000)])
+conditions = conditions_for_payment([(puzzle_hash_for_index(2), 1000)])
 tx = spend_coin(body.coinbase_coin, conditions, 0)
 r = await ledger_api.push_tx(tx=tx)
 #+END_SRC
