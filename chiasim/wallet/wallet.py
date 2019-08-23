@@ -6,13 +6,13 @@ from chiasim.puzzles.p2_delegated_puzzle import puzzle_for_pk
 from chiasim.hashable import Program, ProgramHash, CoinSolution, SpendBundle, BLSSignature
 from chiasim.hashable.CoinSolution import CoinSolutionList
 from chiasim.puzzles.p2_conditions import puzzle_for_conditions
-from tests.BLSPrivateKey import BLSPrivateKey
 from chiasim.validation.Conditions import (
     conditions_by_opcode, make_create_coin_condition, make_assert_my_coin_id_condition, make_assert_min_time_condition
 )
 from chiasim.validation.consensus import (
     conditions_for_solution, hash_key_pairs_for_conditions_dict
 )
+from .BLSPrivateKey import BLSPrivateKey
 
 
 def sha256(val):
