@@ -14,7 +14,7 @@ This roughly corresponds to bitcoin's graftroot.
 
 import clvm
 
-from opacity import binutils
+from clvm_tools import binutils
 
 from chiasim.atoms import hexbytes
 from chiasim.hashable import Program

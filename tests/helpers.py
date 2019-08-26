@@ -1,6 +1,6 @@
 import clvm
 
-from opacity import binutils
+from clvm_tools import binutils
 
 
 def trace_eval(eval_f, args, env):

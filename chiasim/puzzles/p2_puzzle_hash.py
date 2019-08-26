@@ -7,7 +7,7 @@ hash along with its solution.
 
 import clvm
 
-from opacity import binutils
+from clvm_tools import binutils
 
 from chiasim.atoms import hexbytes
 from chiasim.hashable import Program, ProgramHash

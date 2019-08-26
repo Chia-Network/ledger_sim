@@ -22,7 +22,7 @@ $ pip install -r requirements.txt
 $ pip install -e .
 #+END_SRC
 
-*Note* The ~opacity~ dependency in requirements.txt is private on github, so be sure you have
+*Note* The ~clvm_tools~ dependency in requirements.txt is private on github, so be sure you have
 permissions for this depot.
 
 *Note* The ~-e~ flag installs in "editable mode" so you can quickly iterate with changes to

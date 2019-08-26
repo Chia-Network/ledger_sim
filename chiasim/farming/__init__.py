@@ -2,7 +2,7 @@ import blspy
 
 from clvm import to_sexp_f
 
-from opacity import binutils
+from clvm_tools import binutils
 
 from chiasim.atoms import hexbytes, uint64
 from chiasim.hashable import (

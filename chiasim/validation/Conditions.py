@@ -2,7 +2,7 @@ import enum
 
 import clvm
 
-from opacity import binutils
+from clvm_tools import binutils
 
 from .ConsensusError import ConsensusError, Err
 
