@@ -47,7 +47,7 @@ async def client_test(path):
     APpuzzlehash = apwallet_a.ap_get_new_puzzlehash(a_pubkey, b_pubkey)
 
     #Give our APWallet A some money
-    wallet = random.choice(wallets)
+    wallet = wallets[random.randrange(0,3)]
     coinbase_puzzle_hash = apwallet_a.get_new_puzzlehash()
     fees_puzzle_hash = apwallet_a.get_new_puzzlehash()
     r = await remote.next_block(coinbase_puzzle_hash=coinbase_puzzle_hash,
@@ -60,13 +60,13 @@ async def client_test(path):
     #Wallet A locks up the puzzle with information regarding B's pubkey
     APpuzzlehash = apwallet_a.ap_get_new_puzzlehash(a_pubkey, b_pubkey)
     apwallet_a.ap_make_aggregation_puzzle(APpuzzlehash)
-    approved_pubkeys = [wallets[0].get_next_public_key(), wallets[1].get_next_public_key()]
-    approved_puzhash_signature_pairs = apwallet_a.ap_generate_signatures(approved_pubkeys, APpuzzlehash, b_pubkey)
+    approved_puzhashes = [wallets[0].get_new_puzzlehash(), wallets[1].get_new_puzzlehash()]
+    approved_puzhash_signature_pairs = apwallet_a.ap_generate_signatures(approved_puzhashes, APpuzzlehash, b_pubkey)
     amount = 50
     spend_bundle = apwallet_a.generate_signed_transaction(amount, APpuzzlehash)
     _ = await remote.push_tx(tx=spend_bundle)
     #Commit this transaction to a block
-    wallet = apwallet_a
+    wallet = wallets[random.randrange(0,3)]
     coinbase_puzzle_hash = wallet.get_new_puzzlehash()
     fees_puzzle_hash = wallet.get_new_puzzlehash()
     r = await remote.next_block(coinbase_puzzle_hash=coinbase_puzzle_hash,
@@ -83,7 +83,7 @@ async def client_test(path):
     spend_bundle = apwallet_a.generate_signed_transaction(amount, aggregation_puzzlehash)
     _ = await remote.push_tx(tx=spend_bundle)
     #Commit this transaction to a block
-    wallet = apwallet_a
+    wallet = wallets[random.randrange(0,3)]
     coinbase_puzzle_hash = wallet.get_new_puzzlehash()
     fees_puzzle_hash = wallet.get_new_puzzlehash()
     r = await remote.next_block(coinbase_puzzle_hash=coinbase_puzzle_hash,
@@ -98,7 +98,7 @@ async def client_test(path):
     spend_bundle = apwallet_b.ap_generate_signed_aggregation_transaction(a_pubkey)
     _ = await remote.push_tx(tx=spend_bundle)
     #Commit this transaction to a block
-    wallet = apwallet_a
+    wallet = wallets[random.randrange(0,3)]
     coinbase_puzzle_hash = wallet.get_new_puzzlehash()
     fees_puzzle_hash = wallet.get_new_puzzlehash()
     r = await remote.next_block(coinbase_puzzle_hash=coinbase_puzzle_hash,
@@ -117,7 +117,7 @@ async def client_test(path):
     spend_bundle = apwallet_b.ap_generate_signed_transaction(ap_output, a_pubkey, signatures)
     _ = await remote.push_tx(tx=spend_bundle)
     #Commit this transaction to a block
-    wallet = apwallet_a
+    wallet = wallets[random.randrange(0,3)]
     coinbase_puzzle_hash = wallet.get_new_puzzlehash()
     fees_puzzle_hash = wallet.get_new_puzzlehash()
     r = await remote.next_block(coinbase_puzzle_hash=coinbase_puzzle_hash,
@@ -132,7 +132,7 @@ async def client_test(path):
 
     #Normal loop
     while True:
-        wallet = random.choice(wallets)
+        wallet = wallets[random.randrange(2)]
         coinbase_puzzle_hash = wallet.get_new_puzzlehash()
         fees_puzzle_hash = wallet.get_new_puzzlehash()
         r = await remote.next_block(coinbase_puzzle_hash=coinbase_puzzle_hash,
@@ -148,9 +148,13 @@ async def client_test(path):
         r = await remote.all_unspents()
         print("unspents = %s" % r.get("unspents"))
         for i in range(1):
-            receiving_wallet = random.choice(wallets)
+            receiving_wallet = wallets[random.randrange(4)]
             puzzlehash = receiving_wallet.get_new_puzzlehash()
-            sending_wallet = random.choice([w for w in wallets if w.current_balance > 0])
+            complete = False
+            while complete == False:
+                sending_wallet = wallets[random.randrange(4)]
+                if sending_wallet.current_balance > 0:
+                    complete = True
             amount = math.floor(0.50 * random.random() * (sending_wallet.current_balance - 1)) + 1
             spend_bundle = sending_wallet.generate_signed_transaction(amount, puzzlehash)
             _ = await remote.push_tx(tx=spend_bundle)

@@ -35,16 +35,15 @@ class APWallet(Wallet):
     #this is for wallet A to generate the permitted puzzlehashes and sign them ahead of time
     #returns a tuple of (puzhash, signature)
     #not sure about how best to communicate/store who/what the puzzlehashes are, or if this is even important
-    def ap_generate_signatures(self, pubkeys, oldpuzzlehash, b_pubkey_used):
+    def ap_generate_signatures(self, puzhashes, oldpuzzlehash, b_pubkey_used):
         puzhash_signature_list = []
         pubkey, secretkey = self.get_keys(oldpuzzlehash, None, b_pubkey_used)
         blskey = BLSPrivateKey(secretkey)
         signature = blskey.sign(oldpuzzlehash)
         puzhash_signature_list.append((oldpuzzlehash, signature))
-        for p in pubkeys:
-            puzhash = ProgramHash(puzzle_for_pk(p.serialize()))
-            signature = blskey.sign(puzhash)
-            puzhash_signature_list.append((puzhash,signature))
+        for p in puzhashes:
+            signature = blskey.sign(p)
+            puzhash_signature_list.append((p,signature))
 
         return puzhash_signature_list
 
