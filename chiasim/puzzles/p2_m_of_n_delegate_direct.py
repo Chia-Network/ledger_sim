@@ -13,17 +13,21 @@ import stage_2
 
 from chiasim.hashable import Program
 
-make_puzzle_src = pkg_resources.resource_string(__name__, "make_puzzle_m_of_n_direct.clvm").decode("utf8")
-
-make_puzzle_sexp = binutils.assemble(make_puzzle_src)
 
 eval_f = stage_2.EVAL_F
 
+make_puzzle_src = pkg_resources.resource_string(__name__, "make_puzzle_m_of_n_direct.clvm").decode("utf8")
+
+make_puzzle_sexp = binutils.assemble(make_puzzle_src)
+puzzle_prog_template = eval_f(eval_f, stage_2.run, make_puzzle_sexp.to([make_puzzle_sexp]))
+
 
 def puzzle_for_m_of_public_key_list(m, public_key_list):
-    args = clvm.to_sexp_f((make_puzzle_sexp, [m, public_key_list]))
-    puzzle_prog_creator = eval_f(eval_f, stage_2.run, args)
-    puzzle_prog = eval_f(eval_f, stage_2.run, (puzzle_prog_creator, []))
+    format_tuple = tuple(
+        binutils.disassemble(clvm.to_sexp_f(_))
+        for _ in (puzzle_prog_template, m, public_key_list))
+    puzzle_src = "(e (q %s) (c (q %s) (c (q %s) (a))))" % format_tuple
+    puzzle_prog = binutils.assemble(puzzle_src)
     return Program(puzzle_prog)
 
 

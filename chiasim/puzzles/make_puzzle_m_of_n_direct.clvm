@@ -1,60 +1,52 @@
-; this generates the puzzle
-(com (e
-    (com (lambda
-    (M public_key_list)
-        (qq
-            (mod
-                (selectors puzzle solution)
+(mod
+    (M public_key_list selectors puzzle solution)
 
-                (defun add_aggsig (public_keys hash delegated_puzzle solution)
-                    (if public_keys
-                        (c (list 50 (f public_keys) hash)
-                           (add_aggsig (r public_keys) hash delegated_puzzle solution)
-                        )
-                        (e delegated_puzzle solution)
-                    )
-                )
-
-                (defmacro assert items
-                    (if (r items)
-                        (list if (f items) (c assert (r items)) (q (x)))
-                        (f items)
-                    )
-                )
-
-                (defun choose_keys (selectors public_keys)
-                    (if selectors
-                        (if (f selectors)
-                            (c (f public_keys) (choose_keys (r selectors) (r public_keys)))
-                            (choose_keys (r selectors) (r public_keys)))
-                        ()
-                    )
-                )
-
-                (defun count_selectors (selectors)
-                    (if selectors
-                        (+
-                            (count_selectors (r selectors))
-                            (if (f selectors) 1 0)
-                        )
-                        0
-                    )
-                )
-
-                (assert (= (unquote M) (count_selectors selectors))
-                        (add_aggsig (choose_keys selectors (q (unquote public_key_list)))
-                                    (sha256 (wrap puzzle))
-                                    puzzle
-                                    solution)
-                )
-            )
+    (defmacro assert items
+        (if (r items)
+            (list if (f items) (c assert (r items)) (q (x)))
+            (f items)
         )
-)
-)
-(a))
-)
-; want to output (AGGSIG pk1 HASH) (AGGSIG pk2 HASH) ... (AGGSIG pkm HASH) + (other puzzle's output)
+    )
 
+    (defun add_aggsig (public_keys hash delegated_puzzle solution)
+        (if public_keys
+            (c (list 50 (f public_keys) hash)
+               (add_aggsig (r public_keys) hash delegated_puzzle solution)
+            )
+            (e delegated_puzzle solution)
+        )
+    )
 
-;puzzle: (selectors, delegated_puzzle, solution)
-;(assert (= M selectors) (concat2 (map create_aggsig (choose_keys selectors public_keys)) (e delegated_puzzle solution)))
+    (defun choose_keys (selectors public_keys)
+        (if selectors
+            (if (f selectors)
+                (c (f public_keys) (choose_keys (r selectors) (r public_keys)))
+                (choose_keys (r selectors) (r public_keys)))
+            ()
+        )
+    )
+
+    (defun count_selectors (selectors)
+        (if selectors
+            (+
+                (count_selectors (r selectors))
+                (if (f selectors) 1 0)
+            )
+            0
+        )
+    )
+
+    (defun solve_puzzle (M public_key_list selectors puzzle solution)
+        (assert (= M (count_selectors selectors))
+                (add_aggsig (choose_keys selectors public_key_list)
+                            (sha256 (wrap puzzle))
+                            puzzle
+                            solution)
+        )
+    )
+
+    (solve_puzzle
+        M public_key_list
+        selectors puzzle solution
+    )
+)

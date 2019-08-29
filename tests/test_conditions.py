@@ -61,7 +61,6 @@ def test_assert_coin_consumed():
     r = run(remote.push_tx(tx=spend_bundle_1))
     assert r.args[0].startswith("exception: (<Err.ASSERT_COIN_CONSUMED_FAILED")
 
-
     # try to spend coin_1 with coin_2. Should be okay
     spend_bundle_2 = build_spend_bundle(coin_2, solution_1)
     spend_bundle = spend_bundle_1.aggregate([spend_bundle_1, spend_bundle_2])
