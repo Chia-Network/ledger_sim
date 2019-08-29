@@ -85,10 +85,17 @@ class APWallet(Wallet):
 
     #same notes as above but for aggregation coins
     def ac_notify(self, additions):
+        my_utxos_copy = self.my_utxos.copy()
         if self.my_utxos:
             self.temp_coin = self.my_utxos.copy().pop()
         spend_bundle_list = []
         for coin in additions:
+            my_utxos_copy = self.my_utxos.copy()
+            for mycoin in self.my_utxos:
+                if coin.parent_coin_info == mycoin.name():
+                    my_utxos_copy.remove(mycoin)
+                    self.current_balance -= mycoin.amount
+            self.my_utxos = my_utxos_copy
             for mycoin in self.my_utxos:
                 if ProgramHash(self.ap_make_aggregation_puzzle(mycoin.puzzle_hash)) == coin.puzzle_hash:
                     self.aggregation_coins.add(coin)
