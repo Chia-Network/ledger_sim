@@ -21,7 +21,7 @@ async def proxy_for_unix_connection(path):
     reader, writer = await asyncio.open_unix_connection(path)
     return request_response_proxy(reader, writer, ledger_sim.REMOTE_SIGNATURES)
 
-async def  update_wallets(remote, r, wallets, a_pubkey, APpuzzlehash):
+async def update_wallets(remote, r, wallets):
     body = r.get("body")
     additions = list(additions_for_body(body))
     removals = removals_for_body(body)
@@ -29,8 +29,10 @@ async def  update_wallets(remote, r, wallets, a_pubkey, APpuzzlehash):
     for wallet in wallets:
         wallet.notify(additions, removals)
         if type(wallet) is APWallet:
-            wallet.ap_notify(additions, a_pubkey)
-            wallet.ac_notify(additions, APpuzzlehash)
+            wallet.ap_notify(additions)
+            spend_bundle = wallet.ac_notify(additions)
+            if spend_bundle is not None:
+                _ = await remote.push_tx(tx=spend_bundle)
 
 async def client_test(path):
 
@@ -45,6 +47,8 @@ async def client_test(path):
     a_pubkey = apwallet_a.get_next_public_key().serialize()
     b_pubkey = apwallet_b.get_next_public_key().serialize()
     APpuzzlehash = apwallet_a.ap_get_new_puzzlehash(a_pubkey, b_pubkey)
+    apwallet_b.set_sender_values(APpuzzlehash, a_pubkey)
+    apwallet_b.set_approved_change_signature(apwallet_a.ap_generate_signatures([APpuzzlehash],APpuzzlehash, b_pubkey)[0][1])
 
     #Give our APWallet A some money
     wallet = wallets[random.randrange(0,3)]
@@ -54,7 +58,7 @@ async def client_test(path):
                                 fees_puzzle_hash=fees_puzzle_hash)
 
     #Show the current balances of wallets
-    await update_wallets(remote,r, wallets, a_pubkey, APpuzzlehash)
+    await update_wallets(remote,r, wallets)
     print([[x.amount for x in wallet.my_utxos] for wallet in wallets])
 
     #Wallet A locks up the puzzle with information regarding B's pubkey
@@ -73,7 +77,7 @@ async def client_test(path):
                                 fees_puzzle_hash=fees_puzzle_hash)
 
     #Show balances
-    await update_wallets(remote,r, wallets, a_pubkey, APpuzzlehash)
+    await update_wallets(remote,r, wallets)
     print([[x.amount for x in wallet.my_utxos] for wallet in wallets])
 
 
@@ -89,15 +93,11 @@ async def client_test(path):
     r = await remote.next_block(coinbase_puzzle_hash=coinbase_puzzle_hash,
                                 fees_puzzle_hash=fees_puzzle_hash)
 
-    #Show balances
-    await update_wallets(remote,r, wallets, a_pubkey, APpuzzlehash)
+    #Show balances and detect new coin, and buffer auto aggregation
+    await update_wallets(remote,r, wallets)
     print([[x.amount for x in wallet.my_utxos] for wallet in wallets])
 
-
-    #Wallet B tries to aggregate coins together in wallet
-    spend_bundle = apwallet_b.ap_generate_signed_aggregation_transaction(a_pubkey)
-    _ = await remote.push_tx(tx=spend_bundle)
-    #Commit this transaction to a block
+    #Confirm the auto aggregate of the two coins
     wallet = wallets[random.randrange(0,3)]
     coinbase_puzzle_hash = wallet.get_new_puzzlehash()
     fees_puzzle_hash = wallet.get_new_puzzlehash()
@@ -105,16 +105,16 @@ async def client_test(path):
                                 fees_puzzle_hash=fees_puzzle_hash)
 
     #Show balances
-    await update_wallets(remote,r, wallets, a_pubkey, APpuzzlehash)
+    await update_wallets(remote,r, wallets)
     print([[x.amount for x in wallet.my_utxos] for wallet in wallets])
 
     breakpoint()
 
     #Wallet B tries to spend from approved list of transactions
     #the storage of these as well as the selection processs should be improved (moved into wallet class?)
-    signatures = [approved_puzhash_signature_pairs[0][1], approved_puzhash_signature_pairs[1][1], approved_puzhash_signature_pairs[2][1]]
-    ap_output = [(approved_puzhash_signature_pairs[0][0], 30), (approved_puzhash_signature_pairs[1][0], 40), (approved_puzhash_signature_pairs[2][0], 60)]
-    spend_bundle = apwallet_b.ap_generate_signed_transaction(ap_output, a_pubkey, signatures)
+    signatures = [approved_puzhash_signature_pairs[2][1], approved_puzhash_signature_pairs[1][1]]
+    ap_output = [(approved_puzhash_signature_pairs[2][0], 69), (approved_puzhash_signature_pairs[1][0], 22)]
+    spend_bundle = apwallet_b.ap_generate_signed_transaction(ap_output, signatures)
     _ = await remote.push_tx(tx=spend_bundle)
     #Commit this transaction to a block
     wallet = wallets[random.randrange(0,3)]
@@ -124,7 +124,7 @@ async def client_test(path):
                                 fees_puzzle_hash=fees_puzzle_hash)
 
     #Show balances
-    await update_wallets(remote,r, wallets, a_pubkey, APpuzzlehash)
+    await update_wallets(remote,r, wallets)
     print([[x.amount for x in wallet.my_utxos] for wallet in wallets])
 
     #Pause before doing infinite loop
@@ -142,7 +142,7 @@ async def client_test(path):
         removals = removals_for_body(body)
         removals = [Coin.from_bin(await remote.hash_preimage(hash=x)) for x in removals]
 
-        await update_wallets(remote,r, wallets, a_pubkey, APpuzzlehash)
+        await update_wallets(remote,r, wallets)
         print([[x.amount for x in wallet.my_utxos] for wallet in wallets])
 
         r = await remote.all_unspents()
