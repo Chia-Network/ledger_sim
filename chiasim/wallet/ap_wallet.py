@@ -31,6 +31,7 @@ class APWallet(Wallet):
         self.AP_puzzlehash = None
         self.approved_change_puzzle = None
         self.approved_change_signature = None
+        self.temp_coin = None
         return
 
     def set_sender_values(self, AP_puzzlehash, a_pubkey_used):
@@ -84,13 +85,19 @@ class APWallet(Wallet):
 
     #same notes as above but for aggregation coins
     def ac_notify(self, additions):
+        if self.my_utxos:
+            self.temp_coin = self.my_utxos.copy().pop()
+        spend_bundle_list = []
         for coin in additions:
             for mycoin in self.my_utxos:
                 if ProgramHash(self.ap_make_aggregation_puzzle(mycoin.puzzle_hash)) == coin.puzzle_hash:
                     self.aggregation_coins.add(coin)
                     spend_bundle = self.ap_generate_signed_aggregation_transaction()
-                    return spend_bundle
-        return None
+                    spend_bundle_list.append(spend_bundle)
+        if spend_bundle_list:
+            return spend_bundle_list
+        else:
+            return None
 
     #this function generates some ChiaScript that will merge two lists into a single list
     #we use it to merge the outputs of two programs that create lists
@@ -221,28 +228,27 @@ class APWallet(Wallet):
         if self.aggregation_coins is False: #empty sets evaluate to false in python
             return
         consolidating_coin = self.aggregation_coins.pop()
-        utxos = self.select_coins(self.current_balance)
 
-        for coin in utxos:
-            pubkey, secretkey = self.get_keys(coin.puzzle_hash, self.a_pubkey)
+        pubkey, secretkey = self.get_keys(self.temp_coin.puzzle_hash, self.a_pubkey)
 
-            #Spend wallet coin
-            puzzle = self.ap_make_puzzle(self.a_pubkey, pubkey.serialize())
-            solution = self.ap_make_solution_mode_2(coin.puzzle_hash, consolidating_coin.parent_coin_info, consolidating_coin.puzzle_hash, consolidating_coin.amount, coin.parent_coin_info, coin.amount)
-            signature = BLSPrivateKey(secretkey).sign(ProgramHash(solution))
-            list_of_coinsolutions.append(CoinSolution(coin, clvm.to_sexp_f([puzzle.code, solution.code])))
+        #Spend wallet coin
+        puzzle = self.ap_make_puzzle(self.a_pubkey, pubkey.serialize())
+        solution = self.ap_make_solution_mode_2(self.temp_coin.puzzle_hash, consolidating_coin.parent_coin_info, consolidating_coin.puzzle_hash, consolidating_coin.amount, self.temp_coin.parent_coin_info, self.temp_coin.amount)
+        signature = BLSPrivateKey(secretkey).sign(ProgramHash(solution))
+        list_of_coinsolutions.append(CoinSolution(self.temp_coin, clvm.to_sexp_f([puzzle.code, solution.code])))
 
-            #Spend consolidating coin
-            puzzle = self.ap_make_aggregation_puzzle(coin.puzzle_hash)
-            solution = self.ac_make_aggregation_solution(consolidating_coin.name(), coin.parent_coin_info, coin.amount)
-            list_of_coinsolutions.append(CoinSolution(consolidating_coin, clvm.to_sexp_f([puzzle.code, solution.code])))
+        #Spend consolidating coin
+        puzzle = self.ap_make_aggregation_puzzle(self.temp_coin.puzzle_hash)
+        solution = self.ac_make_aggregation_solution(consolidating_coin.name(), self.temp_coin.parent_coin_info, self.temp_coin.amount)
+        list_of_coinsolutions.append(CoinSolution(consolidating_coin, clvm.to_sexp_f([puzzle.code, solution.code])))
 
-            #Spend lock
-            puzstring = "(r (c (q 0x"+ hexlify(consolidating_coin.name()).decode('ascii') +") (q ())))"
-            puzzle = Program(binutils.assemble(puzstring))
-            solution = Program(binutils.assemble("()"))
-            list_of_coinsolutions.append(CoinSolution(Coin(coin,ProgramHash(puzzle),0), clvm.to_sexp_f([puzzle.code, solution.code])))
+        #Spend lock
+        puzstring = "(r (c (q 0x"+ hexlify(consolidating_coin.name()).decode('ascii') +") (q ())))"
+        puzzle = Program(binutils.assemble(puzstring))
+        solution = Program(binutils.assemble("()"))
+        list_of_coinsolutions.append(CoinSolution(Coin(self.temp_coin, ProgramHash(puzzle),0), clvm.to_sexp_f([puzzle.code, solution.code])))
 
+        self.temp_coin = Coin(self.temp_coin, self.temp_coin.puzzle_hash, self.temp_coin.amount + consolidating_coin.amount)
         aggsig = BLSSignature.aggregate([signature])
         solution_list = CoinSolutionList(list_of_coinsolutions)
         return SpendBundle(solution_list, aggsig)

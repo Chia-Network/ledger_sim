@@ -30,9 +30,10 @@ async def update_wallets(remote, r, wallets):
         wallet.notify(additions, removals)
         if type(wallet) is APWallet:
             wallet.ap_notify(additions)
-            spend_bundle = wallet.ac_notify(additions)
-            if spend_bundle is not None:
-                _ = await remote.push_tx(tx=spend_bundle)
+            spend_bundle_list = wallet.ac_notify(additions)
+            if spend_bundle_list is not None:
+                for spend_bundle in spend_bundle_list:
+                    _ = await remote.push_tx(tx=spend_bundle)
 
 async def client_test(path):
 
@@ -70,7 +71,7 @@ async def client_test(path):
     spend_bundle = apwallet_a.generate_signed_transaction(amount, APpuzzlehash)
     _ = await remote.push_tx(tx=spend_bundle)
     #Commit this transaction to a block
-    wallet = wallets[random.randrange(0,3)]
+    wallet = wallets[2]
     coinbase_puzzle_hash = wallet.get_new_puzzlehash()
     fees_puzzle_hash = wallet.get_new_puzzlehash()
     r = await remote.next_block(coinbase_puzzle_hash=coinbase_puzzle_hash,
@@ -83,9 +84,12 @@ async def client_test(path):
 
     #Wallet A sends more money into Wallet B using the aggregation coin
     aggregation_puzzlehash = apwallet_a.ap_get_aggregation_puzzlehash(APpuzzlehash)
-    amount = 80
-    spend_bundle = apwallet_a.generate_signed_transaction(amount, aggregation_puzzlehash)
+    #amount = 80
+    spend_bundle = apwallet_a.generate_signed_transaction(50, aggregation_puzzlehash)
     _ = await remote.push_tx(tx=spend_bundle)
+    spend_bundle = wallets[2].generate_signed_transaction(30, aggregation_puzzlehash)
+    _ = await remote.push_tx(tx=spend_bundle)
+
     #Commit this transaction to a block
     wallet = wallets[random.randrange(0,3)]
     coinbase_puzzle_hash = wallet.get_new_puzzlehash()
