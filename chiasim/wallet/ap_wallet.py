@@ -28,6 +28,7 @@ class APWallet(Wallet):
         self.approved_change_puzzle = None
         self.approved_change_signature = None
         self.temp_coin = None
+        self.temp_coin_flag = False
         return
 
     def set_sender_values(self, AP_puzzlehash, a_pubkey_used):
@@ -87,18 +88,27 @@ class APWallet(Wallet):
         if self.my_utxos:
             self.temp_coin = self.my_utxos.copy().pop()
         spend_bundle_list = []
+
         for coin in additions:
-            my_utxos_copy = self.my_utxos.copy()
-            for mycoin in self.my_utxos:
-                if coin.parent_coin_info == mycoin.name():
-                    my_utxos_copy.remove(mycoin)
-                    self.current_balance -= mycoin.amount
-            self.my_utxos = my_utxos_copy
+            if self.temp_coin_flag:
+                my_utxos_copy = self.my_utxos.copy()
+                for mycoin in self.my_utxos:
+                    if coin.parent_coin_info == mycoin.name():
+                        my_utxos_copy.remove(mycoin)
+                        self.current_balance -= mycoin.amount
+                self.my_utxos = my_utxos_copy
+
             for mycoin in self.my_utxos:
                 if ProgramHash(self.ap_make_aggregation_puzzle(mycoin.puzzle_hash)) == coin.puzzle_hash:
                     self.aggregation_coins.add(coin)
                     spend_bundle = self.ap_generate_signed_aggregation_transaction()
                     spend_bundle_list.append(spend_bundle)
+
+        if len(spend_bundle_list) > 1:
+            self.temp_coin_flag = True
+        else:
+            self.temp_coin_flag = False
+
         if spend_bundle_list:
             return spend_bundle_list
         else:
