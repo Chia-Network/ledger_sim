@@ -75,7 +75,7 @@ class APWallet(Wallet):
     # at the moment this is seperate from the standard notify() - could change it to work like get_keys() with two modes
     def ap_notify(self, additions):
         # this prevents unnecessary checks
-        if self.AP_puzzlehash is not None:
+        if self.AP_puzzlehash is not None and not self.my_utxos:
             for coin in additions:
                 if coin.puzzle_hash == self.AP_puzzlehash:
                     self.current_balance += coin.amount
@@ -84,7 +84,6 @@ class APWallet(Wallet):
 
     # same notes as above but for aggregation coins
     def ac_notify(self, additions):
-        my_utxos_copy = self.my_utxos.copy()
         if self.my_utxos:
             self.temp_coin = self.my_utxos.copy().pop()
         spend_bundle_list = []
