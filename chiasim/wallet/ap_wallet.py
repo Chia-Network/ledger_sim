@@ -11,6 +11,7 @@ from chiasim.validation.Conditions import ConditionOpcode
 from chiasim.puzzles.p2_delegated_puzzle import puzzle_for_pk
 
 
+
 def sha256(val):
     return hashlib.sha256(val).digest()
 
@@ -66,11 +67,6 @@ class APWallet(Wallet):
             elif a_pubkey_used is None and b_pubkey_used is not None:
                 if hash == ProgramHash(self.ap_make_puzzle(pubkey.serialize(), b_pubkey_used)):
                     return (pubkey, self.extended_secret_key.private_child(child).get_private_key())
-
-    # this is used for detecting if a new transactions contains an authorised payee smart transaction for you
-    # helps ap_notify() recognise if the coin should show up in your wallet
-    def ap_does_this_puzzle_belong_to_me(self, hash):
-        return any(map(lambda child: hash == ProgramHash(self.ap_make_puzzle(self.a_pubkey, self.extended_secret_key.public_child(child).get_public_key().serialize())), reversed(range(self.next_address))))
 
     # at the moment this is seperate from the standard notify() - could change it to work like get_keys() with two modes
     def ap_notify(self, additions):

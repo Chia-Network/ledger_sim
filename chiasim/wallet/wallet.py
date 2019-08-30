@@ -43,7 +43,7 @@ class Wallet:
 
     def get_next_public_key(self):
         pubkey = self.extended_secret_key.public_child(self.next_address).get_public_key()
-        self.pubkey_num_lookup[pubkey] = self.next_address
+        self.pubkey_num_lookup[pubkey.serialize()] = self.next_address
         self.next_address = self.next_address + 1
         return pubkey
 
@@ -87,6 +87,17 @@ class Wallet:
         puzzle = self.get_new_puzzle()
         puzzlehash = ProgramHash(puzzle)
         return puzzlehash
+
+    def sign(self, value, pubkey = None):
+        if pubkey is not None:
+            privatekey = self.extended_secret_key.private_child(self.pubkey_num_lookup[pubkey]).get_private_key()
+        else:
+            pubkey = self.extended_secret_key.public_child(self.next_address).get_public_key()
+            privatekey = self.extended_secret_key.private_child(self.next_address).get_private_key()
+            self.pubkey_num_lookup[pubkey.serialize()] = self.next_address
+            self.next_address = self.next_address + 1
+        blskey = BLSPrivateKey(privatekey)
+        return blskey.sign(value)
 
     # returns {'spends' spends, 'signature': None}
     # spends is {(primary_input, puzzle): solution}

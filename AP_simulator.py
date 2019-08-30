@@ -3,6 +3,7 @@ import pathlib
 import tempfile
 import random
 import math
+from chiasim.wallet import ap_wallet_a_functions
 from aiter import map_aiter
 from chiasim.clients import ledger_sim
 from chiasim.ledger import ledger_api
@@ -43,16 +44,16 @@ async def client_test(path):
 
     # Establish wallets
     wallets = [Wallet() for _ in range(3)]
-    apwallet_a = APWallet()
+    apwallet_a = Wallet()
     apwallet_b = APWallet()
     wallets.append(apwallet_a)
     wallets.append(apwallet_b)
     a_pubkey = apwallet_a.get_next_public_key().serialize()
     b_pubkey = apwallet_b.get_next_public_key().serialize()
-    APpuzzlehash = apwallet_a.ap_get_new_puzzlehash(a_pubkey, b_pubkey)
+    APpuzzlehash = ap_wallet_a_functions.ap_get_new_puzzlehash(a_pubkey, b_pubkey)
     apwallet_b.set_sender_values(APpuzzlehash, a_pubkey)
-    apwallet_b.set_approved_change_signature(apwallet_a.ap_generate_signatures(
-        [APpuzzlehash], APpuzzlehash, b_pubkey)[0][1])
+    apwallet_b.set_approved_change_signature(ap_wallet_a_functions.ap_sign_output_newpuzzlehash(
+        APpuzzlehash, apwallet_a, a_pubkey))
 
     # Give our APWallet A some money
     wallet = wallets[random.randrange(0, 3)]
@@ -66,12 +67,10 @@ async def client_test(path):
     print([[x.amount for x in wallet.my_utxos] for wallet in wallets])
 
     # Wallet A locks up the puzzle with information regarding B's pubkey
-    APpuzzlehash = apwallet_a.ap_get_new_puzzlehash(a_pubkey, b_pubkey)
-    apwallet_a.ap_make_aggregation_puzzle(APpuzzlehash)
     approved_puzhashes = [
         wallets[0].get_new_puzzlehash(), wallets[1].get_new_puzzlehash()]
-    approved_puzhash_signature_pairs = apwallet_a.ap_generate_signatures(
-        approved_puzhashes, APpuzzlehash, b_pubkey)
+    approved_puzhash_signature_pairs = ap_wallet_a_functions.ap_generate_signatures(
+        approved_puzhashes, APpuzzlehash, apwallet_a, a_pubkey)
     amount = 50
     spend_bundle = apwallet_a.generate_signed_transaction(amount, APpuzzlehash)
     _ = await remote.push_tx(tx=spend_bundle)
@@ -87,7 +86,7 @@ async def client_test(path):
     print([[x.amount for x in wallet.my_utxos] for wallet in wallets])
 
     # Wallet A sends more money into Wallet B using the aggregation coin
-    aggregation_puzzlehash = apwallet_a.ap_get_aggregation_puzzlehash(
+    aggregation_puzzlehash = ap_wallet_a_functions.ap_get_aggregation_puzzlehash(
         APpuzzlehash)
     #amount = 80
     spend_bundle = apwallet_a.generate_signed_transaction(
@@ -123,9 +122,9 @@ async def client_test(path):
 
     # Wallet B tries to spend from approved list of transactions
     # the storage of these as well as the selection processs should be improved (moved into wallet class?)
-    signatures = [approved_puzhash_signature_pairs[2]
-                  [1], approved_puzhash_signature_pairs[1][1]]
-    ap_output = [(approved_puzhash_signature_pairs[2][0], 69),
+    signatures = [approved_puzhash_signature_pairs[0][1],
+                    approved_puzhash_signature_pairs[1][1]]
+    ap_output = [(approved_puzhash_signature_pairs[0][0], 69),
                  (approved_puzhash_signature_pairs[1][0], 22)]
     spend_bundle = apwallet_b.ap_generate_signed_transaction(
         ap_output, signatures)
