@@ -11,7 +11,6 @@ from chiasim.validation.Conditions import ConditionOpcode
 from chiasim.puzzles.p2_delegated_puzzle import puzzle_for_pk
 
 
-
 def sha256(val):
     return hashlib.sha256(val).digest()
 
@@ -39,9 +38,8 @@ class APWallet(Wallet):
     def set_approved_change_signature(self, signature):
         self.approved_change_signature = signature
 
-    # this is for wallet A to generate the permitted puzzlehashes and sign them ahead of time
+    # allows wallet A to generate and sign permitted puzzlehashes ahead of time
     # returns a tuple of (puzhash, signature)
-    # not sure about how best to communicate/store who/what the puzzlehashes are, or if this is even important
     def ap_generate_signatures(self, puzhashes, oldpuzzlehash, b_pubkey_used):
         puzhash_signature_list = []
         pubkey, secretkey = self.get_keys(oldpuzzlehash, None, b_pubkey_used)
@@ -109,8 +107,8 @@ class APWallet(Wallet):
         else:
             return None
 
-    # this function generates some ChiaScript that will merge two lists into a single list
-    # we use it to merge the outputs of two programs that create lists
+    # this function generates ChiaScript that will merge two lists
+
     def merge_two_lists(self, list1=None, list2=None):
         if (list1 is None) or (list2 is None):
             return None

@@ -40,12 +40,25 @@ class Wallet:
         self.my_utxos = set()
         self.seed = urandom(1024)
         self.extended_secret_key = ExtendedPrivateKey.from_seed(self.seed)
+        self.contacts = {}  # {'name': (puzzlehash, puzzletype, extradata)}
 
     def get_next_public_key(self):
         pubkey = self.extended_secret_key.public_child(self.next_address).get_public_key()
         self.pubkey_num_lookup[pubkey.serialize()] = self.next_address
         self.next_address = self.next_address + 1
         return pubkey
+
+    def add_contact(self, name, puzzlehash, puzzletype, extradata):
+        if name in self.contacts:
+            return None
+        else:
+            self.contacts[name] = (puzzlehash, puzzletype, extradata)
+
+    def get_contact(self, name):
+        return self.contacts[name]
+
+    def get_contact_names(self):
+        return [*self.contacts]  # returns list of names
 
     def can_generate_puzzle_hash(self, hash):
         return any(map(lambda child: hash == ProgramHash(puzzle_for_pk(

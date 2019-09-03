@@ -88,7 +88,7 @@ async def client_test(path):
     # Wallet A sends more money into Wallet B using the aggregation coin
     aggregation_puzzlehash = ap_wallet_a_functions.ap_get_aggregation_puzzlehash(
         APpuzzlehash)
-    #amount = 80
+    # amount = 80
     spend_bundle = apwallet_a.generate_signed_transaction(
         50, aggregation_puzzlehash)
     _ = await remote.push_tx(tx=spend_bundle)
@@ -123,7 +123,7 @@ async def client_test(path):
     # Wallet B tries to spend from approved list of transactions
     # the storage of these as well as the selection processs should be improved (moved into wallet class?)
     signatures = [approved_puzhash_signature_pairs[0][1],
-                    approved_puzhash_signature_pairs[1][1]]
+                  approved_puzhash_signature_pairs[1][1]]
     ap_output = [(approved_puzhash_signature_pairs[0][0], 69),
                  (approved_puzhash_signature_pairs[1][0], 22)]
     spend_bundle = apwallet_b.ap_generate_signed_transaction(
