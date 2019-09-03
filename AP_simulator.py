@@ -66,12 +66,16 @@ async def client_test(path):
     await update_wallets(remote, r, wallets)
     print([[x.amount for x in wallet.my_utxos] for wallet in wallets])
 
-    # Wallet A locks up the puzzle with information regarding B's pubkey
+    # Wallet B adds contacts of the approved payees
     approved_puzhashes = [
         wallets[0].get_new_puzzlehash(), wallets[1].get_new_puzzlehash()]
-    approved_puzhash_signature_pairs = ap_wallet_a_functions.ap_generate_signatures(
-        approved_puzhashes, APpuzzlehash, apwallet_a, a_pubkey)
+    apwallet_b.add_contact("Alice", approved_puzhashes[0], "authorised_payees", ap_wallet_a_functions.ap_sign_output_newpuzzlehash(
+        approved_puzhashes[0], apwallet_a, a_pubkey))
+    apwallet_b.add_contact("Bob", approved_puzhashes[1], "authorised_payees", ap_wallet_a_functions.ap_sign_output_newpuzzlehash(
+        approved_puzhashes[1], apwallet_a, a_pubkey))
     amount = 50
+
+    # Wallet A locks up the puzzle with information regarding B's pubkey
     spend_bundle = apwallet_a.generate_signed_transaction(amount, APpuzzlehash)
     _ = await remote.push_tx(tx=spend_bundle)
     # Commit this transaction to a block
@@ -120,12 +124,12 @@ async def client_test(path):
 
     breakpoint()
 
-    # Wallet B tries to spend from approved list of transactions
-    # the storage of these as well as the selection processs should be improved (moved into wallet class?)
-    signatures = [approved_puzhash_signature_pairs[0][1],
-                  approved_puzhash_signature_pairs[1][1]]
-    ap_output = [(approved_puzhash_signature_pairs[0][0], 69),
-                 (approved_puzhash_signature_pairs[1][0], 22)]
+    # Wallet B tries to spend from approved list of contacts
+    #
+    signatures = [apwallet_b.get_contact("Alice")[2],
+                  apwallet_b.get_contact("Bob")[2]]
+    ap_output = [(apwallet_b.get_contact("Alice")[0], 69),
+                 (apwallet_b.get_contact("Bob")[0], 22)]
     spend_bundle = apwallet_b.ap_generate_signed_transaction(
         ap_output, signatures)
     _ = await remote.push_tx(tx=spend_bundle)
