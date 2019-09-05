@@ -26,12 +26,12 @@ async def client_test(path):
     remote = await proxy_for_unix_connection(path)
 
     wallets = [Wallet() for _ in range(3)]
-    wallets[0].add_contact("Bob", wallets[1].get_new_puzzlehash(), "p2_delegated_puzzle", None)
-    wallets[0].add_contact("Charlie", wallets[2].get_new_puzzlehash(), "p2_delegated_puzzle", None)
-    wallets[1].add_contact("Alice", wallets[0].get_new_puzzlehash(), "p2_delegated_puzzle", None)
-    wallets[1].add_contact("Charlie", wallets[2].get_new_puzzlehash(), "p2_delegated_puzzle", None)
-    wallets[2].add_contact("Alice", wallets[0].get_new_puzzlehash(), "p2_delegated_puzzle", None)
-    wallets[2].add_contact("Bob", wallets[1].get_new_puzzlehash(), "p2_delegated_puzzle", None)
+    wallets[0].add_contact("Bob", wallets[1].get_new_puzzlehash, "p2_delegated_puzzle", None)
+    wallets[0].add_contact("Charlie", wallets[2].get_new_puzzlehash, "p2_delegated_puzzle", None)
+    wallets[1].add_contact("Alice", wallets[0].get_new_puzzlehash, "p2_delegated_puzzle", None)
+    wallets[1].add_contact("Charlie", wallets[2].get_new_puzzlehash, "p2_delegated_puzzle", None)
+    wallets[2].add_contact("Alice", wallets[0].get_new_puzzlehash, "p2_delegated_puzzle", None)
+    wallets[2].add_contact("Bob", wallets[1].get_new_puzzlehash, "p2_delegated_puzzle", None)
 
     while True:
         wallet = random.choice(wallets)
@@ -55,7 +55,7 @@ async def client_test(path):
         for i in range(1):
             sending_wallet = random.choice([w for w in wallets if w.current_balance > 0])
             receiving_contact = random.choice(sending_wallet.get_contact_names())
-            puzzlehash = sending_wallet.get_contact(receiving_contact)[0]
+            puzzlehash = sending_wallet.get_contact(receiving_contact)[0]()
 
             amount = math.floor(0.50 * random.random() * (sending_wallet.current_balance - 1)) + 1
             spend_bundle = sending_wallet.generate_signed_transaction(amount, puzzlehash)

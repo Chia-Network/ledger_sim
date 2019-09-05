@@ -40,7 +40,7 @@ class Wallet:
         self.my_utxos = set()
         self.seed = urandom(1024)
         self.extended_secret_key = ExtendedPrivateKey.from_seed(self.seed)
-        self.contacts = {}  # {'name': (puzzlehash, puzzletype, extradata)}
+        self.contacts = {}  # {'name': (puzzlegenerator, last , extradata)}
 
     def get_next_public_key(self):
         pubkey = self.extended_secret_key.public_child(self.next_address).get_public_key()
@@ -48,11 +48,11 @@ class Wallet:
         self.next_address = self.next_address + 1
         return pubkey
 
-    def add_contact(self, name, puzzlehash, puzzletype, extradata):
+    def add_contact(self, name, puzzlegenerator, last, extradata):
         if name in self.contacts:
             return None
         else:
-            self.contacts[name] = (puzzlehash, puzzletype, extradata)
+            self.contacts[name] = (puzzlegenerator, last, extradata)
 
     def get_contact(self, name):
         return self.contacts[name]
