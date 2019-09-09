@@ -3,16 +3,17 @@ import datetime
 import logging
 import time
 
-from chiasim.atoms import uint64
+from chiasim.atoms import uint64, streamable_list
 from chiasim.farming import farm_new_block, get_plot_public_key, sign_header
 from chiasim.hashable import (
-    HeaderHash, ProgramHash, ProofOfSpace, SpendBundle
+    HeaderHash, ProgramHash, ProofOfSpace, SpendBundle, Header, Body
 )
 from chiasim.pool import (
     create_coinbase_coin_and_signature, get_pool_public_key
 )
 from chiasim.remote.api_decorators import api_request
 from chiasim.validation import ChainView, validate_spend_bundle_signature
+from chiasim.hashable.Body import BodyList
 
 log = logging.getLogger(__name__)
 
@@ -91,6 +92,39 @@ class LedgerAPI:
         return dict(
             tip_hash=chain_view.tip_hash, tip_index=chain_view.tip_index,
             genesis_hash=chain_view.genesis_hash)
+
+    @api_request(
+        most_recent_header=Header.from_bin,
+    )
+    async def do_get_recent_blocks(self, most_recent_header):
+        most_recent_tip = self._chain_view.tip_index
+        travelling_header = await self._chain_view.tip_hash.obj(self._storage)
+        update_list = []
+        # maybe add some sanity checks here but this isn't the actual blockchain
+        while travelling_header != most_recent_header:
+            update_list.append(await travelling_header.body_hash.obj(self._storage))
+            previous_header_hash = travelling_header.previous_hash
+            travelling_header = await previous_header_hash.obj(self._storage)
+            most_recent_tip -= 1
+            if travelling_header.previous_hash != bytes(([0] * 32)):
+                update_list.append(await travelling_header.body_hash.obj(self._storage))
+                continue
+        update_list.reverse()
+        return BodyList(update_list)
+
+    async def do_get_all_blocks(self):
+        travelling_header = await self._chain_view.tip_hash.obj(self._storage)
+        update_list = []
+        complete = False
+        while complete is False:
+            update_list.append(await travelling_header.body_hash.obj(self._storage))
+            previous_header_hash = travelling_header.previous_hash
+            travelling_header = await previous_header_hash.obj(self._storage)
+            if travelling_header.previous_hash != bytes(([0] * 32)):
+                complete = True
+                update_list.append(await travelling_header.body_hash.obj(self._storage))
+        update_list.reverse()
+        return BodyList(update_list)
 
     @api_request(
         coinbase_puzzle_hash=ProgramHash.from_bin,
