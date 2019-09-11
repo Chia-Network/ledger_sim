@@ -69,6 +69,7 @@ class Wallet:
             pubkey = self.extended_secret_key.public_child(child).get_public_key()
             if hash == ProgramHash(puzzle_for_pk(pubkey.serialize())):
                 return True
+            # TODO: Find a better fix for this
             for child_two in range(10):
                 pubkey = self.extended_secret_key.public_child(child).public_child(child_two).get_public_key()
                 if hash == ProgramHash(puzzle_for_pk(pubkey.serialize())):
@@ -79,6 +80,7 @@ class Wallet:
             pubkey = self.extended_secret_key.public_child(child).get_public_key()
             if hash == ProgramHash(puzzle_for_pk(pubkey.serialize())):
                 return (pubkey, self.extended_secret_key.private_child(child).get_private_key())
+            # TODO Find a better fix for this
             for child_two in range(10):
                 pubkey = self.extended_secret_key.public_child(child).public_child(child_two).get_public_key()
                 if hash == ProgramHash(puzzle_for_pk(pubkey.serialize())):

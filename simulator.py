@@ -48,7 +48,7 @@ async def client_test(path):
         for wallet in wallets:
             wallet.notify(additions, removals)
         print([[x.amount for x in wallet.my_utxos] for wallet in wallets])
-
+        breakpoint()
         r = await remote.all_unspents()
         print("unspents = %s" % r.get("unspents"))
 
