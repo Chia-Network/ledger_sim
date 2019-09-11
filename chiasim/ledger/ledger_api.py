@@ -106,7 +106,7 @@ class LedgerAPI:
             previous_header_hash = travelling_header.previous_hash
             travelling_header = await previous_header_hash.obj(self._storage)
             most_recent_tip -= 1
-            if travelling_header.previous_hash != bytes(([0] * 32)):
+            if travelling_header.previous_hash != bytes([0] * 32):
                 update_list.append(await travelling_header.body_hash.obj(self._storage))
                 continue
         update_list.reverse()
@@ -119,8 +119,9 @@ class LedgerAPI:
         while complete is False:
             update_list.append(await travelling_header.body_hash.obj(self._storage))
             previous_header_hash = travelling_header.previous_hash
+            print(previous_header_hash)
             travelling_header = await previous_header_hash.obj(self._storage)
-            if travelling_header.previous_hash != bytes(([0] * 32)):
+            if travelling_header.previous_hash != bytes([0] * 32):
                 complete = True
                 update_list.append(await travelling_header.body_hash.obj(self._storage))
         update_list.reverse()
