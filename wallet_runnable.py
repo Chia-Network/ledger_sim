@@ -1,9 +1,11 @@
 import asyncio
+
 from chiasim.wallet.wallet import Wallet
 from chiasim.clients.ledger_sim import connect_to_ledger_sim
 from chiasim.wallet.deltas import additions_for_body, removals_for_body
 from chiasim.hashable import Coin
 from chiasim.hashable.Body import BodyList
+from blspy import ExtendedPrivateKey, ExtendedPublicKey
 
 
 def view_funds(wallet):
@@ -11,13 +13,30 @@ def view_funds(wallet):
 
 
 def add_contact(wallet):
-    print("Get the details required")
+    name = input("What is the new contact's name? ")
+    # note that we should really be swapping a function here, but thisll do
+    pubkeystring = input("What is their public key?")
+    HDChild = ExtendedPublicKey.from_bytes(pubkeystring)
+    puzzlegenerator = puzzle_for_pk()
     wallet.add_contact()
 
 
 def view_contacts(wallet):
     for name, details in wallet.contacts:
         print(name)
+
+
+def print_my_details(wallet):
+    print("Name: " + wallet.name)
+    print("Public Key: ")
+    print(wallet.extended_secret_key.public_child(wallet.next_address))
+    wallet.next_address += 1
+    print("")
+
+
+def set_name(wallet):
+    selection = input("Enter a new name: ")
+    wallet.set_name(selection)
 
 
 def make_payment(wallet, ledger_api):
@@ -74,6 +93,9 @@ async def main():
         print("4: View Contacts")
         print("5: Get Update")
         print("6: *GOD MODE* Commit Block / Get Money")
+        print("7: Print my details for somebody else")
+        print("8: Set my wallet name")
+        print("9: Test export")
         print("q: Quit")
         selection = input()
         if selection == "1":
@@ -88,6 +110,14 @@ async def main():
             await update_ledger(wallet, ledger_api, most_recent_header)
         elif selection == "6":
             most_recent_header = await new_block(wallet, ledger_api)
+        elif selection == "7":
+            print_my_details(wallet)
+        elif selection == "8":
+            set_name(wallet)
+        elif selection == "9":
+            print(wallet.export_puzzle_generator()(0))
+            print(wallet.export_puzzle_generator()(1))
+            print(wallet.export_puzzle_generator()(2))
 
 
 run = asyncio.get_event_loop().run_until_complete

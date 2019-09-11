@@ -216,7 +216,6 @@ class APWallet(Wallet):
 
     # this is for sending a locked coin
     # Wallet B must sign the whole transaction, and the appropriate puzhash signature from A must be included
-
     def ap_sign_transaction(self, spends: (Program, [CoinSolution]), signatures_from_a):
         sigs = []
         for puzzle, solution in spends:

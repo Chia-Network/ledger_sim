@@ -40,7 +40,8 @@ class Wallet:
         self.my_utxos = set()
         self.seed = urandom(1024)
         self.extended_secret_key = ExtendedPrivateKey.from_seed(self.seed)
-        self.contacts = {}  # {'name': (puzzlegenerator, last , extradata)}
+        self.contacts = {}  # {'name': (puzzlegenerator, last, extradata)}
+        self.name = ""
 
     def get_next_public_key(self):
         pubkey = self.extended_secret_key.public_child(self.next_address).get_public_key()
@@ -52,13 +53,16 @@ class Wallet:
         if name in self.contacts:
             return None
         else:
-            self.contacts[name] = (puzzlegenerator, last, extradata)
+            self.contacts[name] = [puzzlegenerator, last, extradata]
 
     def get_contact(self, name):
         return self.contacts[name]
 
     def get_contact_names(self):
         return [*self.contacts]  # returns list of names
+
+    def set_name(self, name):
+        self.name = name
 
     def can_generate_puzzle_hash(self, hash):
         return any(map(lambda child: hash == ProgramHash(puzzle_for_pk(
@@ -100,6 +104,24 @@ class Wallet:
         puzzle = self.get_new_puzzle()
         puzzlehash = ProgramHash(puzzle)
         return puzzlehash
+
+    def export_puzzle_generator(self):
+        pubkey_generator = self.extended_secret_key.public_child(self.next_address)
+        self.next_address = self.next_address + 1
+
+        def generator(next_key_number):
+            pubkey = pubkey_generator
+            puzzle = puzzle_for_pk(pubkey.public_child(next_key_number).get_public_key().serialize())
+            return puzzle
+        return generator
+
+    def get_puzzle_for_contact(self, contact_name):
+        puzzlehash = self.contacts[contact_name][0](self.contacts[contact_name][1])
+        self.contacts[contact_name][1] += 1
+        return puzzlehash
+
+    def get_puzzlehash_for_contact(self, contact_name):
+        return ProgramHash(self.get_puzzle_for_contact(contact_name))
 
     def sign(self, value, pubkey = None):
         if pubkey is not None:
