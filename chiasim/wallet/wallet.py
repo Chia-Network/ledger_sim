@@ -65,15 +65,25 @@ class Wallet:
         self.name = name
 
     def can_generate_puzzle_hash(self, hash):
-        return any(map(lambda child: hash == ProgramHash(puzzle_for_pk(
-            self.extended_secret_key.public_child(child).get_public_key().serialize())),
-                reversed(range(self.next_address))))
+        for child in range(self.next_address):
+            pubkey = self.extended_secret_key.public_child(child).get_public_key()
+            if hash == ProgramHash(puzzle_for_pk(pubkey.serialize())):
+                return True
+            for child_two in range(10):
+                pubkey = self.extended_secret_key.public_child(child).public_child(child_two).get_public_key()
+                if hash == ProgramHash(puzzle_for_pk(pubkey.serialize())):
+                    return True
 
     def get_keys(self, hash):
         for child in range(self.next_address):
             pubkey = self.extended_secret_key.public_child(child).get_public_key()
             if hash == ProgramHash(puzzle_for_pk(pubkey.serialize())):
                 return (pubkey, self.extended_secret_key.private_child(child).get_private_key())
+            for child_two in range(10):
+                pubkey = self.extended_secret_key.public_child(child).public_child(child_two).get_public_key()
+                if hash == ProgramHash(puzzle_for_pk(pubkey.serialize())):
+                    return (pubkey, self.extended_secret_key.private_child(child).get_private_key())
+
 
     def notify(self, additions, deletions):
         for coin in deletions:

@@ -1,11 +1,10 @@
 import asyncio
-
 from chiasim.wallet.wallet import Wallet
 from chiasim.clients.ledger_sim import connect_to_ledger_sim
 from chiasim.wallet.deltas import additions_for_body, removals_for_body
 from chiasim.hashable import Coin
 from chiasim.hashable.Body import BodyList
-from blspy import ExtendedPrivateKey, ExtendedPublicKey
+from blspy import ExtendedPublicKey
 
 
 def view_funds(wallet):
@@ -28,10 +27,9 @@ def view_contacts(wallet):
 
 def print_my_details(wallet):
     print("Name: " + wallet.name)
-    print("Public Key: ")
-    print(wallet.extended_secret_key.public_child(wallet.next_address))
-    wallet.next_address += 1
-    print("")
+    print("Pickle dump: ")
+    print(wallet.export_puzzle_generator())
+    print()
 
 
 def set_name(wallet):
