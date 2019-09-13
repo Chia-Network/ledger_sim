@@ -1,9 +1,13 @@
 import asyncio
+import clvm
 from chiasim.wallet.wallet import Wallet
 from chiasim.clients.ledger_sim import connect_to_ledger_sim
 from chiasim.wallet.deltas import additions_for_body, removals_for_body
 from chiasim.hashable import Coin
 from chiasim.hashable.Body import BodyList
+from clvm_tools import binutils
+from chiasim.hashable import Program, ProgramHash
+from chiasim.validation.Conditions import ConditionOpcode
 from blspy import ExtendedPublicKey
 
 
@@ -14,10 +18,9 @@ def view_funds(wallet):
 def add_contact(wallet):
     name = input("What is the new contact's name? ")
     # note that we should really be swapping a function here, but thisll do
-    pubkeystring = input("What is their public key?")
-    HDChild = ExtendedPublicKey.from_bytes(pubkeystring)
-    puzzlegenerator = puzzle_for_pk()
-    wallet.add_contact()
+    puzzlegeneratorstring = input("What is their ChiaLisp puzzlegenerator: ")
+    puzzlegenerator = binutils.assemble(puzzlegeneratorstring)
+    wallet.add_contact(name, puzzlegenerator, 0, None)
 
 
 def view_contacts(wallet):
@@ -27,27 +30,35 @@ def view_contacts(wallet):
 
 def print_my_details(wallet):
     print("Name: " + wallet.name)
-    print("Pickle dump: ")
-    print(wallet.export_puzzle_generator())
-    print()
-
+    print("Puzzle Generator: ")
+    print("(c (q 5) (c (c (q 5) (c (q (q 50)) (c (c (q 5) (c (c (q 1) (c (f (a)) (q ()))) (q ((c (sha256 (wrap (a))) (q ())))))) (q ())))) (q ((a)))))")
+    print("New pubkey: ")
+    print(wallet.get_next_public_key())
+    print("Generator hash identifier:")
+    print(ProgramHash(Program(binutils.assemble("(c (q 5) (c (c (q 5) (c (q (q 50)) (c (c (q 5) (c (c (q 1) (c (f (a)) (q ()))) (q ((c (sha256 (wrap (a))) (q ())))))) (q ())))) (q ((a)))))"))))
 
 def set_name(wallet):
     selection = input("Enter a new name: ")
     wallet.set_name(selection)
 
 
-def make_payment(wallet, ledger_api):
-    selection = ""
+def make_payment(wallet):
+    selection = None
     amount = -1
-    print("Pick a contact to send to:")
-    for name, details in wallet.contacts:
-        print("  " + name)
-    while selection not in wallet.contacts:
-        selection = input("Choice: ")
-    while amount > wallet.current_balance or amount < 0 or not amount.isdigit():
-        amount = input("Amount: ")
-    return wallet.generate_signed_transaction(amount, wallet.contacts[selection][0](wallet.contacts[selection][1]))
+    if wallet.current_balance <= 0:
+        print("You need some money first")
+        return None
+    name = input("Name of payee:" )
+    type = input("Generator hash ID: 0x")
+    while amount > wallet.current_balance or amount < 0:
+        amount = int(input("Amount: "))
+    pubkey = input("Pubkey: 0x")
+    args = binutils.assemble("(0x" + pubkey + ")")
+    program = Program(clvm.eval_f(clvm.eval_f, binutils.assemble(wallet.generator_lookups[type]), args))
+    puzzlehash = ProgramHash(program)
+    print(puzzlehash)
+    breakpoint()
+    return wallet.generate_signed_transaction(amount, puzzlehash)
 
 
 async def new_block(wallet, ledger_api):
@@ -101,7 +112,9 @@ async def main():
         elif selection == "2":
             add_contact(wallet)
         elif selection == "3":
-            ledger_api.push_tx(tx=make_payment(wallet))
+            r = make_payment(wallet)
+            if r is not None:
+                await ledger_api.push_tx(tx=r)
         elif selection == "4":
             view_contacts(wallet)
         elif selection == "5":

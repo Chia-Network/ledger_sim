@@ -162,6 +162,7 @@ class APWallet(Wallet):
         input_of_lock = '(c (q 0x%s) (c (sha256 %s %s (uint64 (q 0))) (q ())))' % (hexlify(
             ConditionOpcode.ASSERT_COIN_CONSUMED).decode('ascii'), parent_coin_id, lock_puzzle)
         puz = '(c ' + me_is_my_id + ' (c ' + input_of_lock + ' (q ())))'
+        print(puz)
         return Program(binutils.assemble(puz))
 
     # returns the ProgramHash of a new puzzle

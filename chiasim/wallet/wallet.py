@@ -13,6 +13,8 @@ from chiasim.validation.consensus import (
     conditions_for_solution, hash_key_pairs_for_conditions_dict
 )
 from .BLSPrivateKey import BLSPrivateKey
+from clvm_tools import binutils
+from binascii import hexlify
 
 
 def sha256(val):
@@ -34,6 +36,7 @@ class Wallet:
     seed = b'seed'
     next_address = 0
     pubkey_num_lookup = {}
+    puzzle_generator = "(c (q 5) (c (c (q 5) (c (q (q 50)) (c (c (q 5) (c (c (q 1) (c (f (a)) (q ()))) (q ((c (sha256 (wrap (a))) (q ())))))) (q ())))) (q ((a)))))"
 
     def __init__(self):
         self.current_balance = 0
@@ -41,7 +44,10 @@ class Wallet:
         self.seed = urandom(1024)
         self.extended_secret_key = ExtendedPrivateKey.from_seed(self.seed)
         self.contacts = {}  # {'name': (puzzlegenerator, last, extradata)}
+        self.generator_lookups = {}  # {generator_hash: generator}
         self.name = ""
+        self.generator_lookups[str(ProgramHash(Program(binutils.assemble(self.puzzle_generator))))] = self.puzzle_generator
+
 
     def get_next_public_key(self):
         pubkey = self.extended_secret_key.public_child(self.next_address).get_public_key()
@@ -67,25 +73,24 @@ class Wallet:
     def can_generate_puzzle_hash(self, hash):
         for child in range(self.next_address):
             pubkey = self.extended_secret_key.public_child(child).get_public_key()
-            if hash == ProgramHash(puzzle_for_pk(pubkey.serialize())):
+            if hash == ProgramHash(puzzle_for_pk(pubkey.serialize())) or hash == ProgramHash(self.puzzle_for_pk(pubkey.serialize())):
                 return True
             # TODO: Find a better fix for this
             for child_two in range(10):
                 pubkey = self.extended_secret_key.public_child(child).public_child(child_two).get_public_key()
-                if hash == ProgramHash(puzzle_for_pk(pubkey.serialize())):
+                if hash == ProgramHash(puzzle_for_pk(pubkey.serialize())) or hash == ProgramHash(self.puzzle_for_pk(pubkey.serialize())):
                     return True
 
     def get_keys(self, hash):
         for child in range(self.next_address):
             pubkey = self.extended_secret_key.public_child(child).get_public_key()
-            if hash == ProgramHash(puzzle_for_pk(pubkey.serialize())):
+            if hash == ProgramHash(puzzle_for_pk(pubkey.serialize())) or hash == ProgramHash(self.puzzle_for_pk(pubkey.serialize())):
                 return (pubkey, self.extended_secret_key.private_child(child).get_private_key())
             # TODO Find a better fix for this
             for child_two in range(10):
                 pubkey = self.extended_secret_key.public_child(child).public_child(child_two).get_public_key()
-                if hash == ProgramHash(puzzle_for_pk(pubkey.serialize())):
+                if hash == ProgramHash(puzzle_for_pk(pubkey.serialize())) or hash == ProgramHash(self.puzzle_for_pk(pubkey.serialize())):
                     return (pubkey, self.extended_secret_key.private_child(child).get_private_key())
-
 
     def notify(self, additions, deletions):
         for coin in deletions:
@@ -106,6 +111,11 @@ class Wallet:
         while sum(map(lambda coin: coin.amount, used_utxos)) < amount:
             used_utxos.add(coins.pop())
         return used_utxos
+
+    def puzzle_for_pk(self, pubkey):
+        args = "(0x%s)" % hexlify(pubkey).decode('ascii')
+        puzzle = Program(clvm.eval_f(clvm.eval_f, binutils.assemble(self.puzzle_generator), binutils.assemble(args)))
+        return puzzle
 
     def get_new_puzzle(self):
         pubkey = self.get_next_public_key().serialize()
