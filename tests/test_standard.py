@@ -2,12 +2,13 @@ import asyncio
 from unittest import TestCase
 
 from chiasim.hack.keys import (
-    build_spend_bundle, conditions_for_payment, public_key_bytes_for_index, puzzle_hash_for_index,
-    signature_for_solution,
-    private_key_for_index
+    build_spend_bundle, conditions_for_payment, public_key_bytes_for_index,
+    puzzle_hash_for_index, private_key_for_index
 )
-from chiasim.hashable import Coin, ProgramHash, CoinSolution, SpendBundle
-from chiasim.puzzles import (p2_conditions, p2_delegated_conditions, p2_m_of_n_delegate_direct)
+from chiasim.hashable import Coin, ProgramHash, SpendBundle
+from chiasim.puzzles import (
+    p2_conditions, p2_delegated_conditions, p2_m_of_n_delegate_direct
+)
 from chiasim.remote.client import RemoteError
 from chiasim.validation.Conditions import make_assert_my_coin_id_condition
 from chiasim.wallet.BLSPrivateKey import BLSPrivateKey
