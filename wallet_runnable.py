@@ -7,8 +7,8 @@ from chiasim.hashable import Coin
 from chiasim.hashable.Body import BodyList
 from clvm_tools import binutils
 from chiasim.hashable import Program, ProgramHash
-from chiasim.validation.Conditions import ConditionOpcode
-from blspy import ExtendedPublicKey
+from chiasim.puzzles.p2_delegated_puzzle import puzzle_for_pk
+
 
 
 def view_funds(wallet):
@@ -31,11 +31,12 @@ def view_contacts(wallet):
 def print_my_details(wallet):
     print("Name: " + wallet.name)
     print("Puzzle Generator: ")
-    print("(c (q 5) (c (c (q 5) (c (q (q 50)) (c (c (q 5) (c (c (q 1) (c (f (a)) (q ()))) (q ((c (sha256 (wrap (a))) (q ())))))) (q ())))) (q ((a)))))")
+    print(wallet.puzzle_generator)
     print("New pubkey: ")
     print(wallet.get_next_public_key())
     print("Generator hash identifier:")
-    print(ProgramHash(Program(binutils.assemble("(c (q 5) (c (c (q 5) (c (q (q 50)) (c (c (q 5) (c (c (q 1) (c (f (a)) (q ()))) (q ((c (sha256 (wrap (a))) (q ())))))) (q ())))) (q ((a)))))"))))
+    print(wallet.puzzle_generator_id)
+
 
 def set_name(wallet):
     selection = input("Enter a new name: ")
@@ -50,6 +51,15 @@ def make_payment(wallet):
         return None
     name = input("Name of payee:" )
     type = input("Generator hash ID: 0x")
+    if type not in wallet.generator_lookups:
+        print("Unknown generator - please input the source.")
+        source = input("Source: ")
+        if str(ProgramHash(Program(binutils.assemble(source)))) != "0x"+type:
+            print("source not equal to ID")
+            breakpoint()
+            return
+        else:
+            wallet.generator_lookups[type] = source
     while amount > wallet.current_balance or amount < 0:
         amount = int(input("Amount: "))
     pubkey = input("Pubkey: 0x")
@@ -104,7 +114,7 @@ async def main():
         print("6: *GOD MODE* Commit Block / Get Money")
         print("7: Print my details for somebody else")
         print("8: Set my wallet name")
-        print("9: Test export")
+        print("9: Compare puzzle generations")
         print("q: Quit")
         selection = input()
         if selection == "1":
@@ -112,9 +122,18 @@ async def main():
         elif selection == "2":
             add_contact(wallet)
         elif selection == "3":
-            r = make_payment(wallet)
-            if r is not None:
-                await ledger_api.push_tx(tx=r)
+            print()
+            print("Select option: ")
+            print("1: Pay to contact")
+            print("2: Other payment")
+            mode = input()
+            if mode == "1":
+
+                return
+            elif mode == "2":
+                r = make_payment(wallet)
+                if r is not None:
+                    await ledger_api.push_tx(tx=r)
         elif selection == "4":
             view_contacts(wallet)
         elif selection == "5":
@@ -126,9 +145,11 @@ async def main():
         elif selection == "8":
             set_name(wallet)
         elif selection == "9":
-            print(wallet.export_puzzle_generator()(0))
-            print(wallet.export_puzzle_generator()(1))
-            print(wallet.export_puzzle_generator()(2))
+            pubkey = wallet.get_next_public_key()
+            print(puzzle_for_pk(pubkey.serialize()))
+            print(wallet.puzzle_for_pk(pubkey.serialize()))
+            if ProgramHash(puzzle_for_pk(pubkey.serialize())) == ProgramHash(wallet.puzzle_for_pk(pubkey.serialize())):
+                print("We did it reddit")
 
 
 run = asyncio.get_event_loop().run_until_complete
