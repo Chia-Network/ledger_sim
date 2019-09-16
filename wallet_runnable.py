@@ -106,35 +106,27 @@ async def main():
     while selection != "q":
         print("Select a function:")
         print("1: View Funds")
-        print("2: Add Contact")
+        print("2: Add Contact (DISABLED)")
         print("3: Make Payment")
         print("4: View Contacts")
         print("5: Get Update")
         print("6: *GOD MODE* Commit Block / Get Money")
         print("7: Print my details for somebody else")
         print("8: Set my wallet name")
-        print("9: Compare puzzle generations")
         print("q: Quit")
         selection = input()
         if selection == "1":
             view_funds(wallet)
         elif selection == "2":
-            add_contact(wallet)
+            # add_contact(wallet)
+            print("contacts temporarily disable")
         elif selection == "3":
-            print()
-            print("Select option: ")
-            print("1: Pay to contact")
-            print("2: Other payment")
-            mode = input()
-            if mode == "1":
-
-                return
-            elif mode == "2":
-                r = make_payment(wallet)
-                if r is not None:
-                    await ledger_api.push_tx(tx=r)
+            r = make_payment(wallet)
+            if r is not None:
+                await ledger_api.push_tx(tx=r)
         elif selection == "4":
-            view_contacts(wallet)
+            # view_contacts(wallet)
+            print("contacts temporarily disable")
         elif selection == "5":
             await update_ledger(wallet, ledger_api, most_recent_header)
         elif selection == "6":
@@ -143,12 +135,6 @@ async def main():
             print_my_details(wallet)
         elif selection == "8":
             set_name(wallet)
-        elif selection == "9":
-            pubkey = wallet.get_next_public_key()
-            print(puzzle_for_pk(pubkey.serialize()))
-            print(wallet.puzzle_for_pk(pubkey.serialize()))
-            if ProgramHash(puzzle_for_pk(pubkey.serialize())) == ProgramHash(wallet.puzzle_for_pk(pubkey.serialize())):
-                print("We did it reddit")
 
 
 run = asyncio.get_event_loop().run_until_complete

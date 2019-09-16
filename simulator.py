@@ -53,6 +53,7 @@ async def client_test(path):
         for i in range(1):
             sending_wallet = random.choice([w for w in wallets if w.current_balance > 0])
             receiving_wallet = random.choice(wallets)
+
             pubkey_puz_string = "(0x%s)" % hexlify(receiving_wallet.get_next_public_key().serialize()).decode('ascii')
             args = binutils.assemble(pubkey_puz_string)
             program = Program(clvm.eval_f(clvm.eval_f, binutils.assemble(sending_wallet.generator_lookups[receiving_wallet.puzzle_generator_id]), args))

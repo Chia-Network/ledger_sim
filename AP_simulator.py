@@ -69,10 +69,6 @@ async def client_test(path):
     # Wallet B adds contacts of the approved payees
     approved_puzhashes = [
         wallets[0].get_new_puzzlehash(), wallets[1].get_new_puzzlehash()]
-    apwallet_b.add_contact("Alice", approved_puzhashes[0], "authorised_payees", ap_wallet_a_functions.ap_sign_output_newpuzzlehash(
-        approved_puzhashes[0], apwallet_a, a_pubkey))
-    apwallet_b.add_contact("Bob", approved_puzhashes[1], "authorised_payees", ap_wallet_a_functions.ap_sign_output_newpuzzlehash(
-        approved_puzhashes[1], apwallet_a, a_pubkey))
     amount = 50
 
     # Wallet A locks up the puzzle with information regarding B's pubkey
@@ -126,10 +122,11 @@ async def client_test(path):
 
     # Wallet B tries to spend from approved list of contacts
     #
-    signatures = [apwallet_b.get_contact("Alice")[2],
-                  apwallet_b.get_contact("Bob")[2]]
-    ap_output = [(apwallet_b.get_contact("Alice")[0], 69),
-                 (apwallet_b.get_contact("Bob")[0], 22)]
+    signatures = [ap_wallet_a_functions.ap_sign_output_newpuzzlehash(
+        approved_puzhashes[0], apwallet_a, a_pubkey),
+                  ap_wallet_a_functions.ap_sign_output_newpuzzlehash(
+                      approved_puzhashes[1], apwallet_a, a_pubkey)]
+    ap_output = [(approved_puzhashes[0], 69), (approved_puzhashes[1], 22)]
     spend_bundle = apwallet_b.ap_generate_signed_transaction(
         ap_output, signatures)
     _ = await remote.push_tx(tx=spend_bundle)
