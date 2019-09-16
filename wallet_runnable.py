@@ -10,7 +10,6 @@ from chiasim.hashable import Program, ProgramHash
 from chiasim.puzzles.p2_delegated_puzzle import puzzle_for_pk
 
 
-
 def view_funds(wallet):
     print([x.amount for x in wallet.my_utxos])
 

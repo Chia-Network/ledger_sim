@@ -2,8 +2,10 @@ import asyncio
 import pathlib
 import tempfile
 import random
+import clvm
 import math
 from aiter import map_aiter
+from clvm_tools import binutils
 from chiasim.clients import ledger_sim
 from chiasim.ledger import ledger_api
 from chiasim.hashable import Coin
@@ -14,6 +16,8 @@ from chiasim.utils.log import init_logging
 from chiasim.utils.server import start_unix_server_aiter
 from chiasim.wallet.deltas import additions_for_body, removals_for_body
 from chiasim.wallet.wallet import Wallet
+from chiasim.hashable import Program, ProgramHash
+from binascii import hexlify
 
 
 async def proxy_for_unix_connection(path):
@@ -26,12 +30,6 @@ async def client_test(path):
     remote = await proxy_for_unix_connection(path)
 
     wallets = [Wallet() for _ in range(3)]
-    wallets[0].add_contact("Bob", wallets[1].export_puzzle_generator(), 0, None)
-    wallets[0].add_contact("Charlie", wallets[2].export_puzzle_generator(), 0, None)
-    wallets[1].add_contact("Alice", wallets[0].export_puzzle_generator(), 0, None)
-    wallets[1].add_contact("Charlie", wallets[2].export_puzzle_generator(), 0, None)
-    wallets[2].add_contact("Alice", wallets[0].export_puzzle_generator(), 0, None)
-    wallets[2].add_contact("Bob", wallets[1].export_puzzle_generator(), 0, None)
 
     while True:
         wallet = random.choice(wallets)
@@ -54,8 +52,11 @@ async def client_test(path):
 
         for i in range(1):
             sending_wallet = random.choice([w for w in wallets if w.current_balance > 0])
-            receiving_contact = random.choice(sending_wallet.get_contact_names())
-            puzzlehash = sending_wallet.get_puzzlehash_for_contact(receiving_contact)
+            receiving_wallet = random.choice(wallets)
+            pubkey_puz_string = "(0x%s)" % hexlify(receiving_wallet.get_next_public_key().serialize()).decode('ascii')
+            args = binutils.assemble(pubkey_puz_string)
+            program = Program(clvm.eval_f(clvm.eval_f, binutils.assemble(sending_wallet.generator_lookups[receiving_wallet.puzzle_generator_id]), args))
+            puzzlehash = ProgramHash(program)
 
             amount = math.floor(0.50 * random.random() * (sending_wallet.current_balance - 1)) + 1
             spend_bundle = sending_wallet.generate_signed_transaction(amount, puzzlehash)

@@ -205,7 +205,6 @@ class Wallet:
             secretkey = BLSPrivateKey(secretkey)
             code_ = [puzzle.code, [solution.solution.code, []]]
             sexp = clvm.to_sexp_f(code_)
-            breakpoint()
             conditions_dict = conditions_by_opcode(conditions_for_solution(sexp))
             for _ in hash_key_pairs_for_conditions_dict(conditions_dict):
                 signature = secretkey.sign(_.message_hash)
