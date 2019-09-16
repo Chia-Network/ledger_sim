@@ -144,7 +144,7 @@ class Wallet:
         for puzzle, solution in spends:
             pubkey, secretkey = self.get_keys(solution.coin.puzzle_hash)
             secretkey = BLSPrivateKey(secretkey)
-            code_ = [puzzle.code, [solution.solution.code, []]]
+            code_ = [puzzle, [solution.solution, []]]
             sexp = clvm.to_sexp_f(code_)
             conditions_dict = conditions_by_opcode(conditions_for_solution(sexp))
             for _ in hash_key_pairs_for_conditions_dict(conditions_dict):
@@ -152,7 +152,7 @@ class Wallet:
                 sigs.append(signature)
         aggsig = BLSSignature.aggregate(sigs)
         solution_list = CoinSolutionList(
-            [CoinSolution(coin_solution.coin, clvm.to_sexp_f([puzzle.code, [coin_solution.solution.code, []]])) for
+            [CoinSolution(coin_solution.coin, clvm.to_sexp_f([puzzle, [coin_solution.solution, []]])) for
              (puzzle, coin_solution) in spends])
         spend_bundle = SpendBundle(solution_list, aggsig)
         return spend_bundle

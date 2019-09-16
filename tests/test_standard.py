@@ -130,10 +130,8 @@ class TestStandard(TestCase):
             delegated_puzzle = p2_conditions.puzzle_for_conditions(conditions + [id_condition])
             delegated_solution = p2_delegated_conditions.solution_for_conditions(delegated_puzzle,
                                                                                  [])
-            delegated_code = delegated_solution.code
-
             solution = p2_m_of_n_delegate_direct.solution_for_delegated_puzzle(
-                M, pks, selectors, delegated_puzzle, delegated_code)
+                M, pks, selectors, delegated_puzzle, delegated_solution)
             return solution
 
         run_test(puzzle_hash, payments, solution_maker, fuzz_signature)

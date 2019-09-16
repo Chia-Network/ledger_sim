@@ -36,7 +36,7 @@ def name_puzzle_conditions_list(body_program):
     """
 
     try:
-        sexp = clvm.eval_f(clvm.eval_f, body_program.code, [])
+        sexp = clvm.eval_f(clvm.eval_f, body_program, [])
     except clvm.EvalError.EvalError:
         breakpoint()
         raise ConsensusError(Err.INVALID_BLOCK_SOLUTION, body_program)

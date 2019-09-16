@@ -33,4 +33,4 @@ def puzzle_for_m_of_public_key_list(m, public_key_list):
 
 def solution_for_delegated_puzzle(m, public_key_list, selectors, puzzle, solution):
     puzzle_reveal = puzzle_for_m_of_public_key_list(m, public_key_list)
-    return Program(clvm.to_sexp_f([puzzle_reveal.code, [selectors, puzzle.code, solution]]))
+    return Program(clvm.to_sexp_f([puzzle_reveal, [selectors, puzzle, solution]]))

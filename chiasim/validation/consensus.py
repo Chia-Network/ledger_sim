@@ -28,7 +28,7 @@ def hash_key_pairs_for_solution(solution):
 def validate_spend_bundle_signature(spend_bundle) -> bool:
     hash_key_pairs = []
     for coin_solution in spend_bundle.coin_solutions:
-        hash_key_pairs += hash_key_pairs_for_solution(coin_solution.solution.code)
+        hash_key_pairs += hash_key_pairs_for_solution(coin_solution.solution)
     return spend_bundle.aggregated_signature.validate(hash_key_pairs)
 
 

@@ -48,7 +48,7 @@ def sign_f_for_keychain(keychain):
 
 def signature_for_solution(solution, sign_f):
     signatures = []
-    conditions_dict = conditions_by_opcode(conditions_for_solution(solution.code))
+    conditions_dict = conditions_by_opcode(conditions_for_solution(solution))
     for _ in hash_key_pairs_for_conditions_dict(conditions_dict):
         signature = sign_f(_)
         signatures.append(signature)

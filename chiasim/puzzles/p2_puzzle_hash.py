@@ -33,4 +33,4 @@ def puzzle_for_puzzle_hash(underlying_puzzle_hash):
 def solution_for_puzzle_and_solution(underlying_puzzle, underlying_solution):
     underlying_puzzle_hash = ProgramHash(underlying_puzzle)
     puzzle_program = puzzle_for_puzzle_hash(underlying_puzzle_hash)
-    return Program(clvm.to_sexp_f([puzzle_program.code, underlying_solution.code]))
+    return Program(clvm.to_sexp_f([puzzle_program, underlying_solution]))

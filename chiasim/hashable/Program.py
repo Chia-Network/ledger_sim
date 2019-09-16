@@ -21,7 +21,6 @@ class Program(SExp):
         if isinstance(v, SExp):
             v = v.v
         super(Program, self).__init__(v)
-        self.code = self
 
     @classmethod
     def parse(cls, f):

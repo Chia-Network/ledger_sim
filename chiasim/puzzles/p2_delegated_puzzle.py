@@ -33,8 +33,8 @@ def puzzle_for_pk(public_key):
 def solution_for_conditions(puzzle_reveal, conditions):
     delegated_puzzle = p2_conditions.puzzle_for_conditions(conditions)
     solution = []
-    return Program(clvm.to_sexp_f([puzzle_reveal.code, [delegated_puzzle.code, solution]]))
+    return Program(clvm.to_sexp_f([puzzle_reveal, [delegated_puzzle, solution]]))
 
 
 def solution_for_delegated_puzzle(puzzle_reveal, delegated_solution):
-    return Program(clvm.to_sexp_f([puzzle_reveal.code, delegated_solution.code]))
+    return Program(clvm.to_sexp_f([puzzle_reveal, delegated_solution]))

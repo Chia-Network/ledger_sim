@@ -26,4 +26,4 @@ def puzzle_for_pk(public_key):
 
 
 def solution_for_conditions(puzzle_reveal, conditions):
-    return Program(clvm.to_sexp_f([puzzle_reveal.code, conditions]))
+    return Program(clvm.to_sexp_f([puzzle_reveal, conditions]))
