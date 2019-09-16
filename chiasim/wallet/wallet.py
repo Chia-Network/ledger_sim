@@ -46,7 +46,7 @@ class Wallet:
         self.extended_secret_key = ExtendedPrivateKey.from_seed(self.seed)
         #self.contacts = {}  # {'name': (puzzlegenerator, last, extradata)}
         self.generator_lookups = {}  # {generator_hash: generator}
-        self.name = ""
+        self.name = "MyChiaWallet"
         self.generator_lookups[self.puzzle_generator_id] = self.puzzle_generator
 
     def get_next_public_key(self):

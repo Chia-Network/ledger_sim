@@ -1,5 +1,6 @@
 import asyncio
 import clvm
+import qrcode
 from chiasim.wallet.wallet import Wallet
 from chiasim.clients.ledger_sim import connect_to_ledger_sim
 from chiasim.wallet.deltas import additions_for_body, removals_for_body
@@ -7,7 +8,7 @@ from chiasim.hashable import Coin
 from chiasim.hashable.Body import BodyList
 from clvm_tools import binutils
 from chiasim.hashable import Program, ProgramHash
-from chiasim.puzzles.p2_delegated_puzzle import puzzle_for_pk
+from binascii import hexlify
 
 
 def view_funds(wallet):
@@ -32,9 +33,25 @@ def print_my_details(wallet):
     print("Puzzle Generator: ")
     print(wallet.puzzle_generator)
     print("New pubkey: ")
-    print(wallet.get_next_public_key())
+    pubkey = "0x%s" % hexlify(wallet.get_next_public_key().serialize()).decode('ascii')
+    print(pubkey)
     print("Generator hash identifier:")
     print(wallet.puzzle_generator_id)
+
+
+def make_QR(wallet):
+    pubkey = hexlify(wallet.get_next_public_key().serialize()).decode('ascii')
+    qr = qrcode.QRCode(
+        version=1,
+        error_correction=qrcode.constants.ERROR_CORRECT_H,
+        box_size=10,
+        border=4,
+    )
+    qr.add_data(wallet.name + ":" + wallet.puzzle_generator_id + ":" + pubkey)
+    qr.make(fit=True)
+    img = qr.make_image()
+    img.save(pubkey+".jpg")
+    print("QR code created in " + pubkey + ".jpg")
 
 
 def set_name(wallet):
@@ -48,7 +65,7 @@ def make_payment(wallet):
     if wallet.current_balance <= 0:
         print("You need some money first")
         return None
-    name = input("Name of payee:" )
+    name = input("Name of payee: ")
     type = input("Generator hash ID: 0x")
     if type not in wallet.generator_lookups:
         print("Unknown generator - please input the source.")
@@ -93,6 +110,7 @@ async def update_ledger(wallet, ledger_api, most_recent_header):
     update_list = BodyList.from_bin(r)
     for body in update_list:
         additions = list(additions_for_body(body))
+        print(additions)
         removals = removals_for_body(body)
         removals = [Coin.from_bin(await ledger_api.hash_preimage(hash=x)) for x in removals]
         wallet.notify(additions, removals)
@@ -113,6 +131,7 @@ async def main():
         print("6: *GOD MODE* Commit Block / Get Money")
         print("7: Print my details for somebody else")
         print("8: Set my wallet name")
+        print("9: Make QR code")
         print("q: Quit")
         selection = input()
         if selection == "1":
@@ -135,6 +154,8 @@ async def main():
             print_my_details(wallet)
         elif selection == "8":
             set_name(wallet)
+        elif selection == "9":
+            make_QR(wallet)
 
 
 run = asyncio.get_event_loop().run_until_complete
