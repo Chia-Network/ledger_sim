@@ -1,7 +1,7 @@
 import asyncio
 import clvm
 import qrcode
-from chiasim.wallet.wallet import Wallet
+from chiasim.wallet.wallet import APWallet
 from chiasim.clients.ledger_sim import connect_to_ledger_sim
 from chiasim.wallet.deltas import additions_for_body, removals_for_body
 from chiasim.hashable import Coin
@@ -118,7 +118,7 @@ async def update_ledger(wallet, ledger_api, most_recent_header):
 async def main():
     ledger_api = await connect_to_ledger_sim("localhost", 9868)
     selection = ""
-    wallet = Wallet()
+    wallet = APWallet()
     most_recent_header = None
     while selection != "q":
         print("Select a function:")

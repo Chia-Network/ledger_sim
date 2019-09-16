@@ -146,14 +146,14 @@ async def client_test(path):
 
     # Normal loop
     while True:
-        wallet = wallets[random.randrange(2)]
+        wallet = wallets[random.randrange(0, 3)]
         coinbase_puzzle_hash = wallet.get_new_puzzlehash()
         fees_puzzle_hash = wallet.get_new_puzzlehash()
         r = await remote.next_block(coinbase_puzzle_hash=coinbase_puzzle_hash,
                                     fees_puzzle_hash=fees_puzzle_hash)
         await update_wallets(remote, r, wallets)
         print([[x.amount for x in wallet.my_utxos] for wallet in wallets])
-
+        breakpoint()
         r = await remote.all_unspents()
         print("unspents = %s" % r.get("unspents"))
         for i in range(1):
