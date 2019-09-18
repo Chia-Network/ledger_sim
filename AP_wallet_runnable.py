@@ -1,13 +1,14 @@
 import asyncio
 import clvm
 import qrcode
-from chiasim.wallet.wallet import APWallet
+from chiasim.wallet.ap_wallet import APWallet
 from chiasim.clients.ledger_sim import connect_to_ledger_sim
 from chiasim.wallet.deltas import additions_for_body, removals_for_body
 from chiasim.hashable import Coin
 from chiasim.hashable.Body import BodyList
 from clvm_tools import binutils
 from chiasim.hashable import Program, ProgramHash
+from chiasim.puzzles.puzzle_utilities import pubkey_format
 from binascii import hexlify
 
 
@@ -30,13 +31,16 @@ def view_contacts(wallet):
 
 def print_my_details(wallet):
     print("Name: " + wallet.name)
-    print("Puzzle Generator: ")
-    print(wallet.puzzle_generator)
+    if wallet.puzzle_generator_id == "1ea50e9399e360c85c240e9d17c5d11ccb8fbf37b0ee6e551282ddd5b5613206":
+        print("Awaiting initial coin...")
+    else:
+        print("Puzzle Generator: ")
+        print(wallet.puzzle_generator)
+        print("Generator hash identifier:")
+        print(wallet.puzzle_generator_id)
     print("New pubkey: ")
-    pubkey = "0x%s" % hexlify(wallet.get_next_public_key().serialize()).decode('ascii')
+    pubkey = pubkey_format(wallet.get_next_public_key())
     print(pubkey)
-    print("Generator hash identifier:")
-    print(wallet.puzzle_generator_id)
 
 
 def make_QR(wallet):
@@ -120,17 +124,27 @@ async def main():
     selection = ""
     wallet = APWallet()
     most_recent_header = None
+    print("Welcome to AP Wallet")
+    print("Your pubkey is: " + pubkey_format(wallet.get_next_public_key()))
+    print("Please fill in some initialisation information (this can be changed later)")
+    print("Please enter AP puzzlehash: ")
+    AP_puzzlehash = input()
+    print("Please enter sender's pubkey: ")
+    a_pubkey = input()
+    wallet.set_sender_values(AP_puzzlehash, a_pubkey)
+
     while selection != "q":
         print("Select a function:")
         print("1: View Funds")
         print("2: Add Contact (DISABLED)")
         print("3: Make Payment")
-        print("4: View Contacts")
+        print("4: View Contacts (DISABLED)")
         print("5: Get Update")
         print("6: *GOD MODE* Commit Block / Get Money")
         print("7: Print my details for somebody else")
         print("8: Set my wallet name")
         print("9: Make QR code")
+
         print("q: Quit")
         selection = input()
         if selection == "1":

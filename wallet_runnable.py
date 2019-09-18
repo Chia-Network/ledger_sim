@@ -9,6 +9,8 @@ from chiasim.hashable.Body import BodyList
 from clvm_tools import binutils
 from chiasim.hashable import Program, ProgramHash
 from binascii import hexlify
+from chiasim.puzzles.puzzle_utilities import pubkey_format
+from chiasim.wallet import ap_wallet_a_functions
 
 
 def view_funds(wallet):
@@ -86,6 +88,39 @@ def make_payment(wallet):
     return wallet.generate_signed_transaction(amount, puzzlehash)
 
 
+async def select_smart_contract(wallet, ledger_api):
+    print("Select a smart contract: ")
+    print("1: Authorised Payees")
+    print("2: Add a new smart contract")
+    choice = input()
+    if choice == "1":
+        # TODO: add a pubkey format checker to this (and everything tbh)
+        # Actual puzzle lockup/spend
+        approved_pubkeys = []
+        approved_pk_sig_pairs = []
+        a_pubkey = wallet.get_next_public_key().serialize()
+        b_pubkey = input("Enter recipient's pubkey: 0x")
+        amount = input("Enter amount to give recipient: ")
+        amount = int(amount)
+        APpuzzlehash = ap_wallet_a_functions.ap_get_new_puzzlehash(a_pubkey, b_pubkey)
+        spend_bundle = wallet.generate_signed_transaction(amount, APpuzzlehash)
+        await ledger_api.push_tx(tx=spend_bundle)
+        print("AP Puzzlehash is: " + str(APpuzzlehash))
+        print("Pubkey used is: " + pubkey_format(a_pubkey))
+
+        # Authorised puzzle printout for AP Wallet
+        print("Enter pubkeys of authorised recipients, press 'c' to continue or 'q' to quit")
+        while choice != "c" and choice != "q":
+            choice = input("Pubkey: 0x")
+            if choice != "c" and choice != "q":
+                approved_pubkeys.append(choice)
+        if choice == "q" or len(approved_pubkeys) == 0:
+            return
+        for pubkey in approved_pubkeys:
+            puzzle = wallet.puzzle_for_pk(pubkey)
+            approved_pk_sig_pairs.append((puzzle, wallet.sign(puzzle)))
+
+
 async def new_block(wallet, ledger_api):
     coinbase_puzzle_hash = wallet.get_new_puzzlehash()
     fees_puzzle_hash = wallet.get_new_puzzlehash()
@@ -125,12 +160,13 @@ async def main():
         print("1: View Funds")
         print("2: Add Contact (DISABLED)")
         print("3: Make Payment")
-        print("4: View Contacts")
+        print("4: View Contacts (DISABLED)")
         print("5: Get Update")
         print("6: *GOD MODE* Commit Block / Get Money")
         print("7: Print my details for somebody else")
         print("8: Set my wallet name")
         print("9: Make QR code")
+        print("10: Make Smart Contract")
         print("q: Quit")
         selection = input()
         if selection == "1":
@@ -155,6 +191,8 @@ async def main():
             set_name(wallet)
         elif selection == "9":
             make_QR(wallet)
+        elif selection == "10":
+            await select_smart_contract(wallet, ledger_api)
 
 
 run = asyncio.get_event_loop().run_until_complete

@@ -29,13 +29,10 @@ async def update_wallets(remote, r, wallets):
     removals = removals_for_body(body)
     removals = [Coin.from_bin(await remote.hash_preimage(hash=x)) for x in removals]
     for wallet in wallets:
-        wallet.notify(additions, removals)
-        if type(wallet) is APWallet:
-            wallet.ap_notify(additions)
-            spend_bundle_list = wallet.ac_notify(additions)
-            if spend_bundle_list is not None:
-                for spend_bundle in spend_bundle_list:
-                    _ = await remote.push_tx(tx=spend_bundle)
+        spend_bundle_list = wallet.notify(additions, removals)
+        if spend_bundle_list is not None:
+            for spend_bundle in spend_bundle_list:
+                _ = await remote.push_tx(tx=spend_bundle)
 
 
 async def client_test(path):

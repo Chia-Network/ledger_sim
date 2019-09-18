@@ -4,8 +4,9 @@ from binascii import hexlify
 from chiasim.hashable.Coin import Coin
 from chiasim.hashable.CoinSolution import CoinSolutionList
 from clvm_tools import binutils
-from .BLSPrivateKey import BLSPrivateKey
+from chiasim.puzzles.puzzle_utilities import pubkey_format
 from chiasim.validation.Conditions import ConditionOpcode
+
 
 # this is for wallet A to generate the permitted puzzlehashes and sign them ahead of time
 # returns a tuple of (puzhash, signature)
@@ -17,6 +18,7 @@ def ap_generate_signatures(puzhashes, oldpuzzlehash, a_wallet, a_pubkey_used):
         puzhash_signature_list.append((p, signature))
     return puzhash_signature_list
 
+
 # we use it to merge the outputs of two programs that create lists
 def merge_two_lists(list1=None, list2=None):
     if (list1 is None) or (list2 is None):
@@ -24,10 +26,11 @@ def merge_two_lists(list1=None, list2=None):
     ret = "(e (q (e (f (a)) (a))) (c (q (e (i (e (i (f (r (a))) (q (q ())) (q (q 1))) (a)) (q (f (c (f (r (r (a)))) (q ())))) (q (e (f (a)) (c (f (a)) (c (r (f (r (a)))) (c (c (f (f (r (a)))) (f (r (r (a))))) (q ()))))))) (a))) (c " + list1 + " (c " + list2 + " (q ())))))"
     return ret
 
+
 # this creates our authorised payee puzzle
 def ap_make_puzzle(a_pubkey_serialized, b_pubkey_serialized):
-    a_pubkey = "0x%s" % (hexlify(a_pubkey_serialized).decode('ascii'))
-    b_pubkey = "0x%s" % (hexlify(b_pubkey_serialized).decode('ascii'))
+    a_pubkey = pubkey_format(a_pubkey_serialized)
+    b_pubkey = pubkey_format(b_pubkey_serialized)
 
     # Mode one is for spending to one of the approved destinations
     # Solution contains (option 1 flag, list of (output puzzle hash (C/D), amount), my_primary_input, wallet_puzzle_hash)
@@ -59,6 +62,7 @@ def ap_make_puzzle(a_pubkey_serialized, b_pubkey_serialized):
     # temporary - will eventually be puz
     return Program(binutils.assemble(puz))
 
+
 def ap_make_aggregation_puzzle(wallet_puzzle):
     # If Wallet A wants to send further funds to Wallet B then they can lock them up using this code
     # Solution will be (my_id wallet_coin_primary_input wallet_coin_amount)
@@ -73,12 +77,15 @@ def ap_make_aggregation_puzzle(wallet_puzzle):
     puz = '(c ' + me_is_my_id + ' (c ' + input_of_lock + ' (q ())))'
     return Program(binutils.assemble(puz))
 
+
 # returns the ProgramHash of a new puzzle
 def ap_get_new_puzzlehash(a_pubkey_serialized, b_pubkey_serialized):
     return ProgramHash(ap_make_puzzle(a_pubkey_serialized, b_pubkey_serialized))
 
+
 def ap_get_aggregation_puzzlehash(wallet_puzzle):
     return ProgramHash(ap_make_aggregation_puzzle(wallet_puzzle))
+
 
 # this allows wallet A to approve of new puzzlehashes/spends from wallet B that weren't in the original list
 def ap_sign_output_newpuzzlehash(newpuzzlehash, a_wallet, a_pubkey_used):

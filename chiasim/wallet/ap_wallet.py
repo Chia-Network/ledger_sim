@@ -7,8 +7,10 @@ from chiasim.hashable.Coin import Coin
 from chiasim.hashable.CoinSolution import CoinSolutionList
 from clvm_tools import binutils
 from .BLSPrivateKey import BLSPrivateKey
+from blspy import PublicKey
 from chiasim.validation.Conditions import ConditionOpcode
 from chiasim.puzzles.p2_delegated_puzzle import puzzle_for_pk
+from chiasim.puzzles.puzzle_utilities import pubkey_format, puzzlehash_from_string
 
 
 def sha256(val):
@@ -23,7 +25,7 @@ class APWallet(Wallet):
     def __init__(self):
         super().__init__()
         self.aggregation_coins = set()
-        self.a_pubkey_used = None
+        self.a_pubkey = None
         self.AP_puzzlehash = None
         self.approved_change_puzzle = None
         self.approved_change_signature = None
@@ -32,8 +34,16 @@ class APWallet(Wallet):
         return
 
     def set_sender_values(self, AP_puzzlehash, a_pubkey_used):
-        self.AP_puzzlehash = AP_puzzlehash
-        self.a_pubkey = a_pubkey_used
+        if isinstance(AP_puzzlehash, str):
+            self.AP_puzzlehash = puzzlehash_from_string(AP_puzzlehash)
+        else:
+            self.AP_puzzlehash = AP_puzzlehash
+
+        if isinstance(a_pubkey_used, str):
+            a_pubkey = PublicKey.from_bytes(bytes.fromhex(a_pubkey_used))
+            self.a_pubkey = a_pubkey
+        else:
+            self.a_pubkey = a_pubkey_used
 
     def set_approved_change_signature(self, signature):
         self.approved_change_signature = signature
@@ -66,9 +76,15 @@ class APWallet(Wallet):
                 if hash == ProgramHash(self.ap_make_puzzle(pubkey.serialize(), b_pubkey_used)):
                     return (pubkey, self.extended_secret_key.private_child(child).get_private_key())
 
-    # at the moment this is seperate from the standard notify() - could change it to work like get_keys() with two modes
+    def notify(self, additions, deletions):
+        super().notify(additions, deletions)
+        self.ap_notify(additions)
+        spend_bundle_list = self.ac_notify(additions)
+        return spend_bundle_list
+
     def ap_notify(self, additions):
         # this prevents unnecessary checks
+        breakpoint()
         if self.AP_puzzlehash is not None and not self.my_utxos:
             for coin in additions:
                 if coin.puzzle_hash == self.AP_puzzlehash:
@@ -119,8 +135,8 @@ class APWallet(Wallet):
 
     # this creates our authorised payee puzzle
     def ap_make_puzzle(self, a_pubkey_serialized, b_pubkey_serialized):
-        a_pubkey = "0x%s" % (hexlify(a_pubkey_serialized).decode('ascii'))
-        b_pubkey = "0x%s" % (hexlify(b_pubkey_serialized).decode('ascii'))
+        a_pubkey = pubkey_format(a_pubkey_serialized)
+        b_pubkey = pubkey_format(b_pubkey_serialized)
 
         # Mode one is for spending to one of the approved destinations
         # Solution contains (option 1 flag, list of (output puzzle hash (C/D), amount), my_primary_input, wallet_puzzle_hash)
@@ -201,14 +217,14 @@ class APWallet(Wallet):
         # we only have/need one coin in this wallet at any time - this code can be improved
         utxos = self.select_coins(self.current_balance)
         spends = []
-        for coin in utxos:
-            puzzle_hash = coin.puzzle_hash
+        coin = self.temp_coin
+        puzzle_hash = coin.puzzle_hash
 
-            pubkey, secretkey = self.get_keys(puzzle_hash, self.a_pubkey)
-            puzzle = self.ap_make_puzzle(self.a_pubkey, pubkey.serialize())
-            solution = self.ap_make_solution_mode_1(
-                puzzlehash_amount_list, coin.parent_coin_info, puzzle_hash)
-            spends.append((puzzle, CoinSolution(coin, solution)))
+        pubkey, secretkey = self.get_keys(puzzle_hash, self.a_pubkey)
+        puzzle = self.ap_make_puzzle(self.a_pubkey, pubkey.serialize())
+        solution = self.ap_make_solution_mode_1(
+            puzzlehash_amount_list, coin.parent_coin_info, puzzle_hash)
+        spends.append((puzzle, CoinSolution(coin, solution)))
         return spends
 
     # this allows wallet A to approve of new puzzlehashes/spends from wallet B that weren't in the original list

@@ -2,10 +2,10 @@ import hashlib
 import clvm
 from os import urandom
 from blspy import ExtendedPrivateKey
-from chiasim.puzzles.p2_delegated_puzzle import puzzle_for_pk
 from chiasim.hashable import Program, ProgramHash, CoinSolution, SpendBundle, BLSSignature
 from chiasim.hashable.CoinSolution import CoinSolutionList
 from chiasim.puzzles.p2_conditions import puzzle_for_conditions
+from chiasim.puzzles.puzzle_utilities import pubkey_format
 from chiasim.validation.Conditions import (
     conditions_by_opcode, make_create_coin_condition, make_assert_my_coin_id_condition, make_assert_min_time_condition
 )
@@ -44,7 +44,7 @@ class Wallet:
         self.my_utxos = set()
         self.seed = urandom(1024)
         self.extended_secret_key = ExtendedPrivateKey.from_seed(self.seed)
-        #self.contacts = {}  # {'name': (puzzlegenerator, last, extradata)}
+        # self.contacts = {}  # {'name': (puzzlegenerator, last, extradata)}
         self.generator_lookups = {}  # {generator_hash: generator}
         self.name = "MyChiaWallet"
         self.generator_lookups[self.puzzle_generator_id] = self.puzzle_generator
@@ -102,7 +102,7 @@ class Wallet:
         return used_utxos
 
     def puzzle_for_pk(self, pubkey):
-        args = "(0x%s)" % hexlify(pubkey).decode('ascii')
+        args = "(" + pubkey_format(pubkey) + ")"
         puzzle = Program(clvm.eval_f(clvm.eval_f, binutils.assemble(self.puzzle_generator), binutils.assemble(args)))
         return puzzle
 
