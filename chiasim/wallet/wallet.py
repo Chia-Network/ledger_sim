@@ -137,32 +137,6 @@ class Wallet:
 
     # returns {'spends' spends, 'signature': None}
     # spends is {(primary_input, puzzle): solution}
-    def generate_unsigned_transaction(self, amount, newpuzzlehash, utxoset):
-        utxos = self.select_coins(amount)
-        spends = {}
-        output_id = None
-        spend_value = sum([utxoset[id]['value'] for id in utxos])
-        change = spend_value - amount
-        for id in utxos:
-            primary = utxoset[id]['primary']
-            puzzle_hash = utxoset[id]['puzzlehash']
-            pubkey, secretkey = self.get_keys(puzzle_hash)
-            puzzle = self.puzzle_for_pk(pubkey.serialize())
-            if output_id is None:
-                primaries = [{'puzzlehash': newpuzzlehash, 'amount': amount}]
-                if change > 0:
-                    changepuzzlehash = self.get_new_puzzlehash()
-                    primaries.append({'puzzlehash': changepuzzlehash, 'amount': change})
-                solution = make_solution(primaries=primaries)
-                output_id = sha256(id + newpuzzlehash)
-            else:
-                solution = make_solution(outputs=[{'id': output_id, 'amount': amount}])
-
-            spends[(primary, puzzle)] = solution
-
-        unsigned_transaction = {'spends': spends, 'signature': None}
-        return unsigned_transaction
-
     def generate_unsigned_transaction(self, amount, newpuzzlehash):
         utxos = self.select_coins(amount)
         spends = []

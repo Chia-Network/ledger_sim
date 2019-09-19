@@ -7,8 +7,8 @@ from chiasim.wallet.deltas import additions_for_body, removals_for_body
 from chiasim.hashable import Coin
 from chiasim.hashable.Body import BodyList
 from clvm_tools import binutils
-from chiasim.hashable import Program, ProgramHash
-from chiasim.puzzles.puzzle_utilities import pubkey_format
+from chiasim.hashable import Program, ProgramHash, BLSSignature
+from chiasim.puzzles.puzzle_utilities import pubkey_format, signature_from_string, puzzlehash_from_string
 from binascii import hexlify
 
 
@@ -63,31 +63,27 @@ def set_name(wallet):
     wallet.set_name(selection)
 
 
-def make_payment(wallet):
+def make_payment(wallet, approved_puzhash_sig_pairs):
     amount = -1
     if wallet.current_balance <= 0:
         print("You need some money first")
         return None
+    print("Select a contact from approved list: ")
+    for name in approved_puzhash_sig_pairs:
+        print(" - " + name)
     name = input("Name of payee: ")
-    type = input("Generator hash ID: 0x")
-    if type not in wallet.generator_lookups:
-        print("Unknown generator - please input the source.")
-        source = input("Source: ")
-        if str(ProgramHash(Program(binutils.assemble(source)))) != "0x"+type:
-            print("source not equal to ID")
-            breakpoint()
-            return
-        else:
-            wallet.generator_lookups[type] = source
+
+    if name not in approved_puzhash_sig_pairs:
+        print("invalid contact")
+        return
+
     while amount > wallet.current_balance or amount < 0:
         amount = int(input("Amount: "))
-    pubkey = input("Pubkey: 0x")
-    args = binutils.assemble("(0x" + pubkey + ")")
-    program = Program(clvm.eval_f(clvm.eval_f, binutils.assemble(wallet.generator_lookups[type]), args))
-    puzzlehash = ProgramHash(program)
-    print(puzzlehash)
-    breakpoint()
-    return wallet.generate_signed_transaction(amount, puzzlehash)
+        if amount == "q":
+            return
+
+    puzzlehash = approved_puzhash_sig_pairs[name][0]
+    return wallet.ap_generate_signed_transaction([(puzzlehash, amount)], [BLSSignature(approved_puzhash_sig_pairs[name][1])])
 
 
 async def new_block(wallet, ledger_api):
@@ -119,10 +115,42 @@ async def update_ledger(wallet, ledger_api, most_recent_header):
         wallet.notify(additions, removals)
 
 
+def ap_settings(wallet, approved_puzhash_sig_pairs):
+    print("1: Add Authorised Payee")
+    print("2: Change initialisation settings")
+    choice = input()
+    if choice == "1":
+        print()
+        name = input("Payee name: ")
+        puzzle = input("Approved puzzlehash: ")
+        puzhash = puzzlehash_from_string(puzzle)
+        sig = input("Signature for puzzlehash: ")
+        signature = signature_from_string(sig)
+        approved_puzhash_sig_pairs[name] = (puzhash, signature)
+        choice = input("Press 'c' to add another, or 'q' to return to menu: ")
+    elif choice == "2":
+        print("WARNING: This is only for if you messed it up the first time.")
+        print("If you have already configured this properly, press 'q' to go back.")
+        print("Please enter AP puzzlehash: ")
+        AP_puzzlehash = input()
+        if AP_puzzlehash == "q":
+            return
+        print("Please enter sender's pubkey: ")
+        a_pubkey = input()
+        if a_pubkey == "q":
+            return
+        wallet.set_sender_values(AP_puzzlehash, a_pubkey)
+        print("Please enter signature for change making: ")
+        signature = input()
+        sig = signature_from_string(signature)
+        wallet.set_approved_change_signature(sig)
+
+
 async def main():
     ledger_api = await connect_to_ledger_sim("localhost", 9868)
     selection = ""
     wallet = APWallet()
+    approved_puzhash_sig_pairs = {}  # 'name': (puzhash, signature)
     most_recent_header = None
     print("Welcome to AP Wallet")
     print("Your pubkey is: " + pubkey_format(wallet.get_next_public_key()))
@@ -132,6 +160,10 @@ async def main():
     print("Please enter sender's pubkey: ")
     a_pubkey = input()
     wallet.set_sender_values(AP_puzzlehash, a_pubkey)
+    print("Please enter signature for change making: ")
+    signature = input()
+    sig = signature_from_string(signature)
+    wallet.set_approved_change_signature(sig)
 
     while selection != "q":
         print("Select a function:")
@@ -142,8 +174,9 @@ async def main():
         print("5: Get Update")
         print("6: *GOD MODE* Commit Block / Get Money")
         print("7: Print my details for somebody else")
-        print("8: Set my wallet name")
+        print("8: Set my wallet detail")
         print("9: Make QR code")
+        print("10: AP Settings / Register New Payee")
 
         print("q: Quit")
         selection = input()
@@ -153,7 +186,7 @@ async def main():
             # add_contact(wallet)
             print("contacts temporarily disable")
         elif selection == "3":
-            r = make_payment(wallet)
+            r = make_payment(wallet, approved_puzhash_sig_pairs)
             if r is not None:
                 await ledger_api.push_tx(tx=r)
         elif selection == "4":
@@ -169,6 +202,8 @@ async def main():
             set_name(wallet)
         elif selection == "9":
             make_QR(wallet)
+        elif selection == "10":
+            ap_settings(wallet, approved_puzhash_sig_pairs)
 
 
 run = asyncio.get_event_loop().run_until_complete

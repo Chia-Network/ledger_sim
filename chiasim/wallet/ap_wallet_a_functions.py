@@ -1,8 +1,5 @@
-from chiasim.hashable import Program, ProgramHash, CoinSolution, SpendBundle, BLSSignature
-import hashlib
+from chiasim.hashable import Program, ProgramHash
 from binascii import hexlify
-from chiasim.hashable.Coin import Coin
-from chiasim.hashable.CoinSolution import CoinSolutionList
 from clvm_tools import binutils
 from chiasim.puzzles.puzzle_utilities import pubkey_format
 from chiasim.validation.Conditions import ConditionOpcode

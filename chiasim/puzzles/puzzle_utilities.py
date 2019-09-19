@@ -1,5 +1,5 @@
 from binascii import hexlify
-from blspy import PublicKey
+from blspy import PublicKey, Signature
 import string
 from chiasim.hashable import ProgramHash
 
@@ -38,3 +38,10 @@ def puzzlehash_from_string(puzhash):
 
 def pubkey_from_string(pubkey):
     return PublicKey.from_bytes(bytes.fromhex(pubkey))
+
+
+def signature_from_string(signature):
+    breakpoint()
+    sig = Signature.from_bytes(bytes.fromhex(signature))
+    # sig.sig = bytes(signature)
+    return sig

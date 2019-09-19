@@ -94,10 +94,12 @@ async def select_smart_contract(wallet, ledger_api):
     print("2: Add a new smart contract")
     choice = input()
     if choice == "1":
+        if wallet.current_balance <= 0:
+            print("You need some money first")
+            return None
         # TODO: add a pubkey format checker to this (and everything tbh)
         # Actual puzzle lockup/spend
         approved_pubkeys = []
-        approved_pk_sig_pairs = []
         a_pubkey = wallet.get_next_public_key().serialize()
         b_pubkey = input("Enter recipient's pubkey: 0x")
         amount = input("Enter amount to give recipient: ")
@@ -105,20 +107,27 @@ async def select_smart_contract(wallet, ledger_api):
         APpuzzlehash = ap_wallet_a_functions.ap_get_new_puzzlehash(a_pubkey, b_pubkey)
         spend_bundle = wallet.generate_signed_transaction(amount, APpuzzlehash)
         await ledger_api.push_tx(tx=spend_bundle)
+        print()
         print("AP Puzzlehash is: " + str(APpuzzlehash))
         print("Pubkey used is: " + pubkey_format(a_pubkey))
+        sig = ap_wallet_a_functions.ap_sign_output_newpuzzlehash(APpuzzlehash, wallet, a_pubkey).sig
+        print("Approved change signature is: " + str(sig))
+        print("DEBUG bytes of sig: ")
+        print(sig)
 
         # Authorised puzzle printout for AP Wallet
-        print("Enter pubkeys of authorised recipients, press 'c' to continue or 'q' to quit")
-        while choice != "c" and choice != "q":
+        print("Enter pubkeys of authorised recipients, press 'q' to finish")
+        while choice != "q":
+            name = input("Name of recipient: ")
             choice = input("Pubkey: 0x")
-            if choice != "c" and choice != "q":
-                approved_pubkeys.append(choice)
-        if choice == "q" or len(approved_pubkeys) == 0:
-            return
+            if choice != "q":
+                approved_pubkeys.append((name, choice))
+
         for pubkey in approved_pubkeys:
-            puzzle = wallet.puzzle_for_pk(pubkey)
-            approved_pk_sig_pairs.append((puzzle, wallet.sign(puzzle)))
+            puzzle = ProgramHash(wallet.puzzle_for_pk(pubkey[1]))
+            print("Name: " + name)
+            print("Puzzle: " + str(puzzle))
+            print("Signature: " + str(wallet.sign(puzzle).sig))
 
 
 async def new_block(wallet, ledger_api):
