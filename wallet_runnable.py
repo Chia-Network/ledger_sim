@@ -119,13 +119,13 @@ async def select_smart_contract(wallet, ledger_api):
         print("Enter pubkeys of authorised recipients, press 'q' to finish")
         while choice != "q":
             name = input("Name of recipient: ")
-            choice = input("Pubkey: 0x")
-            if choice != "q":
-                approved_pubkeys.append((name, choice))
+            pubkey = input("Pubkey: 0x")
+            approved_pubkeys.append((name, pubkey)
+            choice = input("Press 'c' to continue, or 'q' to quit: ")
 
         for pubkey in approved_pubkeys:
             puzzle = ProgramHash(wallet.puzzle_for_pk(pubkey[1]))
-            print("Name: " + name)
+            print("Name: " + pubkey[0])
             print("Puzzle: " + str(puzzle))
             print("Signature: " + str(wallet.sign(puzzle).sig))
 

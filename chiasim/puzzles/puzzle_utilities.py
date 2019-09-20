@@ -1,7 +1,7 @@
 from binascii import hexlify
-from blspy import PublicKey, Signature
+from blspy import PublicKey, PrependSignature
 import string
-from chiasim.hashable import ProgramHash
+from chiasim.hashable import ProgramHash, BLSSignature
 
 
 def pubkey_format(pubkey):
@@ -41,7 +41,10 @@ def pubkey_from_string(pubkey):
 
 
 def signature_from_string(signature):
-    breakpoint()
-    sig = Signature.from_bytes(bytes.fromhex(signature))
+    sig = PrependSignature.from_bytes(bytes.fromhex(signature))
     # sig.sig = bytes(signature)
     return sig
+
+
+def BLSSignature_from_string(signature):
+    return BLSSignature(bytes.fromhex(signature))

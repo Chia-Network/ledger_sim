@@ -137,6 +137,7 @@ class Wallet:
 
     # returns {'spends' spends, 'signature': None}
     # spends is {(primary_input, puzzle): solution}
+
     def generate_unsigned_transaction(self, amount, newpuzzlehash):
         utxos = self.select_coins(amount)
         spends = []

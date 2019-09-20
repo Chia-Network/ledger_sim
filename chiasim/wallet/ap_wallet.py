@@ -84,7 +84,6 @@ class APWallet(Wallet):
 
     def ap_notify(self, additions):
         # this prevents unnecessary checks
-        breakpoint()
         if self.AP_puzzlehash is not None and not self.my_utxos:
             for coin in additions:
                 if coin.puzzle_hash == self.AP_puzzlehash:

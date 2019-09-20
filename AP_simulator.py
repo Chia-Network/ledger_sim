@@ -128,7 +128,7 @@ async def client_test(path):
         ap_output, signatures)
     _ = await remote.push_tx(tx=spend_bundle)
     # Commit this transaction to a block
-    wallet = wallets[random.randrange(0, 3)]
+    wallet = wallets[random.randrange(0, 2)]
     coinbase_puzzle_hash = wallet.get_new_puzzlehash()
     fees_puzzle_hash = wallet.get_new_puzzlehash()
     r = await remote.next_block(coinbase_puzzle_hash=coinbase_puzzle_hash,

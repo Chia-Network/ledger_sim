@@ -83,7 +83,7 @@ def make_payment(wallet, approved_puzhash_sig_pairs):
             return
 
     puzzlehash = approved_puzhash_sig_pairs[name][0]
-    return wallet.ap_generate_signed_transaction([(puzzlehash, amount)], [BLSSignature(approved_puzhash_sig_pairs[name][1])])
+    return wallet.ap_generate_signed_transaction([(puzzlehash, amount)], [BLSSignature(approved_puzhash_sig_pairs[name][1].serialize())])
 
 
 async def new_block(wallet, ledger_api):
@@ -120,14 +120,16 @@ def ap_settings(wallet, approved_puzhash_sig_pairs):
     print("2: Change initialisation settings")
     choice = input()
     if choice == "1":
+        choice = "c"
         print()
-        name = input("Payee name: ")
-        puzzle = input("Approved puzzlehash: ")
-        puzhash = puzzlehash_from_string(puzzle)
-        sig = input("Signature for puzzlehash: ")
-        signature = signature_from_string(sig)
-        approved_puzhash_sig_pairs[name] = (puzhash, signature)
-        choice = input("Press 'c' to add another, or 'q' to return to menu: ")
+        while choice == "c":
+            name = input("Payee name: ")
+            puzzle = input("Approved puzzlehash: ")
+            puzhash = puzzlehash_from_string(puzzle)
+            sig = input("Signature for puzzlehash: ")
+            signature = signature_from_string(sig)
+            approved_puzhash_sig_pairs[name] = (puzhash, signature)
+            choice = input("Press 'c' to add another, or 'q' to return to menu: ")
     elif choice == "2":
         print("WARNING: This is only for if you messed it up the first time.")
         print("If you have already configured this properly, press 'q' to go back.")
@@ -162,7 +164,7 @@ async def main():
     wallet.set_sender_values(AP_puzzlehash, a_pubkey)
     print("Please enter signature for change making: ")
     signature = input()
-    sig = signature_from_string(signature)
+    sig = BLSSignature(signature_from_string(signature).serialize())
     wallet.set_approved_change_signature(sig)
 
     while selection != "q":
