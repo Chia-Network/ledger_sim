@@ -5,12 +5,14 @@ from chiasim.wallet.wallet import Wallet
 from chiasim.clients.ledger_sim import connect_to_ledger_sim
 from chiasim.wallet.deltas import additions_for_body, removals_for_body
 from chiasim.hashable import Coin
+from chiasim.hashable.Message import MessageHash
 from chiasim.hashable.Body import BodyList
 from clvm_tools import binutils
 from chiasim.hashable import Program, ProgramHash
 from binascii import hexlify
 from chiasim.puzzles.puzzle_utilities import pubkey_format
 from chiasim.wallet import ap_wallet_a_functions
+from chiasim.hashable.BLSSignature import BLSPublicKey
 
 
 def view_funds(wallet):
@@ -110,24 +112,33 @@ async def select_smart_contract(wallet, ledger_api):
         print()
         print("AP Puzzlehash is: " + str(APpuzzlehash))
         print("Pubkey used is: " + pubkey_format(a_pubkey))
-        sig = ap_wallet_a_functions.ap_sign_output_newpuzzlehash(APpuzzlehash, wallet, a_pubkey).sig
-        print("Approved change signature is: " + str(sig))
-        print("DEBUG bytes of sig: ")
-        print(sig)
+        sig = ap_wallet_a_functions.ap_sign_output_newpuzzlehash(APpuzzlehash, wallet, a_pubkey)
+        print(type(sig))
+        print("Approved change signature is: " + str(sig.sig))
+        #sig.set_aggregation_info(AggregationInfo.from_msg(a_pubkey, APpuzzlehash))
+        pair = sig.aggsig_pair(BLSPublicKey(a_pubkey), APpuzzlehash)
+        print(sig.validate([pair]))
 
         # Authorised puzzle printout for AP Wallet
         print("Enter pubkeys of authorised recipients, press 'q' to finish")
         while choice != "q":
             name = input("Name of recipient: ")
             pubkey = input("Pubkey: 0x")
-            approved_pubkeys.append((name, pubkey)
-            choice = input("Press 'c' to continue, or 'q' to quit: ")
+            approved_pubkeys.append((name, pubkey))
+            choice = input("Press 'c' to continue, or 'q' to quit to menu: ")
 
         for pubkey in approved_pubkeys:
+            print("DEBUG pubkey[1]")
+            breakpoint()
             puzzle = ProgramHash(wallet.puzzle_for_pk(pubkey[1]))
             print("Name: " + pubkey[0])
             print("Puzzle: " + str(puzzle))
-            print("Signature: " + str(wallet.sign(puzzle).sig))
+            sig = wallet.sign(puzzle, a_pubkey)
+            print("Signature: " + str(sig.sig))
+            print(type(sig))
+            pair = sig.aggsig_pair(BLSPublicKey(a_pubkey), puzzle)
+            print(sig.validate([pair]))
+            breakpoint()
 
 
 async def new_block(wallet, ledger_api):

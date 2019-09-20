@@ -117,8 +117,7 @@ async def client_test(path):
 
     breakpoint()
 
-    # Wallet B tries to spend from approved list of contacts
-    #
+    # Wallet B tries to spend from approved list of puzhashes
     signatures = [ap_wallet_a_functions.ap_sign_output_newpuzzlehash(
         approved_puzhashes[0], apwallet_a, a_pubkey),
                   ap_wallet_a_functions.ap_sign_output_newpuzzlehash(

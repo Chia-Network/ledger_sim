@@ -8,7 +8,7 @@ from chiasim.hashable import Coin
 from chiasim.hashable.Body import BodyList
 from clvm_tools import binutils
 from chiasim.hashable import Program, ProgramHash, BLSSignature
-from chiasim.puzzles.puzzle_utilities import pubkey_format, signature_from_string, puzzlehash_from_string
+from chiasim.puzzles.puzzle_utilities import pubkey_format, signature_from_string, puzzlehash_from_string, BLSSignature_from_string
 from binascii import hexlify
 
 
@@ -67,13 +67,13 @@ def make_payment(wallet, approved_puzhash_sig_pairs):
     amount = -1
     if wallet.current_balance <= 0:
         print("You need some money first")
-        return None
+        return
     print("Select a contact from approved list: ")
     for name in approved_puzhash_sig_pairs:
         print(" - " + name)
-    name = input("Name of payee: ")
 
-    if name not in approved_puzhash_sig_pairs:
+    choice = input("Name of payee: ")
+    if choice not in approved_puzhash_sig_pairs:
         print("invalid contact")
         return
 
@@ -82,8 +82,8 @@ def make_payment(wallet, approved_puzhash_sig_pairs):
         if amount == "q":
             return
 
-    puzzlehash = approved_puzhash_sig_pairs[name][0]
-    return wallet.ap_generate_signed_transaction([(puzzlehash, amount)], [BLSSignature(approved_puzhash_sig_pairs[name][1].serialize())])
+    puzzlehash = approved_puzhash_sig_pairs[choice][0]
+    return wallet.ap_generate_signed_transaction([(puzzlehash, amount)], [approved_puzhash_sig_pairs[choice][1]])
 
 
 async def new_block(wallet, ledger_api):
@@ -127,7 +127,7 @@ def ap_settings(wallet, approved_puzhash_sig_pairs):
             puzzle = input("Approved puzzlehash: ")
             puzhash = puzzlehash_from_string(puzzle)
             sig = input("Signature for puzzlehash: ")
-            signature = signature_from_string(sig)
+            signature = BLSSignature_from_string(sig)
             approved_puzhash_sig_pairs[name] = (puzhash, signature)
             choice = input("Press 'c' to add another, or 'q' to return to menu: ")
     elif choice == "2":
@@ -144,7 +144,7 @@ def ap_settings(wallet, approved_puzhash_sig_pairs):
         wallet.set_sender_values(AP_puzzlehash, a_pubkey)
         print("Please enter signature for change making: ")
         signature = input()
-        sig = signature_from_string(signature)
+        sig = BLSSignature_from_string(signature)
         wallet.set_approved_change_signature(sig)
 
 
@@ -164,7 +164,7 @@ async def main():
     wallet.set_sender_values(AP_puzzlehash, a_pubkey)
     print("Please enter signature for change making: ")
     signature = input()
-    sig = BLSSignature(signature_from_string(signature).serialize())
+    sig = BLSSignature_from_string(signature)
     wallet.set_approved_change_signature(sig)
 
     while selection != "q":
