@@ -250,7 +250,6 @@ class APWallet(Wallet):
             [CoinSolution(coin_solution.coin, clvm.to_sexp_f([puzzle.code, coin_solution.solution.code])) for
              (puzzle, coin_solution) in spends])
         spend_bundle = SpendBundle(solution_list, aggsig)
-        breakpoint()
         return spend_bundle
 
     # this is for sending a recieved ap coin, not sending a new ap coin
@@ -262,10 +261,8 @@ class APWallet(Wallet):
         change = self.current_balance - spend_value
         puzzlehash_amount_list.append((self.AP_puzzlehash, change))
         signatures_from_a.append(self.approved_change_signature)
-        breakpoint()
         transaction = self.ap_generate_unsigned_transaction(
             puzzlehash_amount_list)
-        breakpoint()
         return self.ap_sign_transaction(transaction, signatures_from_a)
 
     # This is for using the AC locked coin and aggregating it into wallet - must happen in same block as AP Mode 2

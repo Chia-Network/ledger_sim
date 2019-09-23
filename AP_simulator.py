@@ -125,6 +125,7 @@ async def client_test(path):
     ap_output = [(approved_puzhashes[0], 69), (approved_puzhashes[1], 22)]
     spend_bundle = apwallet_b.ap_generate_signed_transaction(
         ap_output, signatures)
+    breakpoint()
     _ = await remote.push_tx(tx=spend_bundle)
     # Commit this transaction to a block
     wallet = wallets[random.randrange(0, 2)]

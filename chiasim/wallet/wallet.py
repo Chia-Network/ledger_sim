@@ -124,14 +124,8 @@ class Wallet:
     #def get_puzzlehash_for_contact(self, contact_name):
     #    return ProgramHash(self.get_puzzle_for_contact(contact_name))
 
-    def sign(self, value, pubkey=None):
-        if pubkey is not None:
-            privatekey = self.extended_secret_key.private_child(self.pubkey_num_lookup[pubkey]).get_private_key()
-        else:
-            pubkey = self.extended_secret_key.public_child(self.next_address).get_public_key()
-            privatekey = self.extended_secret_key.private_child(self.next_address).get_private_key()
-            self.pubkey_num_lookup[pubkey.serialize()] = self.next_address
-            self.next_address = self.next_address + 1
+    def sign(self, value, pubkey):
+        privatekey = self.extended_secret_key.private_child(self.pubkey_num_lookup[pubkey]).get_private_key()
         blskey = BLSPrivateKey(privatekey)
         return blskey.sign(value)
 
