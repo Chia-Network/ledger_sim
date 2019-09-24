@@ -70,10 +70,7 @@ def read_qr(wallet):
     print("Input filename of QR code: ")  # this'll have to do for now
     fn = input()
     decoded = decode(Image.open(fn))
-    breakpoint()
     name, type, pubkey = QR_string_parser(str(decoded[0].data))
-    pubkey = pubkey[:-1]  # find a non-hack way of removing trailing apostrophe
-    breakpoint()
     if type not in wallet.generator_lookups:
         print("Unknown generator - please input the source.")
         source = input("Source: ")
@@ -86,11 +83,8 @@ def read_qr(wallet):
     while amount > wallet.current_balance or amount <= 0:
         amount = int(input("Amount: "))
     args = binutils.assemble("(0x" + pubkey + ")")
-    breakpoint()
     program = Program(clvm.eval_f(clvm.eval_f, binutils.assemble(wallet.generator_lookups[type]), args))
     puzzlehash = ProgramHash(program)
-    #print(puzzlehash)
-    #breakpoint()
     return wallet.generate_signed_transaction(amount, puzzlehash)
 
 
@@ -99,6 +93,8 @@ def QR_string_parser(input):
     name = arr[0]
     generatorID = arr[1]
     pubkey = arr[2]
+    if pubkey.endswith("'"):
+        pubkey = pubkey[:-1]
     return name, generatorID, pubkey
 
 

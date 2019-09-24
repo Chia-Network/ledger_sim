@@ -16,17 +16,22 @@ def view_funds(wallet):
     print([x.amount for x in wallet.my_utxos])
 
 
-def add_contact(wallet):
-    name = input("What is the new contact's name? ")
-    # note that we should really be swapping a function here, but thisll do
-    puzzlegeneratorstring = input("What is their ChiaLisp puzzlegenerator: ")
-    puzzlegenerator = binutils.assemble(puzzlegeneratorstring)
-    wallet.add_contact(name, puzzlegenerator, 0, None)
+def add_contact(wallet, approved_puzhash_sig_pairs):
+    choice = "c"
+    print()
+    while choice == "c":
+        name = input("Payee name: ")
+        puzzle = input("Approved puzzlehash: ")
+        puzhash = puzzlehash_from_string(puzzle)
+        sig = input("Signature for puzzlehash: ")
+        signature = BLSSignature_from_string(sig)
+        approved_puzhash_sig_pairs[name] = (puzhash, signature)
+        choice = input("Press 'c' to add another, or 'q' to return to menu: ")
 
 
-def view_contacts(wallet):
-    for name, details in wallet.contacts:
-        print(name)
+def view_contacts(approved_puzhash_sig_pairs):
+    for name in approved_puzhash_sig_pairs:
+        print(" - " + name)
 
 
 def print_my_details(wallet):
@@ -118,34 +123,21 @@ async def update_ledger(wallet, ledger_api, most_recent_header):
 def ap_settings(wallet, approved_puzhash_sig_pairs):
     print("1: Add Authorised Payee")
     print("2: Change initialisation settings")
+    print("WARNING: This is only for if you messed it up the first time.")
+    print("Press 'c' to continue or any other key to return")
     choice = input()
-    if choice == "1":
-        choice = "c"
-        print()
-        while choice == "c":
-            name = input("Payee name: ")
-            puzzle = input("Approved puzzlehash: ")
-            puzhash = puzzlehash_from_string(puzzle)
-            sig = input("Signature for puzzlehash: ")
-            signature = BLSSignature_from_string(sig)
-            approved_puzhash_sig_pairs[name] = (puzhash, signature)
-            choice = input("Press 'c' to add another, or 'q' to return to menu: ")
-    elif choice == "2":
-        print("WARNING: This is only for if you messed it up the first time.")
-        print("Press 'c' to continue or any other key to return")
-        choice = input()
-        if choice != "c":
-            return
-        print("Your pubkey is: " + pubkey_format(wallet.get_next_public_key()))
-        print("Please fill in some initialisation information (this can be changed later)")
-        print("Please enter initialisation string: ")
-        init_string = input()
-        arr = init_string.split(":")
-        AP_puzzlehash = arr[0]
-        a_pubkey = arr[1]
-        wallet.set_sender_values(AP_puzzlehash, a_pubkey)
-        sig = BLSSignature_from_string(arr[2])
-        wallet.set_approved_change_signature(sig)
+    if choice != "c":
+        return
+    print("Your pubkey is: " + pubkey_format(wallet.get_next_public_key()))
+    print("Please fill in some initialisation information (this can be changed later)")
+    print("Please enter initialisation string: ")
+    init_string = input()
+    arr = init_string.split(":")
+    AP_puzzlehash = arr[0]
+    a_pubkey = arr[1]
+    wallet.set_sender_values(AP_puzzlehash, a_pubkey)
+    sig = BLSSignature_from_string(arr[2])
+    wallet.set_approved_change_signature(sig)
 
 
 async def main():
@@ -155,7 +147,7 @@ async def main():
     approved_puzhash_sig_pairs = {}  # 'name': (puzhash, signature)
     most_recent_header = None
     print("Welcome to AP Wallet")
-    print("Your pubkey is: " + pubkey_format(wallet.get_next_public_key()))
+    print("Your pubkey is: " + hexlify(wallet.get_next_public_key().serialize()).decode('ascii'))
     print("Please fill in some initialisation information (this can be changed later)")
     print("Please enter initialisation string: ")
     init_string = input()
@@ -170,30 +162,28 @@ async def main():
     while selection != "q":
         print("Select a function:")
         print("1: View Funds")
-        print("2: Add Contact (DISABLED)")
+        print("2: Add Payee")
         print("3: Make Payment")
-        print("4: View Contacts (DISABLED)")
+        print("4: View Payees")
         print("5: Get Update")
         print("6: *GOD MODE* Commit Block / Get Money")
         print("7: Print my details for somebody else")
         print("8: Set my wallet detail")
         print("9: Make QR code")
-        print("10: AP Settings / Register New Payee")
+        print("10: AP Settings")
 
         print("q: Quit")
         selection = input()
         if selection == "1":
             view_funds(wallet)
         elif selection == "2":
-            # add_contact(wallet)
-            print("contacts temporarily disable")
+            add_contact(wallet, approved_puzhash_sig_pairs)
         elif selection == "3":
             r = make_payment(wallet, approved_puzhash_sig_pairs)
             if r is not None:
                 await ledger_api.push_tx(tx=r)
         elif selection == "4":
-            # view_contacts(wallet)
-            print("contacts temporarily disable")
+            view_contacts(approved_puzhash_sig_pairs)
         elif selection == "5":
             await update_ledger(wallet, ledger_api, most_recent_header)
         elif selection == "6":

@@ -73,3 +73,11 @@ conditions = conditions_for_payment([(puzzle_hash_for_index(2), 1000)])
 tx = spend_coin(body.coinbase_coin, conditions, 0)
 r = await ledger_api.push_tx(tx=tx)
 #+END_SRC
+
+
+* Runnable Wallets
+
+The QR code functionality relies on [pyzbar](https://github.com/NaturalHistoryMuseum/pyzbar/)
+#+BEGIN_SRC bash
+brew install zbar
+#+END_SRC
