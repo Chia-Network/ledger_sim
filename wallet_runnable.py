@@ -1,6 +1,8 @@
 import asyncio
 import clvm
 import qrcode
+from pyzbar.pyzbar import decode
+from PIL import Image
 from chiasim.wallet.wallet import Wallet
 from chiasim.clients.ledger_sim import connect_to_ledger_sim
 from chiasim.wallet.deltas import additions_for_body, removals_for_body
@@ -37,10 +39,11 @@ def print_my_details(wallet):
     print("Puzzle Generator: ")
     print(wallet.puzzle_generator)
     print("New pubkey: ")
-    pubkey = "0x%s" % hexlify(wallet.get_next_public_key().serialize()).decode('ascii')
+    pubkey = "%s" % hexlify(wallet.get_next_public_key().serialize()).decode('ascii')
     print(pubkey)
     print("Generator hash identifier:")
     print(wallet.puzzle_generator_id)
+    print("Single string: " + wallet.name + ":" + wallet.puzzle_generator_id + ":" + pubkey)
 
 
 def make_QR(wallet):
@@ -54,8 +57,49 @@ def make_QR(wallet):
     qr.add_data(wallet.name + ":" + wallet.puzzle_generator_id + ":" + pubkey)
     qr.make(fit=True)
     img = qr.make_image()
-    img.save(pubkey+".jpg")
-    print("QR code created in " + pubkey + ".jpg")
+    fn = input("Input file name: ")
+    img.save(fn+".jpg")
+    print("QR code created in '" + fn + ".jpg'")
+
+
+def read_qr(wallet):
+    amount = -1
+    if wallet.current_balance <= 0:
+        print("You need some money first")
+        return None
+    print("Input filename of QR code: ")  # this'll have to do for now
+    fn = input()
+    decoded = decode(Image.open(fn))
+    breakpoint()
+    name, type, pubkey = QR_string_parser(str(decoded[0].data))
+    pubkey = pubkey[:-1]  # find a non-hack way of removing trailing apostrophe
+    breakpoint()
+    if type not in wallet.generator_lookups:
+        print("Unknown generator - please input the source.")
+        source = input("Source: ")
+        if str(ProgramHash(Program(binutils.assemble(source)))) != "0x"+type:
+            print("source not equal to ID")
+            breakpoint()
+            return
+        else:
+            wallet.generator_lookups[type] = source
+    while amount > wallet.current_balance or amount <= 0:
+        amount = int(input("Amount: "))
+    args = binutils.assemble("(0x" + pubkey + ")")
+    breakpoint()
+    program = Program(clvm.eval_f(clvm.eval_f, binutils.assemble(wallet.generator_lookups[type]), args))
+    puzzlehash = ProgramHash(program)
+    #print(puzzlehash)
+    #breakpoint()
+    return wallet.generate_signed_transaction(amount, puzzlehash)
+
+
+def QR_string_parser(input):
+    arr = input.split(":")
+    name = arr[0]
+    generatorID = arr[1]
+    pubkey = arr[2]
+    return name, generatorID, pubkey
 
 
 def set_name(wallet):
@@ -68,8 +112,8 @@ def make_payment(wallet):
     if wallet.current_balance <= 0:
         print("You need some money first")
         return None
-    name = input("Name of payee: ")
-    type = input("Generator hash ID: 0x")
+    qr = input("Enter QR string: ")
+    name, type, pubkey = QR_string_parser(qr)
     if type not in wallet.generator_lookups:
         print("Unknown generator - please input the source.")
         source = input("Source: ")
@@ -81,12 +125,11 @@ def make_payment(wallet):
             wallet.generator_lookups[type] = source
     while amount > wallet.current_balance or amount < 0:
         amount = int(input("Amount: "))
-    pubkey = input("Pubkey: 0x")
     args = binutils.assemble("(0x" + pubkey + ")")
     program = Program(clvm.eval_f(clvm.eval_f, binutils.assemble(wallet.generator_lookups[type]), args))
     puzzlehash = ProgramHash(program)
-    print(puzzlehash)
-    breakpoint()
+    #print(puzzlehash)
+    #breakpoint()
     return wallet.generate_signed_transaction(amount, puzzlehash)
 
 
@@ -99,9 +142,8 @@ async def select_smart_contract(wallet, ledger_api):
         if wallet.current_balance <= 0:
             print("You need some money first")
             return None
-        # TODO: add a pubkey format checker to this (and everything tbh)
+        # TODO: add a format checker to input here (and everywhere tbh)
         # Actual puzzle lockup/spend
-        approved_pubkeys = []
         a_pubkey = wallet.get_next_public_key().serialize()
         b_pubkey = input("Enter recipient's pubkey: 0x")
         amount = input("Enter amount to give recipient: ")
@@ -111,34 +153,25 @@ async def select_smart_contract(wallet, ledger_api):
         await ledger_api.push_tx(tx=spend_bundle)
         print()
         print("AP Puzzlehash is: " + str(APpuzzlehash))
-        print("Pubkey used is: " + pubkey_format(a_pubkey))
+        print("Pubkey used is: " + hexlify(a_pubkey).decode('ascii'))
         sig = ap_wallet_a_functions.ap_sign_output_newpuzzlehash(APpuzzlehash, wallet, a_pubkey)
-        print(type(sig))
+        #print(type(sig))
         print("Approved change signature is: " + str(sig.sig))
-        #sig.set_aggregation_info(AggregationInfo.from_msg(a_pubkey, APpuzzlehash))
-        pair = sig.aggsig_pair(BLSPublicKey(a_pubkey), APpuzzlehash)
-        print(sig.validate([pair]))
+        print("Single string: " + str(APpuzzlehash) + ":" + hexlify(a_pubkey).decode('ascii') + ":" + str(sig.sig))
+        #pair = sig.aggsig_pair(BLSPublicKey(a_pubkey), APpuzzlehash)
+        #print(sig.validate([pair]))
 
         # Authorised puzzle printout for AP Wallet
         print("Enter pubkeys of authorised recipients, press 'q' to finish")
         while choice != "q":
             name = input("Name of recipient: ")
             pubkey = input("Pubkey: 0x")
-            approved_pubkeys.append((name, pubkey))
-            choice = input("Press 'c' to continue, or 'q' to quit to menu: ")
-
-        for pubkey in approved_pubkeys:
-            print("DEBUG pubkey[1]")
-            breakpoint()
-            puzzle = ProgramHash(wallet.puzzle_for_pk(pubkey[1]))
-            print("Name: " + pubkey[0])
+            puzzle = ProgramHash(wallet.puzzle_for_pk(pubkey))
             print("Puzzle: " + str(puzzle))
             sig = wallet.sign(puzzle, a_pubkey)
             print("Signature: " + str(sig.sig))
-            print(type(sig))
-            pair = sig.aggsig_pair(BLSPublicKey(a_pubkey), puzzle)
-            print(sig.validate([pair]))
-            breakpoint()
+            print("Single string: " + name + ":" + str(puzzle) + ":" + str(sig.sig))
+            choice = input("Press 'c' to continue, or 'q' to quit to menu: ")
 
 
 async def new_block(wallet, ledger_api):
@@ -146,7 +179,7 @@ async def new_block(wallet, ledger_api):
     fees_puzzle_hash = wallet.get_new_puzzlehash()
     r = await ledger_api.next_block(coinbase_puzzle_hash=coinbase_puzzle_hash, fees_puzzle_hash=fees_puzzle_hash)
     body = r["body"]
-    breakpoint()
+    # breakpoint()
     most_recent_header = r['header']
     # breakpoint()
     additions = list(additions_for_body(body))
@@ -178,41 +211,38 @@ async def main():
     while selection != "q":
         print("Select a function:")
         print("1: View Funds")
-        print("2: Add Contact (DISABLED)")
-        print("3: Make Payment")
-        print("4: View Contacts (DISABLED)")
-        print("5: Get Update")
-        print("6: *GOD MODE* Commit Block / Get Money")
-        print("7: Print my details for somebody else")
-        print("8: Set my wallet name")
-        print("9: Make QR code")
-        print("10: Make Smart Contract")
+        print("2: Make Payment")
+        print("3: Get Update")
+        print("4: *GOD MODE* Commit Block / Get Money")
+        print("5: Print my details for somebody else")
+        print("6: Set my wallet name")
+        print("7: Make QR code")
+        print("8: Make Smart Contract")
+        print("9: Payment to QR code")
         print("q: Quit")
         selection = input()
         if selection == "1":
             view_funds(wallet)
         elif selection == "2":
-            # add_contact(wallet)
-            print("contacts temporarily disable")
-        elif selection == "3":
             r = make_payment(wallet)
             if r is not None:
                 await ledger_api.push_tx(tx=r)
-        elif selection == "4":
-            # view_contacts(wallet)
-            print("contacts temporarily disable")
-        elif selection == "5":
+        elif selection == "3":
             await update_ledger(wallet, ledger_api, most_recent_header)
-        elif selection == "6":
+        elif selection == "4":
             most_recent_header = await new_block(wallet, ledger_api)
-        elif selection == "7":
+        elif selection == "5":
             print_my_details(wallet)
-        elif selection == "8":
+        elif selection == "6":
             set_name(wallet)
-        elif selection == "9":
+        elif selection == "7":
             make_QR(wallet)
-        elif selection == "10":
+        elif selection == "8":
             await select_smart_contract(wallet, ledger_api)
+        elif selection == "9":
+            r = read_qr(wallet)
+            if r is not None:
+                await ledger_api.push_tx(tx=r)
 
 
 run = asyncio.get_event_loop().run_until_complete

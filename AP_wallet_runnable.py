@@ -132,19 +132,19 @@ def ap_settings(wallet, approved_puzhash_sig_pairs):
             choice = input("Press 'c' to add another, or 'q' to return to menu: ")
     elif choice == "2":
         print("WARNING: This is only for if you messed it up the first time.")
-        print("If you have already configured this properly, press 'q' to go back.")
-        print("Please enter AP puzzlehash: ")
-        AP_puzzlehash = input()
-        if AP_puzzlehash == "q":
+        print("Press 'c' to continue or any other key to return")
+        choice = input()
+        if choice != "c":
             return
-        print("Please enter sender's pubkey: ")
-        a_pubkey = input()
-        if a_pubkey == "q":
-            return
+        print("Your pubkey is: " + pubkey_format(wallet.get_next_public_key()))
+        print("Please fill in some initialisation information (this can be changed later)")
+        print("Please enter initialisation string: ")
+        init_string = input()
+        arr = init_string.split(":")
+        AP_puzzlehash = arr[0]
+        a_pubkey = arr[1]
         wallet.set_sender_values(AP_puzzlehash, a_pubkey)
-        print("Please enter signature for change making: ")
-        signature = input()
-        sig = BLSSignature_from_string(signature)
+        sig = BLSSignature_from_string(arr[2])
         wallet.set_approved_change_signature(sig)
 
 
@@ -157,14 +157,14 @@ async def main():
     print("Welcome to AP Wallet")
     print("Your pubkey is: " + pubkey_format(wallet.get_next_public_key()))
     print("Please fill in some initialisation information (this can be changed later)")
-    print("Please enter AP puzzlehash: ")
-    AP_puzzlehash = input()
-    print("Please enter sender's pubkey: ")
-    a_pubkey = input()
+    print("Please enter initialisation string: ")
+    init_string = input()
+    # TODO: format check all QR style strings
+    arr = init_string.split(":")
+    AP_puzzlehash = arr[0]
+    a_pubkey = arr[1]
     wallet.set_sender_values(AP_puzzlehash, a_pubkey)
-    print("Please enter signature for change making: ")
-    signature = input()
-    sig = BLSSignature_from_string(signature)
+    sig = BLSSignature_from_string(arr[2])
     wallet.set_approved_change_signature(sig)
 
     while selection != "q":
