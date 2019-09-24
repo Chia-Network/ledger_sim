@@ -77,7 +77,9 @@ r = await ledger_api.push_tx(tx=tx)
 
 * Runnable Wallets
 
-The QR code functionality relies on [pyzbar](https://github.com/NaturalHistoryMuseum/pyzbar/)
+The QR code functionality relies on [[https://github.com/NaturalHistoryMuseum/pyzbar/][pyzbar]]
 #+BEGIN_SRC bash
 brew install zbar
 #+END_SRC
+
+New block commits are done on command from one of the wallets, so make sure you that you make a new block after your transaction.
