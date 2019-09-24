@@ -51,4 +51,7 @@ setup(
         'Bug Reports': 'https://github.com/Chia-Network',
         'Source': 'https://github.com/Chia-Network',
     },
+    package_data={
+        '': '*.clvm',
+    },
 )
