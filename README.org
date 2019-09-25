@@ -83,3 +83,4 @@ brew install zbar
 #+END_SRC
 
 New block commits are done on command from one of the wallets, so make sure you that you make a new block after your transaction.
+Other wallets, similarly, must request an update once it exists.

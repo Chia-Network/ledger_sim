@@ -20,10 +20,12 @@ def add_contact(wallet, approved_puzhash_sig_pairs):
     choice = "c"
     print()
     while choice == "c":
-        name = input("Payee name: ")
-        puzzle = input("Approved puzzlehash: ")
+        singlestring = input("Enter contact info string: ")
+        arr = singlestring.split(":")
+        name = arr[0]
+        puzzle = arr[1]
         puzhash = puzzlehash_from_string(puzzle)
-        sig = input("Signature for puzzlehash: ")
+        sig = arr[2]
         signature = BLSSignature_from_string(sig)
         approved_puzhash_sig_pairs[name] = (puzhash, signature)
         choice = input("Press 'c' to add another, or 'q' to return to menu: ")
