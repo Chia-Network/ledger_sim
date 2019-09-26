@@ -160,13 +160,25 @@ async def select_smart_contract(wallet, ledger_api):
         # Authorised puzzle printout for AP Wallet
         print("Enter pubkeys of authorised recipients, press 'q' to finish")
         while choice != "q":
-            name = input("Name of recipient: ")
-            pubkey = input("Pubkey: 0x")
-            puzzle = ProgramHash(wallet.puzzle_for_pk(pubkey))
-            print("Puzzle: " + str(puzzle))
-            sig = wallet.sign(puzzle, a_pubkey)
-            print("Signature: " + str(sig.sig))
-            print("Single string: " + name + ":" + str(puzzle) + ":" + str(sig.sig))
+            singlestr = input("Enter recipient QR string: ")
+            name, type, pubkey = QR_string_parser(singlestr)
+            if type not in wallet.generator_lookups:
+                print("Unknown generator - please input the source.")
+                source = input("Source: ")
+                if str(ProgramHash(Program(binutils.assemble(source)))) != "0x"+type:
+                    print("source not equal to ID")
+                    breakpoint()
+                    return
+                else:
+                    wallet.generator_lookups[type] = source
+            args = binutils.assemble("(0x" + pubkey + ")")
+            program = Program(clvm.eval_f(clvm.eval_f, binutils.assemble(wallet.generator_lookups[type]), args))
+            puzzlehash = ProgramHash(program)
+            print()
+            #print("Puzzle: " + str(puzzlehash))
+            sig = wallet.sign(puzzlehash, a_pubkey)
+            #print("Signature: " + str(sig.sig))
+            print("Single string for AP Wallet: " + name + ":" + str(puzzlehash) + ":" + str(sig.sig))
             choice = input("Press 'c' to continue, or 'q' to quit to menu: ")
 
 
