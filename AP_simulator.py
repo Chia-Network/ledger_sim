@@ -47,7 +47,8 @@ async def client_test(path):
     wallets.append(apwallet_b)
     a_pubkey = apwallet_a.get_next_public_key().serialize()
     b_pubkey = apwallet_b.get_next_public_key().serialize()
-    APpuzzlehash = ap_wallet_a_functions.ap_get_new_puzzlehash(a_pubkey, b_pubkey)
+    APpuzzlehash = ap_wallet_a_functions.ap_get_new_puzzlehash(
+        a_pubkey, b_pubkey)
     apwallet_b.set_sender_values(APpuzzlehash, a_pubkey)
     apwallet_b.set_approved_change_signature(ap_wallet_a_functions.ap_sign_output_newpuzzlehash(
         APpuzzlehash, apwallet_a, a_pubkey))
@@ -120,8 +121,8 @@ async def client_test(path):
     # Wallet B tries to spend from approved list of puzhashes
     signatures = [ap_wallet_a_functions.ap_sign_output_newpuzzlehash(
         approved_puzhashes[0], apwallet_a, a_pubkey),
-                  ap_wallet_a_functions.ap_sign_output_newpuzzlehash(
-                      approved_puzhashes[1], apwallet_a, a_pubkey)]
+        ap_wallet_a_functions.ap_sign_output_newpuzzlehash(
+        approved_puzhashes[1], apwallet_a, a_pubkey)]
     ap_output = [(approved_puzhashes[0], 69), (approved_puzhashes[1], 22)]
     spend_bundle = apwallet_b.ap_generate_signed_transaction(
         ap_output, signatures)

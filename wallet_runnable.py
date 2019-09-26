@@ -39,11 +39,13 @@ def print_my_details(wallet):
     print("Puzzle Generator: ")
     print(wallet.puzzle_generator)
     print("New pubkey: ")
-    pubkey = "%s" % hexlify(wallet.get_next_public_key().serialize()).decode('ascii')
+    pubkey = "%s" % hexlify(
+        wallet.get_next_public_key().serialize()).decode('ascii')
     print(pubkey)
     print("Generator hash identifier:")
     print(wallet.puzzle_generator_id)
-    print("Single string: " + wallet.name + ":" + wallet.puzzle_generator_id + ":" + pubkey)
+    print("Single string: " + wallet.name + ":" +
+          wallet.puzzle_generator_id + ":" + pubkey)
 
 
 def make_QR(wallet):
@@ -58,7 +60,7 @@ def make_QR(wallet):
     qr.make(fit=True)
     img = qr.make_image()
     fn = input("Input file name: ")
-    img.save(fn+".jpg")
+    img.save(fn + ".jpg")
     print("QR code created in '" + fn + ".jpg'")
 
 
@@ -74,7 +76,7 @@ def read_qr(wallet):
     if type not in wallet.generator_lookups:
         print("Unknown generator - please input the source.")
         source = input("Source: ")
-        if str(ProgramHash(Program(binutils.assemble(source)))) != "0x"+type:
+        if str(ProgramHash(Program(binutils.assemble(source)))) != "0x" + type:
             print("source not equal to ID")
             breakpoint()
             return
@@ -83,7 +85,8 @@ def read_qr(wallet):
     while amount > wallet.current_balance or amount <= 0:
         amount = int(input("Amount: "))
     args = binutils.assemble("(0x" + pubkey + ")")
-    program = Program(clvm.eval_f(clvm.eval_f, binutils.assemble(wallet.generator_lookups[type]), args))
+    program = Program(clvm.eval_f(clvm.eval_f, binutils.assemble(
+        wallet.generator_lookups[type]), args))
     puzzlehash = ProgramHash(program)
     return wallet.generate_signed_transaction(amount, puzzlehash)
 
@@ -113,7 +116,7 @@ def make_payment(wallet):
     if type not in wallet.generator_lookups:
         print("Unknown generator - please input the source.")
         source = input("Source: ")
-        if str(ProgramHash(Program(binutils.assemble(source)))) != "0x"+type:
+        if str(ProgramHash(Program(binutils.assemble(source)))) != "0x" + type:
             print("source not equal to ID")
             breakpoint()
             return
@@ -122,10 +125,11 @@ def make_payment(wallet):
     while amount > wallet.current_balance or amount < 0:
         amount = int(input("Amount: "))
     args = binutils.assemble("(0x" + pubkey + ")")
-    program = Program(clvm.eval_f(clvm.eval_f, binutils.assemble(wallet.generator_lookups[type]), args))
+    program = Program(clvm.eval_f(clvm.eval_f, binutils.assemble(
+        wallet.generator_lookups[type]), args))
     puzzlehash = ProgramHash(program)
-    #print(puzzlehash)
-    #breakpoint()
+    # print(puzzlehash)
+    # breakpoint()
     return wallet.generate_signed_transaction(amount, puzzlehash)
 
 
@@ -144,18 +148,20 @@ async def select_smart_contract(wallet, ledger_api):
         b_pubkey = input("Enter recipient's pubkey: 0x")
         amount = input("Enter amount to give recipient: ")
         amount = int(amount)
-        APpuzzlehash = ap_wallet_a_functions.ap_get_new_puzzlehash(a_pubkey, b_pubkey)
+        APpuzzlehash = ap_wallet_a_functions.ap_get_new_puzzlehash(
+            a_pubkey, b_pubkey)
         spend_bundle = wallet.generate_signed_transaction(amount, APpuzzlehash)
         await ledger_api.push_tx(tx=spend_bundle)
         print()
         print("AP Puzzlehash is: " + str(APpuzzlehash))
         print("Pubkey used is: " + hexlify(a_pubkey).decode('ascii'))
-        sig = ap_wallet_a_functions.ap_sign_output_newpuzzlehash(APpuzzlehash, wallet, a_pubkey)
-        #print(type(sig))
+        sig = ap_wallet_a_functions.ap_sign_output_newpuzzlehash(
+            APpuzzlehash, wallet, a_pubkey)
         print("Approved change signature is: " + str(sig.sig))
-        print("Single string: " + str(APpuzzlehash) + ":" + hexlify(a_pubkey).decode('ascii') + ":" + str(sig.sig))
+        print("Single string: " + str(APpuzzlehash) + ":" +
+              hexlify(a_pubkey).decode('ascii') + ":" + str(sig.sig))
         #pair = sig.aggsig_pair(BLSPublicKey(a_pubkey), APpuzzlehash)
-        #print(sig.validate([pair]))
+        # print(sig.validate([pair]))
 
         # Authorised puzzle printout for AP Wallet
         print("Enter pubkeys of authorised recipients, press 'q' to finish")
@@ -165,20 +171,22 @@ async def select_smart_contract(wallet, ledger_api):
             if type not in wallet.generator_lookups:
                 print("Unknown generator - please input the source.")
                 source = input("Source: ")
-                if str(ProgramHash(Program(binutils.assemble(source)))) != "0x"+type:
+                if str(ProgramHash(Program(binutils.assemble(source)))) != "0x" + type:
                     print("source not equal to ID")
                     breakpoint()
                     return
                 else:
                     wallet.generator_lookups[type] = source
             args = binutils.assemble("(0x" + pubkey + ")")
-            program = Program(clvm.eval_f(clvm.eval_f, binutils.assemble(wallet.generator_lookups[type]), args))
+            program = Program(clvm.eval_f(clvm.eval_f, binutils.assemble(
+                wallet.generator_lookups[type]), args))
             puzzlehash = ProgramHash(program)
             print()
             #print("Puzzle: " + str(puzzlehash))
             sig = wallet.sign(puzzlehash, a_pubkey)
             #print("Signature: " + str(sig.sig))
-            print("Single string for AP Wallet: " + name + ":" + str(puzzlehash) + ":" + str(sig.sig))
+            print("Single string for AP Wallet: " + name +
+                  ":" + str(puzzlehash) + ":" + str(sig.sig))
             choice = input("Press 'c' to continue, or 'q' to quit to menu: ")
 
 

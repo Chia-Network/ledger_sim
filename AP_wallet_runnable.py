@@ -58,7 +58,7 @@ def make_QR(wallet):
     qr.add_data(wallet.name + ":" + wallet.puzzle_generator_id + ":" + pubkey)
     qr.make(fit=True)
     img = qr.make_image()
-    img.save(pubkey+".jpg")
+    img.save(pubkey + ".jpg")
     print("QR code created in " + pubkey + ".jpg")
 
 
@@ -146,7 +146,8 @@ async def main():
     approved_puzhash_sig_pairs = {}  # 'name': (puzhash, signature)
     most_recent_header = None
     print("Welcome to AP Wallet")
-    print("Your pubkey is: " + hexlify(wallet.get_next_public_key().serialize()).decode('ascii'))
+    print("Your pubkey is: " +
+          hexlify(wallet.get_next_public_key().serialize()).decode('ascii'))
     print("Please fill in some initialisation information (this can be changed later)")
     print("Please enter initialisation string: ")
     init_string = input()

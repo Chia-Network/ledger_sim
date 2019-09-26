@@ -24,7 +24,8 @@ def sha256(val):
 def make_solution(primaries=[], min_time=0, me={}):
     ret = []
     for primary in primaries:
-        ret.append(make_create_coin_condition(primary['puzzlehash'], primary['amount']))
+        ret.append(make_create_coin_condition(
+            primary['puzzlehash'], primary['amount']))
     if min_time > 0:
         ret.append(make_assert_min_time_condition(min_time))
     if me:
@@ -37,7 +38,8 @@ class Wallet:
     next_address = 0
     pubkey_num_lookup = {}
     puzzle_generator = "(c (q 5) (c (c (q 5) (c (q (q 50)) (c (c (q 5) (c (c (q 1) (c (f (a)) (q ()))) (q ((c (sha256 (wrap (f (a)))) (q ())))))) (q ())))) (q ((e (f (a)) (f (r (a))))))))"
-    puzzle_generator_id = str(ProgramHash(Program(binutils.assemble(puzzle_generator))))
+    puzzle_generator_id = str(ProgramHash(
+        Program(binutils.assemble(puzzle_generator))))
 
     def __init__(self):
         self.current_balance = 0
@@ -50,21 +52,22 @@ class Wallet:
         self.generator_lookups[self.puzzle_generator_id] = self.puzzle_generator
 
     def get_next_public_key(self):
-        pubkey = self.extended_secret_key.public_child(self.next_address).get_public_key()
+        pubkey = self.extended_secret_key.public_child(
+            self.next_address).get_public_key()
         self.pubkey_num_lookup[pubkey.serialize()] = self.next_address
         self.next_address = self.next_address + 1
         return pubkey
 
-    #def add_contact(self, name, puzzlegenerator, last, extradata):
+    # def add_contact(self, name, puzzlegenerator, last, extradata):
     #    if name in self.contacts:
     #        return None
     #    else:
     #        self.contacts[name] = [puzzlegenerator, last, extradata]
 
-    #def get_contact(self, name):
+    # def get_contact(self, name):
     #    return self.contacts[name]
 
-    #def get_contact_names(self):
+    # def get_contact_names(self):
     #    return [*self.contacts]  # returns list of names
 
     def set_name(self, name):
@@ -73,11 +76,12 @@ class Wallet:
     def can_generate_puzzle_hash(self, hash):
         return any(map(lambda child: hash == ProgramHash(self.puzzle_for_pk(
             self.extended_secret_key.public_child(child).get_public_key().serialize())),
-                reversed(range(self.next_address))))
+            reversed(range(self.next_address))))
 
     def get_keys(self, hash):
         for child in range(self.next_address):
-            pubkey = self.extended_secret_key.public_child(child).get_public_key()
+            pubkey = self.extended_secret_key.public_child(
+                child).get_public_key()
             if hash == ProgramHash(self.puzzle_for_pk(pubkey.serialize())):
                 return (pubkey, self.extended_secret_key.private_child(child).get_private_key())
 
@@ -103,7 +107,8 @@ class Wallet:
 
     def puzzle_for_pk(self, pubkey):
         args = "(" + pubkey_format(pubkey) + ")"
-        puzzle = Program(clvm.eval_f(clvm.eval_f, binutils.assemble(self.puzzle_generator), binutils.assemble(args)))
+        puzzle = Program(clvm.eval_f(clvm.eval_f, binutils.assemble(
+            self.puzzle_generator), binutils.assemble(args)))
         return puzzle
 
     def get_new_puzzle(self):
@@ -116,16 +121,17 @@ class Wallet:
         puzzlehash = ProgramHash(puzzle)
         return puzzlehash
 
-    #def get_puzzle_for_contact(self, contact_name):
+    # def get_puzzle_for_contact(self, contact_name):
     #    puzzle = self.contacts[contact_name][0](self.contacts[contact_name][1])
     #    self.contacts[contact_name][1] += 1
     #    return puzzle
 
-    #def get_puzzlehash_for_contact(self, contact_name):
+    # def get_puzzlehash_for_contact(self, contact_name):
     #    return ProgramHash(self.get_puzzle_for_contact(contact_name))
 
     def sign(self, value, pubkey):
-        privatekey = self.extended_secret_key.private_child(self.pubkey_num_lookup[pubkey]).get_private_key()
+        privatekey = self.extended_secret_key.private_child(
+            self.pubkey_num_lookup[pubkey]).get_private_key()
         blskey = BLSPrivateKey(privatekey)
         return blskey.sign(value)
 
@@ -147,7 +153,8 @@ class Wallet:
                 primaries = [{'puzzlehash': newpuzzlehash, 'amount': amount}]
                 if change > 0:
                     changepuzzlehash = self.get_new_puzzlehash()
-                    primaries.append({'puzzlehash': changepuzzlehash, 'amount': change})
+                    primaries.append(
+                        {'puzzlehash': changepuzzlehash, 'amount': change})
                 solution = make_solution(primaries=primaries)
                 output_id = sha256(coin.name() + newpuzzlehash)
             else:
@@ -162,7 +169,8 @@ class Wallet:
             secretkey = BLSPrivateKey(secretkey)
             code_ = [puzzle.code, [solution.solution.code, []]]
             sexp = clvm.to_sexp_f(code_)
-            conditions_dict = conditions_by_opcode(conditions_for_solution(sexp))
+            conditions_dict = conditions_by_opcode(
+                conditions_for_solution(sexp))
             for _ in hash_key_pairs_for_conditions_dict(conditions_dict):
                 signature = secretkey.sign(_.message_hash)
                 sigs.append(signature)

@@ -88,7 +88,8 @@ class APWallet(Wallet):
             for coin in additions:
                 if coin.puzzle_hash == self.AP_puzzlehash:
                     self.puzzle_generator = "(q (c (c (q 0x35) (c (f (a)) (q ()))) (c (c (q 0x34) (c (sha256 (sha256 (f (r (a))) (q 0xd372eab077f8d4923ef663b013ec0a4d2b53552beecd0c32fdede92bee89c1fe) (uint64 (f (r (r (a)))))) (sha256 (wrap (c (q 7) (c (c (q 5) (c (c (q 1) (c (f (a)) (q ()))) (c (q (q ())) (q ())))) (q ()))))) (uint64 (q 0))) (q ()))) (q ()))))"
-                    self.puzzle_generator_id = str(ProgramHash(Program(binutils.assemble(self.puzzle_generator))))
+                    self.puzzle_generator_id = str(ProgramHash(
+                        Program(binutils.assemble(self.puzzle_generator))))
                     self.current_balance += coin.amount
                     self.my_utxos.add(coin)
                     print("this coin is locked using my ID, it's output must be for me")
@@ -214,7 +215,6 @@ class APWallet(Wallet):
     # this is for sending a recieved ap coin, not creating a new ap coin
     def ap_generate_unsigned_transaction(self, puzzlehash_amount_list):
         # we only have/need one coin in this wallet at any time - this code can be improved
-        utxos = self.select_coins(self.current_balance)
         spends = []
         coin = self.temp_coin
         puzzle_hash = coin.puzzle_hash
@@ -261,6 +261,7 @@ class APWallet(Wallet):
         change = self.current_balance - spend_value
         puzzlehash_amount_list.append((self.AP_puzzlehash, change))
         signatures_from_a.append(self.approved_change_signature)
+        breakpoint()
         transaction = self.ap_generate_unsigned_transaction(
             puzzlehash_amount_list)
         return self.ap_sign_transaction(transaction, signatures_from_a)
