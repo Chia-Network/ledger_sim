@@ -2,7 +2,7 @@ import hashlib
 import clvm
 from os import urandom
 from blspy import ExtendedPrivateKey
-from chiasim.hashable import Program, ProgramHash, CoinSolution, SpendBundle, BLSSignature
+from chiasim.hashable import Program, ProgramHash, CoinSolution, SpendBundle, BLSSignature, Coin
 from chiasim.hashable.CoinSolution import CoinSolutionList
 from chiasim.puzzles.p2_conditions import puzzle_for_conditions
 from chiasim.puzzles.puzzle_utilities import pubkey_format
@@ -50,6 +50,7 @@ class Wallet:
         self.generator_lookups = {}  # {generator_hash: generator}
         self.name = "MyChiaWallet"
         self.generator_lookups[self.puzzle_generator_id] = self.puzzle_generator
+        self.temp_utxos = set()
 
     def get_next_public_key(self):
         pubkey = self.extended_secret_key.public_child(
@@ -91,18 +92,25 @@ class Wallet:
                 self.my_utxos.remove(coin)
                 self.current_balance -= coin.amount
         for coin in additions:
+            my_utxos_copy = self.my_utxos.copy()
             if self.can_generate_puzzle_hash(coin.puzzle_hash):
                 self.current_balance += coin.amount
                 self.my_utxos.add(coin)
+            for mycoin in self.my_utxos:
+                if coin.parent_coin_info == mycoin.name():
+                    my_utxos_copy.remove(mycoin)
+                    self.current_balance -= mycoin.amount
+                    self.my_utxos = my_utxos_copy
+
+        self.temp_utxos = self.my_utxos.copy()
 
     def select_coins(self, amount):
         if amount > self.current_balance:
             return None
 
         used_utxos = set()
-        coins = self.my_utxos.copy()
         while sum(map(lambda coin: coin.amount, used_utxos)) < amount:
-            used_utxos.add(coins.pop())
+            used_utxos.add(self.temp_utxos.pop())
         return used_utxos
 
     def puzzle_for_pk(self, pubkey):
@@ -155,11 +163,13 @@ class Wallet:
                     changepuzzlehash = self.get_new_puzzlehash()
                     primaries.append(
                         {'puzzlehash': changepuzzlehash, 'amount': change})
+                    self.temp_utxos.add(Coin(coin, changepuzzlehash, change))
                 solution = make_solution(primaries=primaries)
                 output_id = sha256(coin.name() + newpuzzlehash)
             else:
                 solution = make_solution()
             spends.append((puzzle, CoinSolution(coin, solution)))
+
         return spends
 
     def sign_transaction(self, spends: (Program, [CoinSolution])):
