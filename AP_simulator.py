@@ -32,6 +32,7 @@ async def update_wallets(remote, r, wallets):
         spend_bundle_list = wallet.notify(additions, removals)
         if spend_bundle_list is not None:
             for spend_bundle in spend_bundle_list:
+                #breakpoint()
                 _ = await remote.push_tx(tx=spend_bundle)
 
 
@@ -104,8 +105,9 @@ async def client_test(path):
     # Show balances and detect new coin, and buffer auto aggregation
     await update_wallets(remote, r, wallets)
     print([[x.amount for x in wallet.my_utxos] for wallet in wallets])
+    breakpoint()
 
-    # Confirm the auto aggregate of the two coins
+    # Commit the auto aggregate of the two coins
     wallet = wallets[random.randrange(0, 3)]
     coinbase_puzzle_hash = wallet.get_new_puzzlehash()
     fees_puzzle_hash = wallet.get_new_puzzlehash()
@@ -126,7 +128,7 @@ async def client_test(path):
     ap_output = [(approved_puzhashes[0], 69), (approved_puzhashes[1], 22)]
     spend_bundle = apwallet_b.ap_generate_signed_transaction(
         ap_output, signatures)
-    breakpoint()
+    #breakpoint()
     _ = await remote.push_tx(tx=spend_bundle)
     # Commit this transaction to a block
     wallet = wallets[random.randrange(0, 2)]
@@ -151,7 +153,7 @@ async def client_test(path):
                                     fees_puzzle_hash=fees_puzzle_hash)
         await update_wallets(remote, r, wallets)
         print([[x.amount for x in wallet.my_utxos] for wallet in wallets])
-        breakpoint()
+        #breakpoint()
         r = await remote.all_unspents()
         print("unspents = %s" % r.get("unspents"))
         for i in range(1):

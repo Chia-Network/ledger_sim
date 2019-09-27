@@ -30,7 +30,7 @@ class APWallet(Wallet):
         self.approved_change_puzzle = None
         self.approved_change_signature = None
         self.temp_coin = None
-        self.temp_coin_flag = False
+        #self.temp_coin_flag = False
         return
 
     def set_sender_values(self, AP_puzzlehash, a_pubkey_used):
@@ -83,7 +83,7 @@ class APWallet(Wallet):
         return spend_bundle_list
 
     def ap_notify(self, additions):
-        # this prevents unnecessary checks
+        # this prevents unnecessary checks and stops us receiving multiple coins
         if self.AP_puzzlehash is not None and not self.my_utxos:
             for coin in additions:
                 if coin.puzzle_hash == self.AP_puzzlehash:
@@ -97,28 +97,33 @@ class APWallet(Wallet):
     # same notes as above but for aggregation coins
     def ac_notify(self, additions):
         if self.my_utxos:
-            self.temp_coin = self.my_utxos.copy().pop()
+            self.temp_coin = self.my_utxos.copy().pop()  # reset
+        else:
+            return  # prevent unnecessary searching
         spend_bundle_list = []
 
         for coin in additions:
-            if self.temp_coin_flag:
-                my_utxos_copy = self.my_utxos.copy()
-                for mycoin in self.my_utxos:
-                    if coin.parent_coin_info == mycoin.name():
-                        my_utxos_copy.remove(mycoin)
-                        self.current_balance -= mycoin.amount
-                self.my_utxos = my_utxos_copy
-
+            my_utxos_copy = self.my_utxos.copy()
+            #
             for mycoin in self.my_utxos:
-                if ProgramHash(self.ap_make_aggregation_puzzle(mycoin.puzzle_hash)) == coin.puzzle_hash:
-                    self.aggregation_coins.add(coin)
-                    spend_bundle = self.ap_generate_signed_aggregation_transaction()
-                    spend_bundle_list.append(spend_bundle)
+                if coin.parent_coin_info == mycoin.name():
+                    my_utxos_copy.remove(mycoin)
+                    self.current_balance -= mycoin.amount
+                    self.my_utxos = my_utxos_copy
 
-        if len(spend_bundle_list) > 1:
-            self.temp_coin_flag = True
-        else:
-            self.temp_coin_flag = False
+            #if my_utxos_copy:
+            #    self.temp_coin = my_utxos_copy.pop()
+
+            if ProgramHash(self.ap_make_aggregation_puzzle(self.temp_coin.puzzle_hash)) == coin.puzzle_hash:
+                self.aggregation_coins.add(coin)
+                spend_bundle = self.ap_generate_signed_aggregation_transaction()
+                spend_bundle_list.append(spend_bundle)
+            #breakpoint()
+
+        #if len(spend_bundle_list) > 1:
+        #    self.temp_coin_flag = True
+        #else:
+        #    self.temp_coin_flag = False
 
         if spend_bundle_list:
             return spend_bundle_list
@@ -180,7 +185,7 @@ class APWallet(Wallet):
         input_of_lock = '(c (q 0x%s) (c (sha256 %s %s (uint64 (q 0))) (q ())))' % (hexlify(
             ConditionOpcode.ASSERT_COIN_CONSUMED).decode('ascii'), parent_coin_id, lock_puzzle)
         puz = '(c ' + me_is_my_id + ' (c ' + input_of_lock + ' (q ())))'
-        print(puz)
+        # print(puz)
         return Program(binutils.assemble(puz))
 
     # returns the ProgramHash of a new puzzle
@@ -216,7 +221,8 @@ class APWallet(Wallet):
     def ap_generate_unsigned_transaction(self, puzzlehash_amount_list):
         # we only have/need one coin in this wallet at any time - this code can be improved
         spends = []
-        coin = self.temp_coin
+        copy = self.my_utxos.copy()
+        coin = copy.pop()
         puzzle_hash = coin.puzzle_hash
 
         pubkey, secretkey = self.get_keys(puzzle_hash, self.a_pubkey)
@@ -261,7 +267,7 @@ class APWallet(Wallet):
         change = self.current_balance - spend_value
         puzzlehash_amount_list.append((self.AP_puzzlehash, change))
         signatures_from_a.append(self.approved_change_signature)
-        breakpoint()
+        #breakpoint()
         transaction = self.ap_generate_unsigned_transaction(
             puzzlehash_amount_list)
         return self.ap_sign_transaction(transaction, signatures_from_a)
