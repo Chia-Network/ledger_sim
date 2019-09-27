@@ -110,7 +110,7 @@ class APWallet(Wallet):
                     my_utxos_copy.remove(mycoin)
                     self.current_balance -= mycoin.amount
                     self.my_utxos = my_utxos_copy
-
+                    self.temp_coin = my_utxos_copy.copy().pop()
             #if my_utxos_copy:
             #    self.temp_coin = my_utxos_copy.pop()
 
@@ -221,8 +221,7 @@ class APWallet(Wallet):
     def ap_generate_unsigned_transaction(self, puzzlehash_amount_list):
         # we only have/need one coin in this wallet at any time - this code can be improved
         spends = []
-        copy = self.my_utxos.copy()
-        coin = copy.pop()
+        coin = self.temp_coin
         puzzle_hash = coin.puzzle_hash
 
         pubkey, secretkey = self.get_keys(puzzle_hash, self.a_pubkey)
@@ -270,6 +269,8 @@ class APWallet(Wallet):
         #breakpoint()
         transaction = self.ap_generate_unsigned_transaction(
             puzzlehash_amount_list)
+        self.temp_coin = Coin(self.temp_coin, self.temp_coin.puzzle_hash,
+                              change)
         return self.ap_sign_transaction(transaction, signatures_from_a)
 
     # This is for using the AC locked coin and aggregating it into wallet - must happen in same block as AP Mode 2
