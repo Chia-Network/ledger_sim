@@ -43,8 +43,10 @@ def print_my_details(wallet):
         print("Generator hash identifier:")
         print(wallet.puzzle_generator_id)
     print("New pubkey: ")
-    pubkey = pubkey_format(wallet.get_next_public_key())
+    pubkey = hexlify(wallet.get_next_public_key().serialize()).decode('ascii')
     print(pubkey)
+    print("Single string: " + wallet.name + ":" +
+          wallet.puzzle_generator_id + ":" + pubkey)
 
 
 def make_QR(wallet):
@@ -116,7 +118,12 @@ async def update_ledger(wallet, ledger_api, most_recent_header):
         print(additions)
         removals = removals_for_body(body)
         removals = [Coin.from_bin(await ledger_api.hash_preimage(hash=x)) for x in removals]
-        wallet.notify(additions, removals)
+        spend_bundle_list = wallet.notify(additions, removals)
+        breakpoint()
+        if spend_bundle_list is not None:
+            for spend_bundle in spend_bundle_list:
+                breakpoint()
+                _ = await ledger_api.push_tx(tx=spend_bundle)
 
 
 def ap_settings(wallet, approved_puzhash_sig_pairs):

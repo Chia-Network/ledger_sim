@@ -87,7 +87,7 @@ class APWallet(Wallet):
         if self.AP_puzzlehash is not None and not self.my_utxos:
             for coin in additions:
                 if coin.puzzle_hash == self.AP_puzzlehash:
-                    self.puzzle_generator = "(q (c (c (q 0x35) (c (f (a)) (q ()))) (c (c (q 0x34) (c (sha256 (sha256 (f (r (a))) (q 0xd372eab077f8d4923ef663b013ec0a4d2b53552beecd0c32fdede92bee89c1fe) (uint64 (f (r (r (a)))))) (sha256 (wrap (c (q 7) (c (c (q 5) (c (c (q 1) (c (f (a)) (q ()))) (c (q (q ())) (q ())))) (q ()))))) (uint64 (q 0))) (q ()))) (q ()))))"
+                    self.puzzle_generator = "(q (c (c (q 0x35) (c (f (a)) (q ()))) (c (c (q 0x34) (c (sha256 (sha256 (f (r (a))) (q 0x%s) (uint64 (f (r (r (a)))))) (sha256 (wrap (c (q 7) (c (c (q 5) (c (c (q 1) (c (f (a)) (q ()))) (c (q (q ())) (q ())))) (q ()))))) (uint64 (q 0))) (q ()))) (q ()))))" % hexlify(self.AP_puzzlehash).decode('ascii')
                     self.puzzle_generator_id = str(ProgramHash(
                         Program(binutils.assemble(self.puzzle_generator))))
                     self.current_balance += coin.amount
@@ -106,24 +106,17 @@ class APWallet(Wallet):
             my_utxos_copy = self.my_utxos.copy()
             #
             for mycoin in self.my_utxos:
+                # Check if we have already spent any coins in our utxo set
                 if coin.parent_coin_info == mycoin.name():
                     my_utxos_copy.remove(mycoin)
                     self.current_balance -= mycoin.amount
                     self.my_utxos = my_utxos_copy
                     self.temp_coin = my_utxos_copy.copy().pop()
-            #if my_utxos_copy:
-            #    self.temp_coin = my_utxos_copy.pop()
 
             if ProgramHash(self.ap_make_aggregation_puzzle(self.temp_coin.puzzle_hash)) == coin.puzzle_hash:
                 self.aggregation_coins.add(coin)
                 spend_bundle = self.ap_generate_signed_aggregation_transaction()
                 spend_bundle_list.append(spend_bundle)
-            #breakpoint()
-
-        #if len(spend_bundle_list) > 1:
-        #    self.temp_coin_flag = True
-        #else:
-        #    self.temp_coin_flag = False
 
         if spend_bundle_list:
             return spend_bundle_list
