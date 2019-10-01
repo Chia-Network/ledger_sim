@@ -10,7 +10,8 @@ from binascii import hexlify
 
 
 def view_funds(wallet):
-    print([x.amount for x in wallet.my_utxos])
+    # print([x.amount for x in wallet.my_utxos])
+    print(wallet.temp_coin.amount)
 
 
 def add_contact(wallet, approved_puzhash_sig_pairs):
@@ -119,10 +120,10 @@ async def update_ledger(wallet, ledger_api, most_recent_header):
         removals = removals_for_body(body)
         removals = [Coin.from_bin(await ledger_api.hash_preimage(hash=x)) for x in removals]
         spend_bundle_list = wallet.notify(additions, removals)
-        breakpoint()
+        #breakpoint()
         if spend_bundle_list is not None:
             for spend_bundle in spend_bundle_list:
-                breakpoint()
+                #breakpoint()
                 _ = await ledger_api.push_tx(tx=spend_bundle)
 
 
