@@ -30,7 +30,6 @@ class APWallet(Wallet):
         self.approved_change_puzzle = None
         self.approved_change_signature = None
         self.temp_coin = None
-        #self.temp_coin_flag = False
         return
 
     def set_sender_values(self, AP_puzzlehash, a_pubkey_used):
@@ -78,6 +77,7 @@ class APWallet(Wallet):
 
     def notify(self, additions, deletions):
         super().notify(additions, deletions)
+        self.my_utxos = self.temp_utxos
         self.ap_notify(additions)
         spend_bundle_list = self.ac_notify(additions)
         return spend_bundle_list
@@ -87,14 +87,13 @@ class APWallet(Wallet):
         if self.AP_puzzlehash is not None and not self.my_utxos:
             for coin in additions:
                 if coin.puzzle_hash == self.AP_puzzlehash:
-                    self.puzzle_generator = "(q (c (c (q 0x35) (c (f (a)) (q ()))) (c (c (q 0x34) (c (sha256 (sha256 (f (r (a))) (q 0xd372eab077f8d4923ef663b013ec0a4d2b53552beecd0c32fdede92bee89c1fe) (uint64 (f (r (r (a)))))) (sha256 (wrap (c (q 7) (c (c (q 5) (c (c (q 1) (c (f (a)) (q ()))) (c (q (q ())) (q ())))) (q ()))))) (uint64 (q 0))) (q ()))) (q ()))))"
+                    self.puzzle_generator = "(q (c (c (q 0x35) (c (f (a)) (q ()))) (c (c (q 0x34) (c (sha256 (sha256 (f (r (a))) (q 0x%s) (uint64 (f (r (r (a)))))) (sha256 (wrap (c (q 7) (c (c (q 5) (c (c (q 1) (c (f (a)) (q ()))) (c (q (q ())) (q ())))) (q ()))))) (uint64 (q 0))) (q ()))) (q ()))))" % hexlify(self.AP_puzzlehash).decode('ascii')
                     self.puzzle_generator_id = str(ProgramHash(
                         Program(binutils.assemble(self.puzzle_generator))))
                     self.current_balance += coin.amount
                     self.my_utxos.add(coin)
                     print("this coin is locked using my ID, it's output must be for me")
 
-    # same notes as above but for aggregation coins
     def ac_notify(self, additions):
         if self.my_utxos:
             self.temp_coin = self.my_utxos.copy().pop()  # reset
@@ -104,26 +103,19 @@ class APWallet(Wallet):
 
         for coin in additions:
             my_utxos_copy = self.my_utxos.copy()
-            #
             for mycoin in self.my_utxos:
+                # Check if we have already spent any coins in our utxo set
                 if coin.parent_coin_info == mycoin.name():
                     my_utxos_copy.remove(mycoin)
                     self.current_balance -= mycoin.amount
-                    self.my_utxos = my_utxos_copy
+                    self.my_utxos = my_utxos_copy.copy()
                     self.temp_coin = my_utxos_copy.copy().pop()
-            #if my_utxos_copy:
-            #    self.temp_coin = my_utxos_copy.pop()
 
+            #breakpoint()
             if ProgramHash(self.ap_make_aggregation_puzzle(self.temp_coin.puzzle_hash)) == coin.puzzle_hash:
                 self.aggregation_coins.add(coin)
                 spend_bundle = self.ap_generate_signed_aggregation_transaction()
                 spend_bundle_list.append(spend_bundle)
-            #breakpoint()
-
-        #if len(spend_bundle_list) > 1:
-        #    self.temp_coin_flag = True
-        #else:
-        #    self.temp_coin_flag = False
 
         if spend_bundle_list:
             return spend_bundle_list
@@ -292,12 +284,12 @@ class APWallet(Wallet):
             self.temp_coin, clvm.to_sexp_f([puzzle.code, solution.code])))
 
         # Spend consolidating coin
+        #puzzle = Program(clvm.eval_f(clvm.eval_f, binutils.assmeble(self.puzzle_generator), binutils.assemble("(0x" + self.AP_puzzlehash + ")")))
         puzzle = self.ap_make_aggregation_puzzle(self.temp_coin.puzzle_hash)
         solution = self.ac_make_aggregation_solution(consolidating_coin.name(
         ), self.temp_coin.parent_coin_info, self.temp_coin.amount)
         list_of_coinsolutions.append(CoinSolution(
             consolidating_coin, clvm.to_sexp_f([puzzle.code, solution.code])))
-
         # Spend lock
         puzstring = "(r (c (q 0x" + hexlify(consolidating_coin.name()
                                             ).decode('ascii') + ") (q ())))"

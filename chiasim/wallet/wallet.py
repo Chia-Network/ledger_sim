@@ -4,6 +4,7 @@ from os import urandom
 from blspy import ExtendedPrivateKey
 from chiasim.hashable import Program, ProgramHash, CoinSolution, SpendBundle, BLSSignature, Coin
 from chiasim.hashable.CoinSolution import CoinSolutionList
+from chiasim.puzzles.p2_delegated_puzzle import puzzle_for_pk
 from chiasim.puzzles.p2_conditions import puzzle_for_conditions
 from chiasim.puzzles.puzzle_utilities import pubkey_format
 from chiasim.validation.Conditions import (
@@ -75,7 +76,7 @@ class Wallet:
         self.name = name
 
     def can_generate_puzzle_hash(self, hash):
-        return any(map(lambda child: hash == ProgramHash(self.puzzle_for_pk(
+        return any(map(lambda child: hash == ProgramHash(puzzle_for_pk(
             self.extended_secret_key.public_child(child).get_public_key().serialize())),
             reversed(range(self.next_address))))
 
@@ -121,7 +122,7 @@ class Wallet:
 
     def get_new_puzzle(self):
         pubkey = self.get_next_public_key().serialize()
-        puzzle = self.puzzle_for_pk(pubkey)
+        puzzle = puzzle_for_pk(pubkey)
         return puzzle
 
     def get_new_puzzlehash(self):

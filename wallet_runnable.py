@@ -113,7 +113,7 @@ def make_payment(wallet):
     if type not in wallet.generator_lookups:
         print("Unknown generator - please input the source.")
         source = input("Source: ")
-        if str(ProgramHash(Program(binutils.assemble(source)))) != "0x" + type:
+        if str(ProgramHash(Program(binutils.assemble(source)))) != type:
             print("source not equal to ID")
             breakpoint()
             return
@@ -164,11 +164,13 @@ async def select_smart_contract(wallet, ledger_api):
         print("Enter pubkeys of authorised recipients, press 'q' to finish")
         while choice != "q":
             singlestr = input("Enter recipient QR string: ")
+            if singlestr == "q":
+                return
             name, type, pubkey = QR_string_parser(singlestr)
             if type not in wallet.generator_lookups:
                 print("Unknown generator - please input the source.")
                 source = input("Source: ")
-                if str(ProgramHash(Program(binutils.assemble(source)))) != "0x" + type:
+                if str(ProgramHash(Program(binutils.assemble(source)))) != type:
                     print("source not equal to ID")
                     breakpoint()
                     return
