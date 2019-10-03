@@ -127,7 +127,8 @@ class APWallet(Wallet):
     def merge_two_lists(self, list1=None, list2=None):
         if (list1 is None) or (list2 is None):
             return None
-        ret = "(e (q (e (f (a)) (a))) (c (q (e (i (e (i (f (r (a))) (q (q ())) (q (q 1))) (a)) (q (f (c (f (r (r (a)))) (q ())))) (q (e (f (a)) (c (f (a)) (c (r (f (r (a)))) (c (c (f (f (r (a)))) (f (r (r (a))))) (q ()))))))) (a))) (c " + list1 + " (c " + list2 + " (q ())))))"
+        # ret = "((c (q ((c (f (a)) (a)))) (c (q (e (i (e (i (f (r (a))) (q (q ())) (q (q 1))) (a)) (q (f (c (f (r (r (a)))) (q ())))) (q (e (f (a)) (c (f (a)) (c (r (f (r (a)))) (c (c (f (f (r (a)))) (f (r (r (a))))) (q ()))))))) (a))) (c " + list1 + " (c " + list2 + " (q ()))))))"
+        ret = "((c (q ((c (f (a)) (a)))) (c (q ((c (i ((c (i (f (r (a))) (q (q ())) (q (q 1))) (a))) (q (f (c (f (r (r (a)))) (q ())))) (q ((c (f (a)) (c (f (a)) (c (r (f (r (a)))) (c (c (f (f (r (a)))) (f (r (r (a))))) (q ())))))))) (a)))) (c " + list1 + " (c " + list2 + " (q ()))))))"
         return ret
 
     # this creates our authorised payee puzzle
@@ -137,15 +138,19 @@ class APWallet(Wallet):
 
         # Mode one is for spending to one of the approved destinations
         # Solution contains (option 1 flag, list of (output puzzle hash (C/D), amount), my_primary_input, wallet_puzzle_hash)
-        sum_outputs = "(e (q (e (f (a)) (a))) (c (q (e (i (e (i (f (r (a))) (q (q ())) (q (q 1))) (a)) (q (q 0)) (q (+ (f (r (f (f (r (a)))))) (e (f (a)) (c (f (a)) (c (r (f (r (a)))) (q ()))))))) (a))) (c (f (r (a))) (q ()))))"
+        #sum_outputs = "(e (q (e (f (a)) (a))) (c (q (e (i (e (i (f (r (a))) (q (q ())) (q (q 1))) (a)) (q (q 0)) (q (+ (f (r (f (f (r (a)))))) (e (f (a)) (c (f (a)) (c (r (f (r (a)))) (q ()))))))) (a))) (c (f (r (a))) (q ()))))"
+        sum_outputs = "((c (q ((c (f (a)) (a)))) (c (q ((c (i ((c (i (f (r (a))) (q (q ())) (q (q 1))) (a))) (q (q 0)) (q (+ (f (r (f (f (r (a)))))) ((c (f (a)) (c (f (a)) (c (r (f (r (a)))) (q ())))))))) (a)))) (c (f (r (a))) (q ())))))"
+
         mode_one_me_string = "(c (q 0x%s) (c (sha256 (f (r (r (a)))) (f (r (r (r (a))))) (uint64 %s)) (q ())))" % (
             hexlify(ConditionOpcode.ASSERT_MY_COIN_ID).decode('ascii'), sum_outputs)
-        aggsig_outputs = "(e (q (e (f (a)) (a))) (c (q (e (i (e (i (f (r (a))) (q (q ())) (q (q 1))) (a)) (q (q ())) (q (c (c (q 0x%s) (c (q %s) (c (f (f (f (r (a))))) (q ())))) (e (f (a)) (c (f (a)) (c (r (f (r (a)))) (q ()))))))) (a))) (c (f (r (a))) (q ()))))" % (
-            hexlify(ConditionOpcode.AGG_SIG).decode('ascii'), a_pubkey)
+        #aggsig_outputs = "(e (q (e (f (a)) (a))) (c (q (e (i (e (i (f (r (a))) (q (q ())) (q (q 1))) (a)) (q (q ())) (q (c (c (q 0x%s) (c (q %s) (c (f (f (f (r (a))))) (q ())))) (e (f (a)) (c (f (a)) (c (r (f (r (a)))) (q ()))))))) (a))) (c (f (r (a))) (q ()))))" % (
+            # hexlify(ConditionOpcode.AGG_SIG).decode('ascii'), a_pubkey)
+        aggsig_outputs = "((c (q ((c (f (a)) (a)))) (c (q ((c (i ((c (i (f (r (a))) (q (q ())) (q (q 1))) (a))) (q (q ())) (q (c (c (q 0x%s) (c (q %s) (c (f (f (f (r (a))))) (q ())))) ((c (f (a)) (c (f (a)) (c (r (f (r (a)))) (q ())))))))) (a)))) (c (f (r (a))) (q ())))))" % (hexlify(ConditionOpcode.AGG_SIG).decode('ascii'), a_pubkey)
         aggsig_entire_solution = "(c (q 0x%s) (c (q %s) (c (sha256 (wrap (a))) (q ()))))" % (
             hexlify(ConditionOpcode.AGG_SIG).decode('ascii'), b_pubkey)
-        create_outputs = "(e (q (e (f (a)) (a))) (c (q (e (i (e (i (f (r (a))) (q (q ())) (q (q 1))) (a)) (q (q ())) (q (c (c (q 0x%s) (c (f (f (f (r (a))))) (c (f (r (f (f (r (a)))))) (q ())))) (e (f (a)) (c (f (a)) (c (r (f (r (a)))) (q ()))))))) (a))) (c (f (r (a))) (q ()))))" % (
-            hexlify(ConditionOpcode.CREATE_COIN).decode('ascii'))
+        #create_outputs = "(e (q (e (f (a)) (a))) (c (q (e (i (e (i (f (r (a))) (q (q ())) (q (q 1))) (a)) (q (q ())) (q (c (c (q 0x%s) (c (f (f (f (r (a))))) (c (f (r (f (f (r (a)))))) (q ())))) (e (f (a)) (c (f (a)) (c (r (f (r (a)))) (q ()))))))) (a))) (c (f (r (a))) (q ()))))" % (
+            #hexlify(ConditionOpcode.CREATE_COIN).decode('ascii'))
+        create_outputs = "((c (q ((c (f (a)) (a)))) (c (q ((c (i ((c (i (f (r (a))) (q (q ())) (q (q 1))) (a))) (q (q ())) (q (c (c (q 0x%s) (c (f (f (f (r (a))))) (c (f (r (f (f (r (a)))))) (q ())))) ((c (f (a)) (c (f (a)) (c (r (f (r (a)))) (q ())))))))) (a)))) (c (f (r (a))) (q ())))))" % (hexlify(ConditionOpcode.CREATE_COIN).decode('ascii'))
         mode_one = "(c " + aggsig_entire_solution + \
             " (c " + mode_one_me_string + " " + aggsig_outputs + "))"
         mode_one = self.merge_two_lists(create_outputs, mode_one)
@@ -161,7 +166,8 @@ class APWallet(Wallet):
         mode_two = '(c ' + mode_two_me_string + ' (c ' + aggsig_entire_solution + \
             ' (c ' + create_lock + ' (c ' + create_consolidated + ' (q ())))))'
 
-        puz = "(e (i (= (f (a)) (q 1)) (q " + mode_one + ") (q " + mode_two + ")) (a))"
+        #puz = "(e (i (= (f (a)) (q 1)) (q " + mode_one + ") (q " + mode_two + ")) (a))"
+        puz = "((c (i (= (f (a)) (q 1)) (q " + mode_one + ") (q " + mode_two + ")) (a)))"
         # temporary - will eventually be puz
         return Program(binutils.assemble(puz))
 
