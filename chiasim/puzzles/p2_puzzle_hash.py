@@ -25,7 +25,7 @@ solution: (puzzle_reveal . solution_to_puzzle)
 
 
 def puzzle_for_puzzle_hash(underlying_puzzle_hash):
-    TEMPLATE = "(e (i (= (sha256 (wrap (f (a)))) (q 0x%s)) (q (e (f (a)) (f (r (a))))) (q (x))) (a))"
+    TEMPLATE = "((c (i (= (sha256 (wrap (f (a)))) (q 0x%s)) (q ((c (f (a)) (f (r (a)))))) (q (x))) (a)))"
     return Program(binutils.assemble(TEMPLATE % hexbytes(
         underlying_puzzle_hash)))
 

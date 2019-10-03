@@ -38,7 +38,7 @@ class Wallet:
     seed = b'seed'
     next_address = 0
     pubkey_num_lookup = {}
-    puzzle_generator = "(c (q 5) (c (c (q 5) (c (q (q 50)) (c (c (q 5) (c (c (q 1) (c (f (a)) (q ()))) (q ((c (sha256 (wrap (f (a)))) (q ())))))) (q ())))) (q ((e (f (a)) (f (r (a))))))))"
+    puzzle_generator = "(c (q 5) (c (c (q 5) (c (q (q 50)) (c (c (q 5) (c (c (q 1) (c (f (a)) (q ()))) (q ((c (sha256 (wrap (f (a)))) (q ())))))) (q ())))) (q (((c (f (a)) (f (r (a)))))))))"
     puzzle_generator_id = str(ProgramHash(
         Program(binutils.assemble(puzzle_generator))))
 
