@@ -52,6 +52,6 @@ setup(
         'Source': 'https://github.com/Chia-Network',
     },
     package_data={
-        '': '*.clvm',
+        '': ['*.clvm'],
     },
 )
