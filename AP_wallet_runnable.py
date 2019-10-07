@@ -10,8 +10,10 @@ from binascii import hexlify
 
 
 def view_funds(wallet):
-    # print([x.amount for x in wallet.my_utxos])
-    print(wallet.temp_coin.amount)
+    if wallet.temp_coin is not None:
+        print(wallet.temp_coin.amount)
+    else:
+        print([x.amount for x in wallet.my_utxos])
 
 
 def add_contact(wallet, approved_puzhash_sig_pairs):
@@ -25,6 +27,16 @@ def add_contact(wallet, approved_puzhash_sig_pairs):
         puzhash = puzzlehash_from_string(puzzle)
         sig = arr[2]
         signature = BLSSignature_from_string(sig)
+        if name in approved_puzhash_sig_pairs:
+            print(name + " is already a contact. Would you like to add a new contact or overwrite " + name + "?")
+            print("1: Overwrite")
+            print("2: Add new contact")
+            print("q: Return to menu")
+            pick = input()
+            if pick == "q":
+                return
+            elif pick == "2":
+                name = input("Enter new name for contact: ")
         approved_puzhash_sig_pairs[name] = (puzhash, signature)
         choice = input("Press 'c' to add another, or 'q' to return to menu: ")
 
