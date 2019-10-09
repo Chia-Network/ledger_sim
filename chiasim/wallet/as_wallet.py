@@ -123,7 +123,8 @@ class ASWallet(Wallet):
 
     def as_generate_secret_hash(self, secret):
         secret_hash_cl = "(sha256 (q %s))" % (secret)
-        secret_hash_preformat = clvm.eval_f(clvm.eval_f, binutils.assemble("(sha256 (f (a)))"), binutils.assemble("(1234)"))
+        sec = "(%s)" % secret
+        secret_hash_preformat = clvm.eval_f(clvm.eval_f, binutils.assemble("(sha256 (f (a)))"), binutils.assemble(sec))
         secret_hash = binutils.disassemble(secret_hash_preformat)
         return secret_hash
 
