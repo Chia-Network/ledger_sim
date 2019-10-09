@@ -1,12 +1,3 @@
-# TO DO:
-#   + consider adding an ASSERT_MY_COIN_ID condition to verify that the coin ...
-#       ... is for the correct amount
-#   + decide whether the puzzle should generate the puzzlehashes using pubkeys ...
-#       ... or if it should import puzzlehashes as arguments
-
-
-
-
 from chiasim.wallet.wallet import Wallet
 import hashlib
 import clvm
