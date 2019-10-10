@@ -4,8 +4,7 @@ from clvm.subclass_sexp import BaseSExp
 
 from .Hash import std_hash
 
-from ..atoms import hash_pointer, streamable
-from ..atoms.bin_methods import bin_methods
+from ..atoms import hash_pointer
 
 
 SExp = to_sexp_f(1).__class__
