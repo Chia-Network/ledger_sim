@@ -73,14 +73,3 @@ conditions = conditions_for_payment([(puzzle_hash_for_index(2), 1000)])
 tx = spend_coin(body.coinbase_coin, conditions, 0)
 r = await ledger_api.push_tx(tx=tx)
 #+END_SRC
-
-
-* Runnable Wallets
-
-The QR code functionality relies on [[https://github.com/NaturalHistoryMuseum/pyzbar/][pyzbar]]
-#+BEGIN_SRC bash
-brew install zbar
-#+END_SRC
-
-New block commits are done on command from one of the wallets, so make sure you that you make a new block after your transaction.
-Other wallets, similarly, must request an update once it exists.
