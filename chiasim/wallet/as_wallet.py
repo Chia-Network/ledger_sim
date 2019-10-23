@@ -45,17 +45,25 @@ class ASWallet(Wallet):
         super().notify(additions, deletions)
         puzzlehashes = []
         for swap in as_swap_list:
-            puzzlehashes.append(swap["puzzlehash"])
+            puzzlehashes.append(swap["outgoing puzzlehash"])
+            puzzlehashes.append(swap["incoming puzzlehash"])
         if puzzlehashes != []:
             self.as_notify(additions, puzzlehashes)
 
     def as_notify(self, additions, puzzlehashes):
+        counter = 0
         for coin in additions:
             for puzzlehash in puzzlehashes:
                 if hexlify(coin.puzzle_hash).decode('ascii') == puzzlehash:
                     self.current_balance += coin.amount
                     self.my_utxos.add(coin)
-                    return
+                    counter += 1
+        if counter == 1:
+            print()
+            print("{} {}".format(counter, "new atomic swap coin is available to you."))
+        elif counter > 1:
+            print()
+            print("{} {}".format(counter, "new atomic swap coins are available to you."))
 
 
     # needs to be adapted for potential future changes regarding how atomic ...
