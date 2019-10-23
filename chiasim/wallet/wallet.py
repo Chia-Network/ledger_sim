@@ -101,7 +101,7 @@ class Wallet:
             puzzle_hash = utxoset[id]['puzzlehash']
             pubkey, secretkey = self.get_keys(puzzle_hash)
             puzzle = puzzle_for_pk(pubkey.serialize())
-            if output_id == None:
+            if output_id is None:
                 primaries = [{'puzzlehash': newpuzzlehash, 'amount': amount}]
                 if change > 0:
                     changepuzzlehash = self.get_new_puzzlehash()
@@ -127,7 +127,7 @@ class Wallet:
 
             pubkey, secretkey = self.get_keys(puzzle_hash)
             puzzle = puzzle_for_pk(pubkey.serialize())
-            if output_id == None:
+            if output_id is None:
                 primaries = [{'puzzlehash': newpuzzlehash, 'amount': amount}]
                 if change > 0:
                     changepuzzlehash = self.get_new_puzzlehash()
