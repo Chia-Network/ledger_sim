@@ -26,7 +26,7 @@ def puzzle_for_m_of_public_key_list(m, public_key_list):
     format_tuple = tuple(
         binutils.disassemble(clvm.to_sexp_f(_))
         for _ in (puzzle_prog_template, m, public_key_list))
-    puzzle_src = "(e (q %s) (c (q %s) (c (q %s) (a))))" % format_tuple
+    puzzle_src = "((c (q %s) (c (q %s) (c (q %s) (a)))))" % format_tuple
     puzzle_prog = binutils.assemble(puzzle_src)
     return Program(puzzle_prog)
 
