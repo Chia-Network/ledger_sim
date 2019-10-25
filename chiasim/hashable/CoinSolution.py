@@ -17,7 +17,7 @@ class CoinSolution:
     def conditions(self):
         # TODO: this (and the ones below) are in the wrong spot. Fix them
         from chiasim.validation.consensus import conditions_for_puzzle_hash_solution
-        return conditions_for_puzzle_hash_solution(self.coin.puzzle_hash, self.solution.code)
+        return conditions_for_puzzle_hash_solution(self.coin.puzzle_hash, self.solution)
 
     def conditions_dict(self):
         from chiasim.validation.Conditions import conditions_by_opcode

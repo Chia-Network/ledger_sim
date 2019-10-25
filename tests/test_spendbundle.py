@@ -20,7 +20,7 @@ def test_1():
 
     puzzle_hash_solution = p2_delegated_puzzle.solution_for_conditions(puzzle_program_0, conditions)
 
-    output_conditions = conditions_for_solution(puzzle_hash_solution.code, trace_eval)
+    output_conditions = conditions_for_solution(puzzle_hash_solution, trace_eval)
     from pprint import pprint
     output_conditions_dict = conditions_by_opcode(output_conditions)
     pprint(output_conditions_dict)

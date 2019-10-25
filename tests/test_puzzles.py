@@ -1,6 +1,7 @@
 import asyncio
 import pathlib
 import tempfile
+from unittest import TestCase
 
 from aiter import map_aiter
 
@@ -13,7 +14,7 @@ from chiasim.hashable import Coin, ProgramHash
 from chiasim.ledger import ledger_api
 from chiasim.puzzles import (
     p2_conditions, p2_delegated_conditions, p2_delegated_puzzle,
-    p2_puzzle_hash
+    p2_puzzle_hash, p2_m_of_n_delegate_direct
 )
 from chiasim.remote.api_server import api_server
 from chiasim.remote.client import request_response_proxy
@@ -84,83 +85,102 @@ def run_test(puzzle_hash, solution, payments):
         assert unspent.spent_block_index == 0
 
 
-def test_p2_conditions():
-    payments = [
-        (puzzle_hash_for_index(0), 1000),
-        (puzzle_hash_for_index(1), 2000),
-    ]
+class TestPuzzles(TestCase):
+    def test_p2_conditions(self):
+        payments = [
+            (puzzle_hash_for_index(0), 1000),
+            (puzzle_hash_for_index(1), 2000),
+        ]
 
-    conditions = conditions_for_payment(payments)
+        conditions = conditions_for_payment(payments)
 
-    puzzle_hash = ProgramHash(p2_conditions.puzzle_for_conditions(conditions))
-    solution = p2_conditions.solution_for_conditions(conditions)
+        puzzle_hash = ProgramHash(p2_conditions.puzzle_for_conditions(conditions))
+        solution = p2_conditions.solution_for_conditions(conditions)
 
-    run_test(puzzle_hash, solution, payments)
+        run_test(puzzle_hash, solution, payments)
 
+    def test_p2_delegated_conditions(self):
+        payments = [
+            (puzzle_hash_for_index(0), 1000),
+            (puzzle_hash_for_index(1), 2000),
+        ]
 
-def test_p2_delegated_conditions():
-    payments = [
-        (puzzle_hash_for_index(0), 1000),
-        (puzzle_hash_for_index(1), 2000),
-    ]
+        conditions = conditions_for_payment(payments)
 
-    conditions = conditions_for_payment(payments)
+        pk = public_key_bytes_for_index(1)
 
-    pk = public_key_bytes_for_index(1)
+        puzzle_program = p2_delegated_conditions.puzzle_for_pk(pk)
+        puzzle_hash = ProgramHash(puzzle_program)
+        solution = p2_delegated_conditions.solution_for_conditions(puzzle_program, conditions)
 
-    puzzle_program = p2_delegated_conditions.puzzle_for_pk(pk)
-    puzzle_hash = ProgramHash(puzzle_program)
-    solution = p2_delegated_conditions.solution_for_conditions(puzzle_program, conditions)
+        run_test(puzzle_hash, solution, payments)
 
-    run_test(puzzle_hash, solution, payments)
+    def test_p2_delegated_puzzle_simple(self):
+        payments = [
+            (puzzle_hash_for_index(0), 1000),
+            (puzzle_hash_for_index(1), 2000),
+        ]
 
+        conditions = conditions_for_payment(payments)
 
-def test_p2_delegated_puzzle_simple():
-    payments = [
-        (puzzle_hash_for_index(0), 1000),
-        (puzzle_hash_for_index(1), 2000),
-    ]
+        pk = public_key_bytes_for_index(1)
 
-    conditions = conditions_for_payment(payments)
+        puzzle_program = p2_delegated_puzzle.puzzle_for_pk(pk)
+        puzzle_hash = ProgramHash(puzzle_program)
+        solution = p2_delegated_puzzle.solution_for_conditions(puzzle_program, conditions)
 
-    pk = public_key_bytes_for_index(1)
+        run_test(puzzle_hash, solution, payments)
 
-    puzzle_program = p2_delegated_puzzle.puzzle_for_pk(pk)
-    puzzle_hash = ProgramHash(puzzle_program)
-    solution = p2_delegated_puzzle.solution_for_conditions(puzzle_program, conditions)
+    def test_p2_delegated_puzzle_graftroot(self):
+        payments = [
+            (puzzle_hash_for_index(0), 1000),
+            (puzzle_hash_for_index(1), 2000),
+        ]
+        conditions = conditions_for_payment(payments)
 
-    run_test(puzzle_hash, solution, payments)
+        delegated_puzzle = p2_delegated_conditions.puzzle_for_pk(public_key_bytes_for_index(8))
+        delegated_solution = p2_delegated_conditions.solution_for_conditions(delegated_puzzle, conditions)
 
+        puzzle_program = p2_delegated_puzzle.puzzle_for_pk(public_key_bytes_for_index(1))
+        puzzle_hash = ProgramHash(puzzle_program)
+        solution = p2_delegated_puzzle.solution_for_delegated_puzzle(puzzle_program, delegated_solution)
 
-def test_p2_delegated_puzzle_graftroot():
-    payments = [
-        (puzzle_hash_for_index(0), 1000),
-        (puzzle_hash_for_index(1), 2000),
-    ]
-    conditions = conditions_for_payment(payments)
+        run_test(puzzle_hash, solution, payments)
 
-    delegated_puzzle = p2_delegated_conditions.puzzle_for_pk(public_key_bytes_for_index(8))
-    delegated_solution = p2_delegated_conditions.solution_for_conditions(delegated_puzzle, conditions)
+    def test_p2_puzzle_hash(self):
+        payments = [
+            (puzzle_hash_for_index(0), 1000),
+            (puzzle_hash_for_index(1), 2000),
+        ]
+        conditions = conditions_for_payment(payments)
+        underlying_puzzle = p2_delegated_conditions.puzzle_for_pk(public_key_bytes_for_index(4))
+        underlying_solution = p2_delegated_conditions.solution_for_conditions(underlying_puzzle, conditions)
+        underlying_puzzle_hash = ProgramHash(underlying_puzzle)
 
-    puzzle_program = p2_delegated_puzzle.puzzle_for_pk(public_key_bytes_for_index(1))
-    puzzle_hash = ProgramHash(puzzle_program)
-    solution = p2_delegated_puzzle.solution_for_delegated_puzzle(puzzle_program, delegated_solution)
+        puzzle_program = p2_puzzle_hash.puzzle_for_puzzle_hash(underlying_puzzle_hash)
+        puzzle_hash = ProgramHash(puzzle_program)
+        solution = p2_puzzle_hash.solution_for_puzzle_and_solution(underlying_puzzle, underlying_solution)
 
-    run_test(puzzle_hash, solution, payments)
+        run_test(puzzle_hash, solution, payments)
 
+    def test_p2_m_of_n_delegated_puzzle(self):
+        payments = [
+            (puzzle_hash_for_index(0), 1000),
+            (puzzle_hash_for_index(1), 2000),
+        ]
 
-def test_p2_puzzle_hash():
-    payments = [
-        (puzzle_hash_for_index(0), 1000),
-        (puzzle_hash_for_index(1), 2000),
-    ]
-    conditions = conditions_for_payment(payments)
-    underlying_puzzle = p2_delegated_conditions.puzzle_for_pk(public_key_bytes_for_index(4))
-    underlying_solution = p2_delegated_conditions.solution_for_conditions(underlying_puzzle, conditions)
-    underlying_puzzle_hash = ProgramHash(underlying_puzzle)
+        conditions = conditions_for_payment(payments)
 
-    puzzle_program = p2_puzzle_hash.puzzle_for_puzzle_hash(underlying_puzzle_hash)
-    puzzle_hash = ProgramHash(puzzle_program)
-    solution = p2_puzzle_hash.solution_for_puzzle_and_solution(underlying_puzzle, underlying_solution)
+        pks = [public_key_bytes_for_index(_) for _ in range(1, 6)]
+        M = 3
 
-    run_test(puzzle_hash, solution, payments)
+        delegated_puzzle = p2_conditions.puzzle_for_conditions(conditions)
+        delegated_solution = []
+
+        puzzle_program = p2_m_of_n_delegate_direct.puzzle_for_m_of_public_key_list(M, pks)
+        selectors = [1, [], [], 1, 1]
+        solution = p2_m_of_n_delegate_direct.solution_for_delegated_puzzle(
+            M, pks, selectors, delegated_puzzle, delegated_solution)
+        puzzle_hash = ProgramHash(puzzle_program)
+
+        run_test(puzzle_hash, solution, payments)

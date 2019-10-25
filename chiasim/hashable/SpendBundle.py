@@ -29,7 +29,7 @@ class SpendBundle:
         from chiasim.wallet.deltas import additions_for_solution
         items = []
         for coin_solution in self.coin_solutions._items:
-            items += additions_for_solution(coin_solution.coin.name(), coin_solution.solution.code)
+            items += additions_for_solution(coin_solution.coin.name(), coin_solution.solution)
         return tuple(items)
 
     def removals(self):

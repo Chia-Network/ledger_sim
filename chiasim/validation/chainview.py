@@ -36,7 +36,7 @@ def name_puzzle_conditions_list(body_program):
     """
 
     try:
-        sexp = clvm.eval_f(clvm.eval_f, body_program.code, [])
+        sexp = clvm.eval_f(clvm.eval_f, body_program, [])
     except clvm.EvalError.EvalError:
         breakpoint()
         raise ConsensusError(Err.INVALID_BLOCK_SOLUTION, body_program)
@@ -137,6 +137,8 @@ async def accept_new_block(
     """
 
     try:
+        newly_created_block_index = chain_view.tip_index + 1
+
         # verify header extends current view
 
         if header.previous_hash != chain_view.tip_hash:
@@ -186,7 +188,7 @@ async def accept_new_block(
         for _ in additions:
             await ram_storage.add_preimage(_.as_bin())
 
-        ram_db = RAMUnspentDB(additions, chain_view.tip_index + 1)
+        ram_db = RAMUnspentDB(additions, newly_created_block_index)
         overlay_storage = OverlayStorage(ram_storage, storage)
         unspent_db = OverlayUnspentDB(chain_view.unspent_db, ram_db)
 
@@ -238,6 +240,7 @@ async def accept_new_block(
         # this is where CHECKLOCKTIME etc. are verified
 
         context = dict(
+            block_index=newly_created_block_index,
             removals=set(removals),
         )
         hash_key_pairs = []
