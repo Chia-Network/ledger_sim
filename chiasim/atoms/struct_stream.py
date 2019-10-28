@@ -14,7 +14,4 @@ class struct_stream(bin_methods):
         return cls(*struct.unpack(cls.PACK, f.read(struct.calcsize(cls.PACK))))
 
     def stream(self, f):
-        try:
-            f.write(struct.pack(self.PACK, self))
-        except struct.error:
-            breakpoint()
+        f.write(struct.pack(self.PACK, self))
