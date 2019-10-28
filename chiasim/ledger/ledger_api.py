@@ -98,6 +98,8 @@ class LedgerAPI:
         most_recent_header=Header.from_bin,
     )
     async def do_get_recent_blocks(self, most_recent_header):
+        # TODO: return just headers
+        # TODO: set a maximum number to return
         most_recent_tip = self._chain_view.tip_index
         travelling_header = await self._chain_view.tip_hash.obj(self._storage)
         update_list = []
@@ -114,6 +116,7 @@ class LedgerAPI:
         return BodyList(update_list)
 
     async def do_get_all_blocks(self):
+        # TODO: deprecate. This doesn't scale.
         travelling_header = await self._chain_view.tip_hash.obj(self._storage)
         update_list = []
         complete = False
