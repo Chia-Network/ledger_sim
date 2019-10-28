@@ -1,5 +1,5 @@
 
-from ..atoms import streamable, uint64, streamable_list
+from ..atoms import streamable, uint64
 
 from .BLSSignature import BLSSignature
 from .Coin import Coin
@@ -18,6 +18,3 @@ class Body:
     solution_program: Program
     program_cost: uint64
     aggregated_signature: BLSSignature
-
-
-BodyList = streamable_list(Body)
