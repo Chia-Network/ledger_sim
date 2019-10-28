@@ -87,6 +87,7 @@ async def client_test(path):
     _ = await remote.push_tx(tx=spend_bundle)
     import pprint
     pprint.pprint(_)
+    assert repr(_).startswith("RemoteError")
 
     r = await remote.next_block(
         coinbase_puzzle_hash=coinbase_puzzle_hash, fees_puzzle_hash=fees_puzzle_hash)
