@@ -13,6 +13,7 @@ from chiasim.pool import (
 )
 from chiasim.remote.api_decorators import api_request
 from chiasim.validation import ChainView, validate_spend_bundle_signature
+from chiasim.hashable.Body import BodyList
 
 log = logging.getLogger(__name__)
 
