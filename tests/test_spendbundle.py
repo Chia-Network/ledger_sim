@@ -6,7 +6,7 @@ from chiasim.validation.consensus import (
 )
 from chiasim.validation.Conditions import conditions_by_opcode, make_create_coin_condition
 
-from tests.helpers import trace_eval
+from .helpers import trace_eval
 
 
 def test_1():
