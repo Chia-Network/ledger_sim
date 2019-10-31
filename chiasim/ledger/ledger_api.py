@@ -3,10 +3,10 @@ import datetime
 import logging
 import time
 
-from chiasim.atoms import uint64, streamable_list
+from chiasim.atoms import uint64
 from chiasim.farming import farm_new_block, get_plot_public_key, sign_header
 from chiasim.hashable import (
-    HeaderHash, ProgramHash, ProofOfSpace, SpendBundle, Header, Body
+    HeaderHash, ProgramHash, ProofOfSpace, SpendBundle, Header
 )
 from chiasim.pool import (
     create_coinbase_coin_and_signature, get_pool_public_key
@@ -16,9 +16,6 @@ from chiasim.validation import ChainView, validate_spend_bundle_signature
 from chiasim.hashable.Body import BodyList
 
 log = logging.getLogger(__name__)
-
-
-BodyList = streamable_list(Body)
 
 GENESIS_HASH = HeaderHash([0] * 32)
 
