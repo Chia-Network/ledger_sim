@@ -1,5 +1,5 @@
 aiter==0.1.2
 blspy==0.1.8
 cbor==1.0.0
--e git+git@github.com:Chia-Network/clvm.git#egg=clvm
--e git+git@github.com:Chia-Network/clvm_tools.git#egg=clvm_tools
+-e git+git@github.com:Chia-Network/clvm.git@34b4a2d56e23367f4971571d982248690f689180#egg=clvm
+-e git+git@github.com:Chia-Network/clvm_tools.git@d1d6ac701c32f5d4f90eaca889f28524c1d5b39a#egg=clvm_tools
