@@ -44,7 +44,7 @@ async def new_chain_view(
 
     header_signature = sign_header(header, plot_public_key)
 
-    [await storage.add_preimage(_.as_bin()) for _ in (header, body)]
+    [await storage.add_preimage(bytes(_)) for _ in (header, body)]
 
     chain_view = await chain_view.augment_chain_view(
         header, header_signature, storage, unspent_db, REWARD)

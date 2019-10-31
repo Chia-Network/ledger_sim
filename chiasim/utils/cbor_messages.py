@@ -32,10 +32,10 @@ async def reader_to_cbor_stream(reader):
 
 def transform_to_streamable(d):
     """
-    Drill down through dictionaries and lists and transform objects with "as_bin" to bytes.
+    Drill down through dictionaries and lists and transform objects with "bytes()" to bytes.
     """
-    if hasattr(d, "as_bin"):
-        return d.as_bin()
+    if hasattr(d, "__bytes__"):
+        return bytes(d)
     if isinstance(d, (str, bytes, int)):
         return d
     if isinstance(d, dict):

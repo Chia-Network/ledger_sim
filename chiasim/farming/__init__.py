@@ -25,7 +25,7 @@ def get_plot_public_key() -> PublicKey:
 def sign_header(header: Header, public_key: PublicKey):
     if public_key != PLOT_PUBLIC_KEY:
         raise ValueError("unknown public key")
-    message_hash = blspy.Util.hash256(header.as_bin())
+    message_hash = blspy.Util.hash256(bytes(header))
     return PLOT_PRIVATE_KEY.sign(message_hash)
 
 

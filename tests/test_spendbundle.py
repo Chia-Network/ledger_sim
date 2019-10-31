@@ -14,7 +14,7 @@ def test_1():
     puzzle_program_1 = puzzle_program_for_index(1)
     puzzle_program_2 = puzzle_program_for_index(2)
 
-    conditions = [make_create_coin_condition(std_hash(pp.as_bin()), amount) for pp, amount in [
+    conditions = [make_create_coin_condition(std_hash(bytes(pp)), amount) for pp, amount in [
         (puzzle_program_1, 1000), (puzzle_program_2, 2000),
     ]]
 

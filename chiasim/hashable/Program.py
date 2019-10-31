@@ -28,6 +28,13 @@ class Program(SExp):
     def stream(self, f):
         sexp_to_stream(self, f)
 
+    @classmethod
+    def from_bytes(cls, b):
+        return self.from_bin(b)
+
+    def __bytes__(self):
+        return self.as_bin()
+
     def __getattribute__(self, attr_name):
         if attr_name == "code":
             # breakpoint()

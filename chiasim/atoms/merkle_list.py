@@ -49,7 +49,7 @@ def merkle_list(the_type, hash_f):
             if any(not isinstance(_, the_type) for _ in items):
                 raise ValueError("wrong type")
             self._obj = items
-            hashes = [hash_f(_.as_bin()) for _ in items]
+            hashes = [hash_f(bytes(_)) for _ in items]
             args = merkle_hash(hashes, hash_f)
         self.id = hash_type(args[0])
         self.depth = uint8(args[1])

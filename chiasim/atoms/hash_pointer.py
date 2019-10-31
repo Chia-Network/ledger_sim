@@ -15,7 +15,7 @@ def hash_pointer(the_type, hash_f):
     def __new__(cls, v):
         has_obj = isinstance(v, the_type)
         if has_obj:
-            v_ptr = hash_f(v.as_bin())
+            v_ptr = hash_f(bytes(v))
         else:
             v_ptr = v
         r = hash_type.__new__(cls, v_ptr)

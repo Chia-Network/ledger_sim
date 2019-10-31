@@ -186,7 +186,7 @@ async def accept_new_block(
 
         ram_storage = RAM_DB()
         for _ in additions:
-            await ram_storage.add_preimage(_.as_bin())
+            await ram_storage.add_preimage(bytes(_))
 
         ram_db = RAMUnspentDB(additions, newly_created_block_index)
         overlay_storage = OverlayStorage(ram_storage, storage)
@@ -266,7 +266,7 @@ async def apply_deltas(block_index, additions, removals, unspent_db, storage):
     for coin in additions:
         new_unspent = Unspent(block_index, 0)
         await unspent_db.set_unspent_for_coin_name(coin.name(), new_unspent)
-        await storage.add_preimage(coin.as_bin())
+        await storage.add_preimage(bytes(coin))
 
     for coin_name in removals:
         unspent = await unspent_db.unspent_for_coin_name(coin_name)
