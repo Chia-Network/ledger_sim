@@ -65,7 +65,7 @@ class LedgerAPI:
         return dict(response="got ping message %r at time %s" % (
             m, datetime.datetime.utcnow()))
 
-    @api_request(tx=SpendBundle.from_bin)
+    @api_request(tx=SpendBundle.from_bytes)
     async def do_push_tx(self, tx):
         log.info("push_tx %s", tx)
         if not validate_spend_bundle_signature(tx):
@@ -93,7 +93,7 @@ class LedgerAPI:
             genesis_hash=chain_view.genesis_hash)
 
     @api_request(
-        most_recent_header=Header.from_bin,
+        most_recent_header=Header.from_bytes,
     )
     async def do_get_recent_blocks(self, most_recent_header):
         # TODO: return just headers
@@ -133,8 +133,8 @@ class LedgerAPI:
         return BodyList(update_list)
 
     @api_request(
-        coinbase_puzzle_hash=ProgramHash.from_bin,
-        fees_puzzle_hash=ProgramHash.from_bin,
+        coinbase_puzzle_hash=ProgramHash.from_bytes,
+        fees_puzzle_hash=ProgramHash.from_bytes,
     )
     async def do_next_block(self, coinbase_puzzle_hash, fees_puzzle_hash):
         async with self._next_block_lock:

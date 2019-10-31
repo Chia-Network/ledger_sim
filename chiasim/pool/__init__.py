@@ -6,7 +6,7 @@ from chiasim.hashable import BLSPublicKey, BLSSignature, Coin, ProgramHash
 
 HIERARCHICAL_PRIVATE_KEY = blspy.ExtendedPrivateKey.from_seed(b"foo")
 POOL_PRIVATE_KEYS = [HIERARCHICAL_PRIVATE_KEY.private_child(_).get_private_key() for _ in range(100)]
-POOL_PUBLIC_KEYS = [BLSPublicKey.from_bin(_.get_public_key().serialize()) for _ in POOL_PRIVATE_KEYS]
+POOL_PUBLIC_KEYS = [BLSPublicKey.from_bytes(_.get_public_key().serialize()) for _ in POOL_PRIVATE_KEYS]
 POOL_LOOKUP = dict(zip(POOL_PUBLIC_KEYS, POOL_PRIVATE_KEYS))
 
 

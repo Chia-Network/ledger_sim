@@ -70,7 +70,7 @@ def merkle_list(the_type, hash_f):
             hashes = [hash_f(_) for _ in blobs]
             mh = merkle_hash(hashes, hash_f)
             if mh == self:
-                self._obj = [the_type.from_bin(_) for _ in blobs]
+                self._obj = [the_type.from_bytes(_) for _ in blobs]
         return self._obj
 
     def __str__(self):

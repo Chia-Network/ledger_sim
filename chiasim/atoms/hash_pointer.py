@@ -33,7 +33,7 @@ def hash_pointer(the_type, hash_f):
         if self._obj is None and data_source:
             blob = await data_source.hash_preimage(hash=self)
             if hash_f(blob) == self:
-                self._obj = the_type.from_bin(blob)
+                self._obj = the_type.from_bytes(blob)
         return self._obj
 
     namespace = dict(__new__=__new__, obj=obj)

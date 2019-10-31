@@ -7,10 +7,10 @@ from .hexbytes import hexbytes
 
 class bin_methods:
     """
-    Create "from_bin" and "as_bin" methods in terms of "parse" and "stream" methods.
+    Create "from_bytes" and "as_bin" methods in terms of "parse" and "stream" methods.
     """
     @classmethod
-    def from_bin(cls, blob: bytes) -> Any:
+    def from_bytes(cls, blob: bytes) -> Any:
         f = io.BytesIO(blob)
         return cls.parse(f)
 

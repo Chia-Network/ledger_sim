@@ -36,7 +36,7 @@ def farm_block(
 
     header_signature = sign_header(header, proof_of_space.plot_public_key)
 
-    bad_bls_public_key = BLSPublicKey.from_bin(public_key_bytes_for_index(9))
+    bad_bls_public_key = BLSPublicKey.from_bytes(public_key_bytes_for_index(9))
 
     bad_eor_public_key = EORPrivateKey(std_hash(bytes([5]))).public_key()
 

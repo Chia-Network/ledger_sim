@@ -5,10 +5,10 @@ from chiasim.remote.client import request_response_proxy, xform_dict
 
 
 REMOTE_SIGNATURES = dict(
-    get_tip=xform_dict(genesis_hash=HeaderHash.from_bin, tip_hash=HeaderHash.from_bin),
-    next_block=xform_dict(header=Header.from_bin, body=Body.from_bin),
-    all_unspents=xform_dict(unspents=lambda u: [CoinName.from_bin(_) for _ in u]),
-    unspent_for_coin_name=lambda x: Unspent.from_bin(x) if x else None,
+    get_tip=xform_dict(genesis_hash=HeaderHash.from_bytes, tip_hash=HeaderHash.from_bytes),
+    next_block=xform_dict(header=Header.from_bytes, body=Body.from_bytes),
+    all_unspents=xform_dict(unspents=lambda u: [CoinName.from_bytes(_) for _ in u]),
+    unspent_for_coin_name=lambda x: Unspent.from_bytes(x) if x else None,
 )
 
 
