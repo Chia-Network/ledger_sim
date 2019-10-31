@@ -78,7 +78,7 @@ async def client_test(path):
     assert len(removals) == 1
     assert repr(removals[0]) == (
         '<CoinPointer: '
-        'd09e50b903c2f5b12992c5c12ca3c3557d8f9757096b593cba41eb26eab5aa56>')
+        '8f076c94522ca55ce43e27aa10b933cf33bf81946a01e72e225b3676cbaf6082>')
 
     # add a SpendBundle
     input_coin = my_new_coins[0]
@@ -114,8 +114,8 @@ async def client_test(path):
     assert repr(_) == (
         "RemoteError('exception: (<Err.WRONG_PUZZLE_HASH: 8>, "
         "Coin(parent_coin_info=<CoinPointer: "
-        "d09e50b903c2f5b12992c5c12ca3c3557d8f9757096b593cba41eb26eab5aa56>,"
-        " puzzle_hash=<ProgramPointer: 303c12e668cddd0b015c149fc66bc1d4b41497472da5373b3f29422d3e358fea>, "
+        "8f076c94522ca55ce43e27aa10b933cf33bf81946a01e72e225b3676cbaf6082>,"
+        " puzzle_hash=<ProgramPointer: 365bdd80582fcc2e4868076ab9f24b482a1f83f6d88fd795c362c43544380e7a>, "
         "amount=2000))')")
 
 
