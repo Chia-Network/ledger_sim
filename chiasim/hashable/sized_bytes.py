@@ -1,6 +1,1 @@
-from ..atoms import make_sized_bytes
-
-
-bytes32 = make_sized_bytes(32)
-bytes48 = make_sized_bytes(48)
-bytes96 = make_sized_bytes(96)
+from src.types.sized_bytes import bytes32, bytes48, bytes96
