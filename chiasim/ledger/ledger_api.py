@@ -13,7 +13,7 @@ from chiasim.pool import (
 )
 from chiasim.remote.api_decorators import api_request
 from chiasim.validation import ChainView, validate_spend_bundle_signature
-from chiasim.hashable.Body import BodyList
+from chiasim.hashable.Body import Body
 
 log = logging.getLogger(__name__)
 
@@ -111,7 +111,7 @@ class LedgerAPI:
                 update_list.append(await travelling_header.body_hash.obj(self._storage))
                 continue
         update_list.reverse()
-        return BodyList(update_list)
+        return update_list
 
     async def do_get_all_blocks(self):
         # TODO: deprecate. This doesn't scale.
@@ -130,7 +130,7 @@ class LedgerAPI:
                     complete = True
                     update_list.append(await travelling_header.body_hash.obj(self._storage))
         update_list.reverse()
-        return BodyList(update_list)
+        return update_list
 
     @api_request(
         coinbase_puzzle_hash=ProgramHash.from_bytes,
