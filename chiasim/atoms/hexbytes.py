@@ -1,5 +1,3 @@
-import binascii
-
 
 class hexbytes(bytes):
     """
@@ -7,7 +5,7 @@ class hexbytes(bytes):
     which is much easier on the eyes for binary data that is very non-ascii .
     """
     def __str__(self):
-        return binascii.hexlify(self).decode("utf8")
+        return self.hex()
 
     def __repr__(self):
         return "<%s: %s>" % (self.__class__.__name__, str(self))

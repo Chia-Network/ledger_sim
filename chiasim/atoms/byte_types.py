@@ -1,5 +1,3 @@
-import binascii
-
 from typing import Any, BinaryIO
 
 from .bin_methods import bin_methods
@@ -29,7 +27,7 @@ def make_sized_bytes(size):
         f.write(self)
 
     def __str__(self):
-        return binascii.hexlify(self).decode("utf8")
+        return self.hex()
 
     def __repr__(self):
         return "<%s: %s>" % (self.__class__.__name__, str(self))
