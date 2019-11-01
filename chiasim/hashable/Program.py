@@ -35,12 +35,5 @@ class Program(SExp):
     def __bytes__(self):
         return self.as_bin()
 
-    def __getattribute__(self, attr_name):
-        if attr_name == "code":
-            # breakpoint()
-            # uncomment the line above to find where ".code" is used
-            return self
-        return object.__getattribute__(self, attr_name)
-
 
 ProgramHash = hash_pointer(Program, std_hash)
