@@ -1,7 +1,14 @@
-from .bin_methods import bin_methods  # noqa
+import dataclasses
+
 from .byte_types import make_sized_bytes  # noqa
 from .hash_pointer import hash_pointer  # noqa
 from .hexbytes import hexbytes  # noqa
-from .ints import int8, uint8, int16, uint16, int32, uint32, int64, uint64  # noqa
-from .streamable import streamable  # noqa
+from src.util.ints import int8, uint8, int16, uint16, int32, uint32, int64, uint64  # noqa
+from src.util.streamable import streamable as streamable1
 from .streamable_list import streamable_list  # noqa
+
+
+def streamable(cls):
+    f1 = streamable1(cls)
+    f2 = dataclasses.dataclass(frozen=True)(f1)
+    return f2
