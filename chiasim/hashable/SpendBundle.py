@@ -1,7 +1,9 @@
+from typing import List
+
 from ..atoms import streamable
 
 from .BLSSignature import BLSSignature
-from .CoinSolution import CoinSolutionList
+from .CoinSolution import CoinSolution
 
 
 @streamable
@@ -12,7 +14,7 @@ class SpendBundle:
     transaction (although because of non-interactive signature aggregation, the boundaries
     between transactions are more flexible than in bitcoin).
     """
-    coin_solutions: CoinSolutionList
+    coin_solutions: List[CoinSolution]
     aggregated_signature: BLSSignature
 
     @classmethod
@@ -28,7 +30,7 @@ class SpendBundle:
     def additions(self):
         from chiasim.wallet.deltas import additions_for_solution
         items = []
-        for coin_solution in self.coin_solutions._items:
+        for coin_solution in self.coin_solutions:
             items += additions_for_solution(coin_solution.coin.name(), coin_solution.solution)
         return tuple(items)
 

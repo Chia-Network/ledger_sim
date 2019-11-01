@@ -1,4 +1,4 @@
-from ..atoms import streamable, streamable_list
+from ..atoms import streamable
 
 from .Coin import Coin
 from .Program import Program
@@ -26,6 +26,3 @@ class CoinSolution:
     def additions(self):
         from chiasim.validation.consensus import created_outputs_for_conditions_dict
         return created_outputs_for_conditions_dict(self.conditions_dict(), self.coin.name())
-
-
-CoinSolutionList = streamable_list(CoinSolution)
