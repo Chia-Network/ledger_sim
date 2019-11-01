@@ -3,7 +3,6 @@ from typing import List
 import blspy
 
 from ..atoms import streamable
-from ..atoms.bin_methods import bin_methods
 
 from .sized_bytes import bytes48, bytes96
 
@@ -18,7 +17,7 @@ class BLSPublicKey(bytes48):
 
 
 @streamable
-class BLSSignature(bin_methods):
+class BLSSignature:
     """
     This wraps the blspy.BLSPublicKey and resolves a couple edge cases around aggregation and validation.
     """
