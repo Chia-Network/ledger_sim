@@ -119,7 +119,7 @@ async def check_header_signature(
 
     # verify header signature
 
-    hkp = header_signature.aggsig_pair(pos.plot_public_key, header.hash())
+    hkp = header_signature.aggsig_pair(pos.plot_public_key, HeaderHash(header))
     if not header_signature.validate([hkp]):
         raise ConsensusError(Err.BAD_HEADER_SIGNATURE, header_signature)
 
