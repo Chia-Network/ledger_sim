@@ -9,7 +9,6 @@ import clvm
 
 from clvm_tools import binutils
 
-from chiasim.atoms import hexbytes
 from chiasim.hashable import Program, ProgramHash
 
 
@@ -26,8 +25,7 @@ solution: (puzzle_reveal . solution_to_puzzle)
 
 def puzzle_for_puzzle_hash(underlying_puzzle_hash):
     TEMPLATE = "((c (i (= (sha256 (wrap (f (a)))) (q 0x%s)) (q ((c (f (a)) (f (r (a)))))) (q (x))) (a)))"
-    return Program(binutils.assemble(TEMPLATE % hexbytes(
-        underlying_puzzle_hash)))
+    return Program(binutils.assemble(TEMPLATE % underlying_puzzle_hash.hex()))
 
 
 def solution_for_puzzle_and_solution(underlying_puzzle, underlying_solution):

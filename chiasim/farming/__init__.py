@@ -4,7 +4,7 @@ from clvm import to_sexp_f
 
 from clvm_tools import binutils
 
-from chiasim.atoms import hexbytes, uint64
+from chiasim.atoms import uint64
 from chiasim.hashable import (
     BLSSignature, Body, Coin, EORPrivateKey, Header, HeaderHash,
     Program, ProgramHash, ProofOfSpace, PublicKey, Signature,
@@ -70,7 +70,7 @@ def farm_new_block(
 
     assert validate_spend_bundle_signature(spend_bundle)
     solution_program = best_solution_program(spend_bundle)
-    extension_data = hexbytes(b'')
+    extension_data = b''
 
     block_index_hash = block_index.to_bytes(32, "big")
     fees_coin = Coin(block_index_hash, fees_puzzle_hash, spend_bundle.fees())

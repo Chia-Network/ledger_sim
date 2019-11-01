@@ -1,4 +1,4 @@
-from ..atoms import hash_pointer, hexbytes, streamable, uint64
+from ..atoms import hash_pointer, streamable, uint64
 
 from .Body import Body
 from .Hash import std_hash
@@ -21,7 +21,7 @@ class Header:
     timestamp: uint64
     proof_of_space_hash: hash_pointer(ProofOfSpace, std_hash)
     body_hash: hash_pointer(Body, std_hash)
-    extension_data_hash: hash_pointer(hexbytes, std_hash)
+    extension_data_hash: hash_pointer(bytes, std_hash)
 
 
 HeaderHash = hash_pointer(Header, std_hash)
