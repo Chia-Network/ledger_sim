@@ -30,7 +30,7 @@ class Program(SExp):
 
     @classmethod
     def from_bytes(cls, b):
-        return self.from_bin(b)
+        return cls.from_bin(b)
 
     def __bytes__(self):
         return self.as_bin()
