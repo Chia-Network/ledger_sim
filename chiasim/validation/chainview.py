@@ -18,7 +18,7 @@ from .ConsensusError import ConsensusError, Err
 from .check_conditions import CONDITION_CHECKER_LOOKUP
 
 
-MAX_COIN_AMOUNT = int(1<<48)
+MAX_COIN_AMOUNT = int(1 << 48)
 
 
 def check_conditions_dict(coin, conditions_dict, context):
