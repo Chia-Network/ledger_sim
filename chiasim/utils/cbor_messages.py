@@ -36,7 +36,7 @@ def transform_to_streamable(d):
     """
     if hasattr(d, "__bytes__"):
         return bytes(d)
-    if isinstance(d, (str, bytes, int)):
+    if d is None or isinstance(d, (str, bytes, int)):
         return d
     if isinstance(d, dict):
         new_d = {}
