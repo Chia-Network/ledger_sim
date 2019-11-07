@@ -18,6 +18,9 @@ from .ConsensusError import ConsensusError, Err
 from .check_conditions import CONDITION_CHECKER_LOOKUP
 
 
+MAX_COIN_AMOUNT = int(1<<48)
+
+
 def check_conditions_dict(coin, conditions_dict, context):
     """
     Check all conditions against current state.
@@ -167,6 +170,10 @@ async def accept_new_block(
                     yield _
 
         additions = tuple(additions_iter(body, npc_list))
+        for coin in additions:
+            if coin.amount >= MAX_COIN_AMOUNT:
+                raise ConsensusError(
+                    Err.COIN_AMOUNT_EXCEEDS_MAXIMUM, coin)
 
         #  watch out for duplicate outputs
 
