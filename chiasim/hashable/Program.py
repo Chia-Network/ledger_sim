@@ -28,6 +28,9 @@ class Program(SExp):
     def stream(self, f):
         sexp_to_stream(self, f)
 
+    def __str__(self):
+        return bytes(self).hex()
+
     @classmethod
     def from_bytes(cls, b):
         return cls.from_bin(b)
