@@ -10,4 +10,4 @@ def std_hash(b) -> Hash:
     """
     The standard hash used in many places.
     """
-    return Hash(hashlib.sha256(b).digest())
+    return Hash(hashlib.sha256(bytes(b)).digest())

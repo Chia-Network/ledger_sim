@@ -8,6 +8,7 @@ from chiasim.clients import ledger_sim
 from chiasim.hack.keys import (
     conditions_for_payment, puzzle_hash_for_index, spend_coin
 )
+from chiasim.hashable import std_hash
 from chiasim.ledger import ledger_api
 from chiasim.remote.api_server import api_server
 from chiasim.remote.client import request_response_proxy
@@ -42,6 +43,11 @@ async def client_test(path):
     header = r.get("header")
     body = r.get("body")
 
+    for _ in [header, body]:
+        hh = std_hash(_)
+        r1 = await remote.hash_preimage(hash=hh)
+        assert r1 == bytes(_)
+
     coinbase_coin = body.coinbase_coin
 
     r = await remote.all_unspents()
@@ -68,6 +74,11 @@ async def client_test(path):
         coinbase_puzzle_hash=coinbase_puzzle_hash, fees_puzzle_hash=fees_puzzle_hash)
     header = r.get("header")
     body = r.get("body")
+
+    for _ in [header, body]:
+        hh = std_hash(_)
+        r1 = await remote.hash_preimage(hash=hh)
+        assert r1 == bytes(_)
 
     print(header)
     print(body)
@@ -96,6 +107,11 @@ async def client_test(path):
 
     print(header)
     print(body)
+
+    for _ in [header, body]:
+        hh = std_hash(_)
+        r1 = await remote.hash_preimage(hash=hh)
+        assert r1 == bytes(_)
 
     r = await remote.all_unspents()
     print("unspents = %s" % r.get("unspents"))
