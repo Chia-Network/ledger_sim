@@ -1,3 +1,4 @@
+from .bin_methods import bin_methods  # noqa
 from .byte_types import make_sized_bytes  # noqa
 from .hash_pointer import hash_pointer  # noqa
 from .hexbytes import hexbytes  # noqa
