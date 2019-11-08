@@ -37,7 +37,7 @@ async def client_test(path):
 
     # test preimage API failure case
     _ = await remote.hash_preimage(hash=b'0'*32)
-    assert _ == None
+    assert _ is None
 
     coinbase_puzzle_hash = puzzle_hash_for_index(1)
     fees_puzzle_hash = puzzle_hash_for_index(6)
