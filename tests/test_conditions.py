@@ -8,6 +8,7 @@ from chiasim.validation.Conditions import (
     make_assert_coin_consumed_condition,
     make_assert_my_coin_id_condition,
     make_assert_block_index_exceeds_condition,
+    make_assert_block_age_exceeds_condition,
 )
 
 from .test_puzzles import farm_spendable_coin, make_client_server
@@ -124,4 +125,34 @@ class TestConditions(TestCase):
             puzzle_program, conditions_coin_exceeds_block_1)
         spend_bundle_5 = build_spend_bundle(coin_3, solution_5)
         r = run(remote.push_tx(tx=spend_bundle_5))
+        assert r["response"].startswith("accepted")
+
+    def test_assert_block_age_exceeds(self):
+        run = asyncio.get_event_loop().run_until_complete
+
+        remote = make_client_server()
+
+        puzzle_program = p2_delegated_conditions.puzzle_for_pk(
+            public_key_bytes_for_index(8))
+        puzzle_hash = ProgramHash(puzzle_program)
+
+        # farm a bunch of blocks to start
+        for _ in range(20):
+            farm_spendable_coin(remote, puzzle_hash)
+
+        coin_1 = farm_spendable_coin(remote, puzzle_hash)
+
+        conditions_block_age_exceeds_1 = [make_assert_block_age_exceeds_condition(1)]
+
+        # try to spend coin_1 with limit set to age 1. Should fail
+        solution_1 = p2_delegated_conditions.solution_for_conditions(
+            puzzle_program, conditions_block_age_exceeds_1)
+        spend_bundle_1 = build_spend_bundle(coin_1, solution_1)
+        r = run(remote.push_tx(tx=spend_bundle_1))
+        assert r.args[0].startswith("exception: (<Err.ASSERT_BLOCK_AGE_EXCEEDS_FAILED")
+
+        # farm a block and try again. Should succeed
+        farm_spendable_coin(remote, puzzle_hash)
+
+        r = run(remote.push_tx(tx=spend_bundle_1))
         assert r["response"].startswith("accepted")
