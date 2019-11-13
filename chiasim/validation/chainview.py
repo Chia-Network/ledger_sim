@@ -216,6 +216,17 @@ async def accept_new_block(
             if puzzle_hash != coin.puzzle_hash:
                 raise ConsensusError(Err.WRONG_PUZZLE_HASH, coin)
 
+        # build coin_to_unspent dictionary
+
+        futures = []
+        for coin, puzzle_hash, conditions_dict in cpc_list:
+            futures.append(asyncio.ensure_future(
+                unspent_db.unspent_for_coin_name(coin_name)))
+
+        coin_to_unspent = {}
+        for (coin, puzzle_hash, conditions_dict), future in zip(cpc_list, futures):
+            coin_to_unspent[coin.name()] = await future
+
         # check removals against UnspentDB
 
         for coin, puzzle_hash, conditions_dict in cpc_list:
@@ -223,7 +234,7 @@ async def accept_new_block(
                 # it's an ephemeral coin, created and destroyed in the same block
                 continue
             coin_name = coin.name()
-            unspent = await unspent_db.unspent_for_coin_name(coin_name)
+            unspent = coin_to_unspent[coin_name]
             if (unspent is None or
                     unspent.confirmed_block_index == 0 or
                     unspent.confirmed_block_index > chain_view.tip_index):
@@ -249,6 +260,7 @@ async def accept_new_block(
         context = dict(
             block_index=newly_created_block_index,
             removals=set(removals),
+            coin_to_unspent=coin_to_unspent,
         )
         hash_key_pairs = []
         for coin, puzzle_hash, conditions_dict in cpc_list:
