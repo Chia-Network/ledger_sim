@@ -221,7 +221,7 @@ async def accept_new_block(
         futures = []
         for coin, puzzle_hash, conditions_dict in cpc_list:
             futures.append(asyncio.ensure_future(
-                unspent_db.unspent_for_coin_name(coin_name)))
+                unspent_db.unspent_for_coin_name(coin.name())))
 
         coin_to_unspent = {}
         for (coin, puzzle_hash, conditions_dict), future in zip(cpc_list, futures):
