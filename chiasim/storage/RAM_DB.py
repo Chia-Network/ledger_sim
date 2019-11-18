@@ -25,3 +25,10 @@ class RAM_DB(Storage, UnspentDB):
     async def all_unspents(self):
         for coin_name, unspent in self._unspent_db.items():
             yield coin_name, unspent
+
+    async def rollback_to_block(self, block_index):
+        for v in self._unspent_db.values():
+            if v.spent_block_index > block_index:
+                v.spent_block_index = 0
+            if v.confirmed_block_index > block_index:
+                v.confirmed_block_index = 0
