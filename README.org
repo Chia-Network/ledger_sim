@@ -15,11 +15,7 @@ Python 3.7 or later is required.
 - create a virtual environment
 
 #+BEGIN_SRC bash
-$ python3 -m venv env
-$ ln -s env/bin/activate
-$ . activate
-$ pip install -r requirements.txt
-$ pip install -e .
+$ . setup.sh
 #+END_SRC
 
 *Note* The ~clvm_tools~ dependency in requirements.txt is private on github, so be sure you have
