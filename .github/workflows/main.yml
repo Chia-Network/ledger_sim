@@ -13,19 +13,14 @@ jobs:
       uses: actions/setup-python@v1
       with:
         python-version: 3.7
-    - name: Set env
-      run: |
-        python3 -m venv env
-        ln -s env/bin/activate
-        . activate
-    - name: Install dependencies
+    - name: Set env & dependencies
       env:
         CHIA_MACHINE_SSH_KEY: ${{ secrets.CHIA_MACHINE_SSH_KEY }}
         GIT_SSH_COMMAND: "ssh -o StrictHostKeyChecking=no"
       run: |
+        . setup.sh
         eval "$(ssh-agent -s)"
         ssh-add - <<< "${CHIA_MACHINE_SSH_KEY}"
-        . setup.sh
     - name: Test with pytest
       run: |
         pip install pytest
