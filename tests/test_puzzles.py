@@ -85,14 +85,19 @@ def run_test(puzzle_hash, solution, payments):
         assert unspent.spent_block_index == 0
 
 
+def default_payments_and_conditions():
+    payments = [
+        (puzzle_hash_for_index(1), 1000),
+        (puzzle_hash_for_index(2), 2000),
+    ]
+
+    conditions = conditions_for_payment(payments)
+    return payments, conditions
+
+
 class TestPuzzles(TestCase):
     def test_p2_conditions(self):
-        payments = [
-            (puzzle_hash_for_index(0), 1000),
-            (puzzle_hash_for_index(1), 2000),
-        ]
-
-        conditions = conditions_for_payment(payments)
+        payments, conditions = default_payments_and_conditions()
 
         puzzle_hash = ProgramHash(p2_conditions.puzzle_for_conditions(conditions))
         solution = p2_conditions.solution_for_conditions(conditions)
@@ -100,12 +105,7 @@ class TestPuzzles(TestCase):
         run_test(puzzle_hash, solution, payments)
 
     def test_p2_delegated_conditions(self):
-        payments = [
-            (puzzle_hash_for_index(0), 1000),
-            (puzzle_hash_for_index(1), 2000),
-        ]
-
-        conditions = conditions_for_payment(payments)
+        payments, conditions = default_payments_and_conditions()
 
         pk = public_key_bytes_for_index(1)
 
@@ -116,12 +116,7 @@ class TestPuzzles(TestCase):
         run_test(puzzle_hash, solution, payments)
 
     def test_p2_delegated_puzzle_simple(self):
-        payments = [
-            (puzzle_hash_for_index(0), 1000),
-            (puzzle_hash_for_index(1), 2000),
-        ]
-
-        conditions = conditions_for_payment(payments)
+        payments, conditions = default_payments_and_conditions()
 
         pk = public_key_bytes_for_index(1)
 
@@ -132,11 +127,7 @@ class TestPuzzles(TestCase):
         run_test(puzzle_hash, solution, payments)
 
     def test_p2_delegated_puzzle_graftroot(self):
-        payments = [
-            (puzzle_hash_for_index(0), 1000),
-            (puzzle_hash_for_index(1), 2000),
-        ]
-        conditions = conditions_for_payment(payments)
+        payments, conditions = default_payments_and_conditions()
 
         delegated_puzzle = p2_delegated_conditions.puzzle_for_pk(public_key_bytes_for_index(8))
         delegated_solution = p2_delegated_conditions.solution_for_conditions(delegated_puzzle, conditions)
@@ -148,11 +139,8 @@ class TestPuzzles(TestCase):
         run_test(puzzle_hash, solution, payments)
 
     def test_p2_puzzle_hash(self):
-        payments = [
-            (puzzle_hash_for_index(0), 1000),
-            (puzzle_hash_for_index(1), 2000),
-        ]
-        conditions = conditions_for_payment(payments)
+        payments, conditions = default_payments_and_conditions()
+
         underlying_puzzle = p2_delegated_conditions.puzzle_for_pk(public_key_bytes_for_index(4))
         underlying_solution = p2_delegated_conditions.solution_for_conditions(underlying_puzzle, conditions)
         underlying_puzzle_hash = ProgramHash(underlying_puzzle)
@@ -164,12 +152,7 @@ class TestPuzzles(TestCase):
         run_test(puzzle_hash, solution, payments)
 
     def test_p2_m_of_n_delegated_puzzle(self):
-        payments = [
-            (puzzle_hash_for_index(0), 1000),
-            (puzzle_hash_for_index(1), 2000),
-        ]
-
-        conditions = conditions_for_payment(payments)
+        payments, conditions = default_payments_and_conditions()
 
         pks = [public_key_bytes_for_index(_) for _ in range(1, 6)]
         M = 3
