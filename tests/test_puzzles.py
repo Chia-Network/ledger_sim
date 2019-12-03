@@ -7,10 +7,13 @@ from aiter import map_aiter
 
 from chiasim.clients import ledger_sim
 from chiasim.hack.keys import (
+    bls_private_key_for_index,
     build_spend_bundle,
     conditions_for_payment,
     public_key_bytes_for_index,
     puzzle_hash_for_index,
+    DEFAULT_KEYCHAIN,
+    add_secret_exponents,
 )
 from chiasim.hashable import Coin, ProgramHash
 from chiasim.ledger import ledger_api
@@ -96,10 +99,10 @@ def run_test(puzzle_hash, solution, payments):
         assert unspent.spent_block_index == 0
 
 
-def default_payments_and_conditions():
+def default_payments_and_conditions(initial_index=1):
     payments = [
-        (puzzle_hash_for_index(1), 1000),
-        (puzzle_hash_for_index(2), 2000),
+        (puzzle_hash_for_index(initial_index + 1), initial_index * 1000),
+        (puzzle_hash_for_index(initial_index + 2), (initial_index + 1) * 1000),
     ]
 
     conditions = conditions_for_payment(payments)
@@ -200,7 +203,7 @@ class TestPuzzles(TestCase):
 
         run_test(puzzle_hash, solution, payments)
 
-    def test_p2_delegated_puzzle_or_hidden_puzzle(self):
+    def test_p2_delegated_puzzle_or_hidden_puzzle_with_hidden_puzzle(self):
         payments, conditions = default_payments_and_conditions()
 
         hidden_puzzle = p2_conditions.puzzle_for_conditions(conditions)
@@ -216,3 +219,40 @@ class TestPuzzles(TestCase):
         )
 
         run_test(puzzle_hash, solution, payments)
+
+    def test_p2_delegated_puzzle_or_hidden_puzzle_with_delegated_puzzle(self):
+        HIDDEN_PUB_KEY_INDEX = 9
+        payments, conditions = default_payments_and_conditions()
+
+        hidden_puzzle = p2_conditions.puzzle_for_conditions(conditions)
+        hidden_public_key = public_key_bytes_for_index(HIDDEN_PUB_KEY_INDEX)
+
+        puzzle = p2_delegated_puzzle_or_hidden_puzzle.puzzle_for_public_key_and_hidden_puzzle(
+            hidden_public_key, hidden_puzzle
+        )
+        puzzle_hash = ProgramHash(puzzle)
+
+        payable_payments, payable_conditions = default_payments_and_conditions(5)
+
+        delegated_puzzle = p2_conditions.puzzle_for_conditions(payable_conditions)
+        delegated_solution = []
+
+        synthetic_public_key = p2_delegated_puzzle_or_hidden_puzzle.calculate_synthetic_public_key(
+            hidden_public_key, hidden_puzzle
+        )
+
+        solution = p2_delegated_puzzle_or_hidden_puzzle.solution_with_delegated_puzzle(
+            synthetic_public_key, delegated_puzzle, delegated_solution
+        )
+
+        hidden_puzzle_hash = ProgramHash(hidden_puzzle)
+        synthetic_offset = p2_delegated_puzzle_or_hidden_puzzle.calculate_synthetic_offset(
+            hidden_public_key, hidden_puzzle_hash
+        )
+        private_key = bls_private_key_for_index(HIDDEN_PUB_KEY_INDEX)
+        assert private_key.public_key() == hidden_public_key
+        secret_exponent = private_key.secret_exponent()
+        synthetic_secret_exponent = secret_exponent + synthetic_offset
+        add_secret_exponents([synthetic_secret_exponent], DEFAULT_KEYCHAIN)
+
+        run_test(puzzle_hash, solution, payable_payments)

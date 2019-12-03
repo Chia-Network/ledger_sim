@@ -4,10 +4,12 @@ from chiasim.hashable import ProgramHash
 from chiasim.hashable import BLSSignature, CoinSolution, SpendBundle
 from chiasim.puzzles import p2_delegated_puzzle
 from chiasim.validation.Conditions import (
-    conditions_by_opcode, make_create_coin_condition
+    conditions_by_opcode,
+    make_create_coin_condition,
 )
 from chiasim.validation.consensus import (
-    conditions_for_solution, hash_key_pairs_for_conditions_dict
+    conditions_for_solution,
+    hash_key_pairs_for_conditions_dict,
 )
 from chiasim.wallet.BLSPrivateKey import BLSPrivateKey
 
@@ -19,13 +21,18 @@ def private_key_for_index(index):
     return HIERARCHICAL_PRIVATE_KEY.private_child(index).get_private_key()
 
 
+def bls_private_key_for_index(index):
+    return BLSPrivateKey.from_bytes(
+        HIERARCHICAL_PRIVATE_KEY.private_child(index).get_private_key().serialize()
+    )
+
+
 def public_key_bytes_for_index(index):
     return HIERARCHICAL_PRIVATE_KEY.private_child(index).get_public_key().serialize()
 
 
 def puzzle_program_for_index(index):
-    return p2_delegated_puzzle.puzzle_for_pk(
-        public_key_bytes_for_index(index))
+    return p2_delegated_puzzle.puzzle_for_pk(public_key_bytes_for_index(index))
 
 
 def puzzle_hash_for_index(index):
@@ -33,7 +40,10 @@ def puzzle_hash_for_index(index):
 
 
 def conditions_for_payment(puzzle_hash_amount_pairs):
-    conditions = [make_create_coin_condition(ph, amount) for ph, amount in puzzle_hash_amount_pairs]
+    conditions = [
+        make_create_coin_condition(ph, amount)
+        for ph, amount in puzzle_hash_amount_pairs
+    ]
     return conditions
 
 
@@ -43,6 +53,7 @@ def sign_f_for_keychain(keychain):
         if bls_private_key:
             return bls_private_key.sign(aggsig_pair.message_hash)
         raise ValueError("unknown pubkey %s" % aggsig_pair.public_key)
+
     return sign_f
 
 
@@ -64,6 +75,12 @@ DEFAULT_KEYCHAIN = make_default_keychain()
 DEFAULT_SIGNER = sign_f_for_keychain(DEFAULT_KEYCHAIN)
 
 
+def add_secret_exponents(secret_exponents, keychain):
+    for _ in secret_exponents:
+        bls_private_key = BLSPrivateKey.from_secret_exponent(_)
+        keychain[bls_private_key.public_key()] = bls_private_key
+
+
 def build_spend_bundle(coin, solution, sign_f=DEFAULT_SIGNER):
     coin_solution = CoinSolution(coin, solution)
     signature = signature_for_solution(solution, sign_f)
@@ -72,5 +89,6 @@ def build_spend_bundle(coin, solution, sign_f=DEFAULT_SIGNER):
 
 def spend_coin(coin, conditions, index):
     solution = p2_delegated_puzzle.solution_for_conditions(
-        puzzle_program_for_index(index), conditions)
+        puzzle_program_for_index(index), conditions
+    )
     return build_spend_bundle(coin, solution)

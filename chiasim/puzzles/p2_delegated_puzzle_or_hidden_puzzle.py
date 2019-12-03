@@ -13,6 +13,7 @@ which proves that it was hidden there in the first place.
 
 This roughly corresponds to bitcoin's taproot.
 """
+import hashlib
 
 import clvm
 
@@ -35,6 +36,11 @@ def run(program, args):
     args = clvm.to_sexp_f(args)
     r = eval_f(eval_f, sexp, args)
     return r.as_python()
+
+
+def calculate_synthetic_offset(public_key, hidden_puzzle_hash):
+    blob = hashlib.sha256(bytes(public_key) + hidden_puzzle_hash).digest()
+    return int.from_bytes(blob, "big")
 
 
 def calculate_synthetic_public_key(public_key, hidden_puzzle):
