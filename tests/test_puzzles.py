@@ -13,7 +13,6 @@ from chiasim.hack.keys import (
     public_key_bytes_for_index,
     puzzle_hash_for_index,
     DEFAULT_KEYCHAIN,
-    add_secret_exponents,
 )
 from chiasim.hashable import Coin, ProgramHash
 from chiasim.ledger import ledger_api
@@ -253,6 +252,6 @@ class TestPuzzles(TestCase):
         assert private_key.public_key() == hidden_public_key
         secret_exponent = private_key.secret_exponent()
         synthetic_secret_exponent = secret_exponent + synthetic_offset
-        add_secret_exponents([synthetic_secret_exponent], DEFAULT_KEYCHAIN)
+        DEFAULT_KEYCHAIN.add_secret_exponents([synthetic_secret_exponent])
 
         run_test(puzzle_hash, solution, payable_payments)
