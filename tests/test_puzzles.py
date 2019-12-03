@@ -7,14 +7,20 @@ from aiter import map_aiter
 
 from chiasim.clients import ledger_sim
 from chiasim.hack.keys import (
-    build_spend_bundle, conditions_for_payment,
-    public_key_bytes_for_index, puzzle_hash_for_index
+    build_spend_bundle,
+    conditions_for_payment,
+    public_key_bytes_for_index,
+    puzzle_hash_for_index,
 )
 from chiasim.hashable import Coin, ProgramHash
 from chiasim.ledger import ledger_api
 from chiasim.puzzles import (
-    p2_conditions, p2_delegated_conditions, p2_delegated_puzzle,
-    p2_puzzle_hash, p2_m_of_n_delegate_direct
+    p2_conditions,
+    p2_delegated_conditions,
+    p2_delegated_puzzle,
+    p2_puzzle_hash,
+    p2_m_of_n_delegate_direct,
+    p2_delegated_puzzle_or_hidden_puzzle,
 )
 from chiasim.remote.api_server import api_server
 from chiasim.remote.client import request_response_proxy
@@ -33,7 +39,9 @@ def make_client_server():
     run = asyncio.get_event_loop().run_until_complete
     path = pathlib.Path(tempfile.mkdtemp(), "port")
     server, aiter = run(start_unix_server_aiter(path))
-    rws_aiter = map_aiter(lambda rw: dict(reader=rw[0], writer=rw[1], server=server), aiter)
+    rws_aiter = map_aiter(
+        lambda rw: dict(reader=rw[0], writer=rw[1], server=server), aiter
+    )
     initial_block_hash = bytes(([0] * 31) + [1])
     ledger = ledger_api.LedgerAPI(initial_block_hash, RAM_DB())
     server_task = asyncio.ensure_future(api_server(rws_aiter, ledger))
@@ -46,8 +54,11 @@ def make_client_server():
 def farm_spendable_coin(remote, puzzle_hash=puzzle_hash_for_index(0)):
     run = asyncio.get_event_loop().run_until_complete
 
-    r = run(remote.next_block(
-        coinbase_puzzle_hash=puzzle_hash, fees_puzzle_hash=puzzle_hash_for_index(1)))
+    r = run(
+        remote.next_block(
+            coinbase_puzzle_hash=puzzle_hash, fees_puzzle_hash=puzzle_hash_for_index(1)
+        )
+    )
     body = r.get("body")
 
     coinbase_coin = body.coinbase_coin
@@ -111,7 +122,9 @@ class TestPuzzles(TestCase):
 
         puzzle_program = p2_delegated_conditions.puzzle_for_pk(pk)
         puzzle_hash = ProgramHash(puzzle_program)
-        solution = p2_delegated_conditions.solution_for_conditions(puzzle_program, conditions)
+        solution = p2_delegated_conditions.solution_for_conditions(
+            puzzle_program, conditions
+        )
 
         run_test(puzzle_hash, solution, payments)
 
@@ -122,32 +135,48 @@ class TestPuzzles(TestCase):
 
         puzzle_program = p2_delegated_puzzle.puzzle_for_pk(pk)
         puzzle_hash = ProgramHash(puzzle_program)
-        solution = p2_delegated_puzzle.solution_for_conditions(puzzle_program, conditions)
+        solution = p2_delegated_puzzle.solution_for_conditions(
+            puzzle_program, conditions
+        )
 
         run_test(puzzle_hash, solution, payments)
 
     def test_p2_delegated_puzzle_graftroot(self):
         payments, conditions = default_payments_and_conditions()
 
-        delegated_puzzle = p2_delegated_conditions.puzzle_for_pk(public_key_bytes_for_index(8))
-        delegated_solution = p2_delegated_conditions.solution_for_conditions(delegated_puzzle, conditions)
+        delegated_puzzle = p2_delegated_conditions.puzzle_for_pk(
+            public_key_bytes_for_index(8)
+        )
+        delegated_solution = p2_delegated_conditions.solution_for_conditions(
+            delegated_puzzle, conditions
+        )
 
-        puzzle_program = p2_delegated_puzzle.puzzle_for_pk(public_key_bytes_for_index(1))
+        puzzle_program = p2_delegated_puzzle.puzzle_for_pk(
+            public_key_bytes_for_index(1)
+        )
         puzzle_hash = ProgramHash(puzzle_program)
-        solution = p2_delegated_puzzle.solution_for_delegated_puzzle(puzzle_program, delegated_solution)
+        solution = p2_delegated_puzzle.solution_for_delegated_puzzle(
+            puzzle_program, delegated_solution
+        )
 
         run_test(puzzle_hash, solution, payments)
 
     def test_p2_puzzle_hash(self):
         payments, conditions = default_payments_and_conditions()
 
-        underlying_puzzle = p2_delegated_conditions.puzzle_for_pk(public_key_bytes_for_index(4))
-        underlying_solution = p2_delegated_conditions.solution_for_conditions(underlying_puzzle, conditions)
+        underlying_puzzle = p2_delegated_conditions.puzzle_for_pk(
+            public_key_bytes_for_index(4)
+        )
+        underlying_solution = p2_delegated_conditions.solution_for_conditions(
+            underlying_puzzle, conditions
+        )
         underlying_puzzle_hash = ProgramHash(underlying_puzzle)
 
         puzzle_program = p2_puzzle_hash.puzzle_for_puzzle_hash(underlying_puzzle_hash)
         puzzle_hash = ProgramHash(puzzle_program)
-        solution = p2_puzzle_hash.solution_for_puzzle_and_solution(underlying_puzzle, underlying_solution)
+        solution = p2_puzzle_hash.solution_for_puzzle_and_solution(
+            underlying_puzzle, underlying_solution
+        )
 
         run_test(puzzle_hash, solution, payments)
 
@@ -160,10 +189,30 @@ class TestPuzzles(TestCase):
         delegated_puzzle = p2_conditions.puzzle_for_conditions(conditions)
         delegated_solution = []
 
-        puzzle_program = p2_m_of_n_delegate_direct.puzzle_for_m_of_public_key_list(M, pks)
+        puzzle_program = p2_m_of_n_delegate_direct.puzzle_for_m_of_public_key_list(
+            M, pks
+        )
         selectors = [1, [], [], 1, 1]
         solution = p2_m_of_n_delegate_direct.solution_for_delegated_puzzle(
-            M, pks, selectors, delegated_puzzle, delegated_solution)
+            M, pks, selectors, delegated_puzzle, delegated_solution
+        )
         puzzle_hash = ProgramHash(puzzle_program)
+
+        run_test(puzzle_hash, solution, payments)
+
+    def test_p2_delegated_puzzle_or_hidden_puzzle(self):
+        payments, conditions = default_payments_and_conditions()
+
+        hidden_puzzle = p2_conditions.puzzle_for_conditions(conditions)
+        hidden_public_key = public_key_bytes_for_index(10)
+
+        puzzle = p2_delegated_puzzle_or_hidden_puzzle.puzzle_for_public_key_and_hidden_puzzle(
+            hidden_public_key, hidden_puzzle
+        )
+        puzzle_hash = ProgramHash(puzzle)
+
+        solution = p2_delegated_puzzle_or_hidden_puzzle.solution_with_hidden_puzzle(
+            hidden_public_key, hidden_puzzle, []
+        )
 
         run_test(puzzle_hash, solution, payments)
