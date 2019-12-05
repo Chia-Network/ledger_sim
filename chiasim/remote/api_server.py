@@ -2,7 +2,7 @@ import logging
 
 from aiter import map_aiter, parallel_map_aiter
 
-from ..utils.cbor_messages import reader_to_cbor_stream, send_cbor_message
+from ..utils.cbor_messages import reader_to_cbor_stream, xform_to_cbor_message
 from ..utils.event_stream import rws_to_event_aiter
 
 log = logging.getLogger(__name__)
@@ -13,6 +13,14 @@ async def event_to_response(event):
 
 
 async def api_server(rws_aiter, api, workers=1):
+    """
+    An rws_aiter is an aiter which streams a (StreamReader, StreamWriter, SocketServer) tuples.
+    For a given rws_aiter, create a task which fetches messages from the StreamReader, parses them,
+    and turns them into api calls on api.
+
+    You can wait forever on this task. If you close the socket, once all connected clients drop off, the
+    task will complete.
+    """
     event_aiter = rws_to_event_aiter(rws_aiter, reader_to_cbor_stream)
 
     response_writer_for_event = make_response_map_for_api(api)
@@ -22,12 +30,26 @@ async def api_server(rws_aiter, api, workers=1):
     else:
         response_writer_aiter = map_aiter(response_writer_for_event, event_aiter)
 
-    async for response, writer in response_writer_aiter:
-        if response is not None:
-            send_cbor_message(response, writer)
+    def to_cbor(response_writer_pair):
+        response, writer = response_writer_pair
+        try:
+            msg = xform_to_cbor_message(response)
+        except Exception as ex:
+            msg = xform_to_cbor_message("problem streaming message: %s" % ex)
+        return writer, msg
+
+    cbor_msg_aiter = map_aiter(to_cbor, response_writer_aiter)
+
+    async for writer, cbor_msg in cbor_msg_aiter:
+        writer.write(cbor_msg)
 
 
 def make_response_map_for_api(api):
+    """
+    This is intended to be used with map_aiter. It takes a message, parses it,
+    invokes "do_XXX" on the given API, then packs up the response and sends it
+    back to the remote.
+    """
 
     async def response_for_message(message):
         try:
