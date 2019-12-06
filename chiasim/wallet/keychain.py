@@ -1,10 +1,9 @@
-from chiasim.hashable import BLSSignature
+from chiasim.hashable import BLSPublicKey, BLSSignature
 from chiasim.validation.Conditions import conditions_by_opcode
 from chiasim.validation.consensus import (
     conditions_for_solution,
     hash_key_pairs_for_conditions_dict,
 )
-from chiasim.wallet.BLSPrivateKey import BLSPrivateKey
 
 
 class Keychain(dict):
@@ -14,14 +13,14 @@ class Keychain(dict):
 
     def add_secret_exponents(self, secret_exponents):
         for _ in secret_exponents:
-            bls_private_key = BLSPrivateKey.from_secret_exponent(_)
-            self[bls_private_key.public_key()] = bls_private_key
+            public_key = BLSPublicKey.from_secret_exponent(_)
+            self[public_key] = _
 
     def sign(self, aggsig_pair):
-        bls_private_key = self.get(aggsig_pair.public_key)
-        if not bls_private_key:
+        secret_exponent = self.get(aggsig_pair.public_key)
+        if not secret_exponent:
             raise ValueError("unknown pubkey %s" % aggsig_pair.public_key)
-        return bls_private_key.sign(aggsig_pair.message_hash)
+        return BLSSignature.create(aggsig_pair.message_hash, secret_exponent)
 
     def signature_for_solution(self, solution):
         signatures = []
