@@ -9,6 +9,10 @@ from .sized_bytes import bytes48, bytes96
 from .Message import MessageHash
 
 
+GROUP_ORDER = (
+    52435875175126190479447740508185965837690552500527637822603658699938581184513
+)
+
 ZERO96 = bytes96([0] * 96)
 
 
@@ -21,12 +25,21 @@ class BLSSignature:
     """
     This wraps the blspy.BLSPublicKey and resolves a couple edge cases around aggregation and validation.
     """
+
     @streamable
     class aggsig_pair:
         public_key: BLSPublicKey
         message_hash: MessageHash
 
     sig: bytes96
+
+    @classmethod
+    def create(cls, message_hash, secret_exponent):
+        secret_exponent %= GROUP_ORDER
+        private_key = blspy.PrivateKey.from_bytes(secret_exponent.to_bytes(32, "big"))
+        return BLSSignature(
+            private_key.sign_prepend_prehashed(message_hash).serialize()
+        )
 
     @classmethod
     def aggregate(cls, sigs):

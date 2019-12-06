@@ -1,23 +1,19 @@
-import blspy
-
 from chiasim.hashable import CoinSolution, ProgramHash, SpendBundle
 from chiasim.puzzles import p2_delegated_puzzle
 from chiasim.validation.Conditions import make_create_coin_condition
-from chiasim.wallet.BLSPrivateKey import BLSPrivateKey
+from chiasim.wallet.BLSHDKey import BLSPrivateHDKey
 from chiasim.wallet.keychain import Keychain
 
 
-HIERARCHICAL_PRIVATE_KEY = blspy.ExtendedPrivateKey.from_seed(b"foo")
+HIERARCHICAL_PRIVATE_KEY = BLSPrivateHDKey.from_seed(b"foo")
 
 
 def bls_private_key_for_index(index):
-    return BLSPrivateKey.from_bytes(
-        HIERARCHICAL_PRIVATE_KEY.private_child(index).get_private_key().serialize()
-    )
+    return HIERARCHICAL_PRIVATE_KEY.private_child(index)
 
 
 def public_key_bytes_for_index(index):
-    return HIERARCHICAL_PRIVATE_KEY.private_child(index).get_public_key().serialize()
+    return HIERARCHICAL_PRIVATE_KEY.public_child(index)
 
 
 def puzzle_program_for_index(index):

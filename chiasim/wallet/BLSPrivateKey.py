@@ -3,10 +3,7 @@ import dataclasses
 import blspy
 
 from chiasim.hashable import bytes32, BLSSignature, BLSPublicKey
-
-GROUP_ORDER = (
-    52435875175126190479447740508185965837690552500527637822603658699938581184513
-)
+from chiasim.hashable.BLSSignature import GROUP_ORDER
 
 
 @dataclasses.dataclass

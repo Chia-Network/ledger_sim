@@ -1,5 +1,3 @@
-import blspy
-
 from clvm_tools import binutils
 
 from chiasim.atoms import uint64
@@ -11,7 +9,7 @@ from chiasim.hashable import (
 from chiasim.validation import validate_spend_bundle_signature
 
 
-PLOT_PRIVATE_KEY = EORPrivateKey(blspy.Util.hash256(bytes([4])))
+PLOT_PRIVATE_KEY = EORPrivateKey(std_hash([4]))
 PLOT_PUBLIC_KEY = PLOT_PRIVATE_KEY.public_key()
 
 
@@ -23,7 +21,7 @@ def get_plot_public_key() -> PublicKey:
 def sign_header(header: Header, public_key: PublicKey):
     if public_key != PLOT_PUBLIC_KEY:
         raise ValueError("unknown public key")
-    message_hash = blspy.Util.hash256(bytes(header))
+    message_hash = std_hash(header)
     return PLOT_PRIVATE_KEY.sign(message_hash)
 
 

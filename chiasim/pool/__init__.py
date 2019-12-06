@@ -1,12 +1,11 @@
-import blspy
-
 from chiasim.atoms import uint64
-from chiasim.hashable import BLSPublicKey, BLSSignature, Coin, ProgramHash
+from chiasim.hashable import BLSPublicKey, BLSSignature, Coin, CoinName, ProgramHash
+from chiasim.wallet.BLSHDKey import BLSPrivateHDKey
 
 
-HIERARCHICAL_PRIVATE_KEY = blspy.ExtendedPrivateKey.from_seed(b"foo")
-POOL_PRIVATE_KEYS = [HIERARCHICAL_PRIVATE_KEY.private_child(_).get_private_key() for _ in range(100)]
-POOL_PUBLIC_KEYS = [BLSPublicKey.from_bytes(_.get_public_key().serialize()) for _ in POOL_PRIVATE_KEYS]
+HIERARCHICAL_PRIVATE_KEY = BLSPrivateHDKey.from_seed(b"foo")
+POOL_PRIVATE_KEYS = [HIERARCHICAL_PRIVATE_KEY.private_child(_) for _ in range(100)]
+POOL_PUBLIC_KEYS = [_.public_key() for _ in POOL_PRIVATE_KEYS]
 POOL_LOOKUP = dict(zip(POOL_PUBLIC_KEYS, POOL_PRIVATE_KEYS))
 
 
@@ -15,9 +14,9 @@ def get_pool_public_key(index=0) -> BLSPublicKey:
     return POOL_PUBLIC_KEYS[index]
 
 
-def signature_for_coinbase(coin: Coin, pool_private_key: blspy.PrivateKey):
-    message_hash = blspy.Util.hash256(bytes(coin))
-    return BLSSignature(pool_private_key.sign_prepend_prehashed(message_hash).serialize())
+def signature_for_coinbase(coin: Coin, pool_private_key):
+    message_hash = CoinName(coin)
+    return BLSSignature.create(message_hash, pool_private_key.secret_exponent())
 
 
 def sign_coinbase_coin(coin: Coin, public_key: BLSPublicKey):
