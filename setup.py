@@ -18,7 +18,6 @@ with open(path.join(here, 'README.org'), encoding='utf-8') as f:
 
 setup(
     name='ledger_sim',
-    version='0.20190701',
     description='Chia network ledger sim',
     long_description=long_description,
     long_description_content_type='text/plain',
@@ -36,7 +35,8 @@ setup(
     keywords='chia cryptocurrency',
     packages=find_packages(exclude=['contrib', 'docs', 'tests']),
     python_requires='>=3.7, <4',
-    setup_requires=["clvm_tools"],
+    setup_requires=["clvm_tools", 'setuptools_scm'],
+    use_scm_version=True,
     install_requires=[],
 
     extras_require={
