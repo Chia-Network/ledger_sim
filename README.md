@@ -1,50 +1,40 @@
-#+TITLE: Ledger Simulator
-#+STARTUP: indent
+# Ledger Simulator
 
-
-* Ledger Simulator
-
-There is a simple simulator of a ledger that will use the same transaction rules
-as the final chia network. It's intended to be used by those creating and testing
-smart transactions.
+This is a simple simulator of a ledger that will use the same transaction rules as the final chia network. It’s intended to be used by those creating and testing smart transactions.
 
 Python 3.7 or later is required.
 
-* Launching
-
-- create a virtual environment
-
-#+BEGIN_SRC bash
+# Launching
+### Create a virtual environment
+```bash
 $ python3 -m venv env
 $ ln -s env/bin/activate
 $ . activate
 $ pip install -r requirements.txt
 $ pip install -e .
-#+END_SRC
+```
 
-*Note* The ~clvm_tools~ dependency in requirements.txt is private on github, so be sure you have
-permissions for this depot.
+**Note** The `clvm_tools` dependency in requirements.txt is private on github, so be sure you have permissions for this depot.
 
-*Note* The ~-e~ flag installs in "editable mode" so you can quickly iterate with changes to
-ledger-sim code. See [[https://pip.pypa.io/en/stable/reference/pip_install/#options][documentation]]
-for more info.
+**Note** The `-e` flag installs in “editable mode” so you can quickly iterate with changes to ledger-sim code. See [documentation](https://pip.pypa.io/en/stable/reference/pip_install/#options) for more info.
 
-- launch
-#+BEGIN_SRC bash
+### Launch
+```bash
 $ ledger-sim -h
 $ ledger-sim
-#+END_SRC
+```
 
-If you don't specify a port, the default of 9868 will be selected automatically.
+If you don’t specify a port, the default of 9868 will be selected automatically.
 
-- install ipython if necessary
-#+BEGIN_SRC bash
+### Install ipython if necessary
+```bash
 $ pip install ipython
-#+END_SRC
-We need ipython because it allows ~await~ syntax on the command-line.
+```
 
-- test a client
-#+BEGIN_SRC bash
+We need ipython because it allows `await` syntax on the command-line.
+
+### Test a client
+```bash
 $ ipython
 In [1]: from chiasim.clients.ledger_sim import connect_to_ledger_sim
 In [2]: ledger_api = await connect_to_ledger_sim("localhost", 9868)
@@ -55,12 +45,11 @@ In [5]: await ledger_api.get_tip()
 {'tip_hash': <HeaderPointer: 0000000000000000000000000000000000000000000000000000000000000000>,
  'tip_index': 0,
  'genesis_hash': <HeaderPointer: 0000000000000000000000000000000000000000000000000000000000000000>}
-#+END_SRC
+ ```
 
-
-- create and spend a coin
-#+BEGIN_SRC bash
-$ ipython
+### Create and spend a coin
+```bash
+ $ ipython
 from chiasim.hack.keys import conditions_for_payment, puzzle_hash_for_index, spend_coin
 from chiasim.clients.ledger_sim import connect_to_ledger_sim
 
@@ -72,4 +61,4 @@ body = r["body"]
 conditions = conditions_for_payment([(puzzle_hash_for_index(2), 1000)])
 tx = spend_coin(body.coinbase_coin, conditions, 0)
 r = await ledger_api.push_tx(tx=tx)
-#+END_SRC
+```
