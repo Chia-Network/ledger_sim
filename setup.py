@@ -41,7 +41,7 @@ setup(
     extras_require={"dev": [], "test": ["coverage"],},
     entry_points={"console_scripts": ["ledger-sim=chiasim.cmds.ledger_sim:main",],},
     project_urls={
-        "Bug Reports": "https://github.com/Chia-Network",
-        "Source": "https://github.com/Chia-Network",
+        "Bug Reports": "https://github.com/Chia-Network/ledger_sim",
+        "Source": "https://github.com/Chia-Network/ledger_sim",
     },
 )
