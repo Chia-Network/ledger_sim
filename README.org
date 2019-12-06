@@ -2,9 +2,9 @@
 #+STARTUP: indent
 
 
-* Ledger Simulator
+* What is it?
 
-There is a simple simulator of a ledger that will use the same transaction rules
+This is a simple simulator of a ledger that will use the same transaction rules
 as the final chia network. It's intended to be used by those creating and testing
 smart transactions.
 
@@ -21,9 +21,6 @@ $ . activate
 $ pip install -r requirements.txt
 $ pip install -e .
 #+END_SRC
-
-*Note* The ~clvm_tools~ dependency in requirements.txt is private on github, so be sure you have
-permissions for this depot.
 
 *Note* The ~-e~ flag installs in "editable mode" so you can quickly iterate with changes to
 ledger-sim code. See [[https://pip.pypa.io/en/stable/reference/pip_install/#options][documentation]]
