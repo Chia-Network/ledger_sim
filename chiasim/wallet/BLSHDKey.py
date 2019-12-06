@@ -67,6 +67,9 @@ class BLSPrivateHDKey:
     def public_hd_child(self, idx):
         return self.public_hd_key().public_hd_child(idx)
 
+    def secret_exponent_child(self, idx):
+        return self.private_hd_child(idx).secret_exponent()
+
     def private_child(self, idx):
         return self.private_hd_child(idx).private_key()
 

@@ -4,8 +4,9 @@ import blspy
 
 from ..atoms import streamable
 
-from .sized_bytes import bytes48, bytes96
+from .sized_bytes import bytes96
 
+from .BLSPublicKey import BLSPublicKey
 from .Message import MessageHash
 
 
@@ -14,10 +15,6 @@ GROUP_ORDER = (
 )
 
 ZERO96 = bytes96([0] * 96)
-
-
-class BLSPublicKey(bytes48):
-    pass
 
 
 @streamable
