@@ -4,9 +4,11 @@ from chiasim.wallet.BLSHDKey import BLSPrivateHDKey
 
 
 HIERARCHICAL_PRIVATE_KEY = BLSPrivateHDKey.from_seed(b"foo")
-POOL_PRIVATE_KEYS = [HIERARCHICAL_PRIVATE_KEY.private_child(_) for _ in range(100)]
-POOL_PUBLIC_KEYS = [_.public_key() for _ in POOL_PRIVATE_KEYS]
-POOL_LOOKUP = dict(zip(POOL_PUBLIC_KEYS, POOL_PRIVATE_KEYS))
+POOL_SECRET_EXPONENTS = [
+    HIERARCHICAL_PRIVATE_KEY.secret_exponent_for_child(_) for _ in range(100)
+]
+POOL_PUBLIC_KEYS = [BLSPublicKey.from_secret_exponent(_) for _ in POOL_SECRET_EXPONENTS]
+POOL_LOOKUP = dict(zip(POOL_PUBLIC_KEYS, POOL_SECRET_EXPONENTS))
 
 
 def get_pool_public_key(index=0) -> BLSPublicKey:
@@ -14,16 +16,16 @@ def get_pool_public_key(index=0) -> BLSPublicKey:
     return POOL_PUBLIC_KEYS[index]
 
 
-def signature_for_coinbase(coin: Coin, pool_private_key):
-    message_hash = coin.name()
-    return BLSSignature.create(message_hash, pool_private_key.secret_exponent())
+def signature_for_coinbase(coin: Coin, secret_exponent):
+    message_hash = CoinName(coin)
+    return BLSSignature.create(message_hash, secret_exponent)
 
 
 def sign_coinbase_coin(coin: Coin, public_key: BLSPublicKey):
-    private_key = POOL_LOOKUP.get(public_key)
-    if private_key is None:
+    secret_exponent = POOL_LOOKUP.get(public_key)
+    if secret_exponent is None:
         raise ValueError("unknown public key")
-    return signature_for_coinbase(coin, private_key)
+    return signature_for_coinbase(coin, secret_exponent)
 
 
 def create_coinbase_coin(block_index: int, puzzle_hash: ProgramHash, reward: uint64):

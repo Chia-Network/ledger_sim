@@ -7,14 +7,14 @@ from aiter import map_aiter
 
 from chiasim.clients import ledger_sim
 from chiasim.hack.keys import (
-    bls_private_key_for_index,
     build_spend_bundle,
     conditions_for_payment,
     public_key_bytes_for_index,
     puzzle_hash_for_index,
+    secret_exponent_for_index,
     DEFAULT_KEYCHAIN,
 )
-from chiasim.hashable import Coin, ProgramHash
+from chiasim.hashable import BLSPublicKey, Coin, ProgramHash
 from chiasim.ledger import ledger_api
 from chiasim.puzzles import (
     p2_conditions,
@@ -247,9 +247,8 @@ class TestPuzzles(TestCase):
         synthetic_offset = p2_delegated_puzzle_or_hidden_puzzle.calculate_synthetic_offset(
             hidden_public_key, hidden_puzzle_hash
         )
-        private_key = bls_private_key_for_index(hidden_pub_key_index)
-        assert private_key.public_key() == hidden_public_key
-        secret_exponent = private_key.secret_exponent()
+        secret_exponent = secret_exponent_for_index(hidden_pub_key_index)
+        assert BLSPublicKey.from_secret_exponent(secret_exponent) == hidden_public_key
         synthetic_secret_exponent = secret_exponent + synthetic_offset
         DEFAULT_KEYCHAIN.add_secret_exponents([synthetic_secret_exponent])
 

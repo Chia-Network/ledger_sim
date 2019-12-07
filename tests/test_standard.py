@@ -2,10 +2,13 @@ import asyncio
 from unittest import TestCase
 
 from chiasim.hack.keys import (
-    build_spend_bundle, conditions_for_payment, public_key_bytes_for_index,
-    puzzle_hash_for_index, bls_private_key_for_index
+    build_spend_bundle,
+    conditions_for_payment,
+    public_key_bytes_for_index,
+    puzzle_hash_for_index,
+    secret_exponent_for_index,
 )
-from chiasim.hashable import Coin, ProgramHash, SpendBundle
+from chiasim.hashable import BLSSignature, Coin, ProgramHash, SpendBundle
 from chiasim.puzzles import (
     p2_conditions, p2_delegated_conditions, p2_m_of_n_delegate_direct
 )
@@ -100,8 +103,8 @@ class TestStandard(TestCase):
         selectors = [1, [], 1]
         with self.assertRaises(RemoteError) as raised:
             def fuzz_signature(spend_bundle: SpendBundle):
-                bls_private_key = bls_private_key_for_index(0)
-                signature = bls_private_key.sign(b'\x11' * 32)
+                secret_exponent = secret_exponent_for_index(0)
+                signature = BLSSignature.create(b"\x11" * 32, secret_exponent)
                 return SpendBundle(spend_bundle.coin_solutions, signature)
 
             self.do_multisig(selectors, fuzz_signature=fuzz_signature)
