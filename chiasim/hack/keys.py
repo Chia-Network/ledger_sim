@@ -8,8 +8,8 @@ from chiasim.wallet.keychain import Keychain
 HIERARCHICAL_PRIVATE_KEY = BLSPrivateHDKey.from_seed(b"foo")
 
 
-def bls_private_key_for_index(index):
-    return HIERARCHICAL_PRIVATE_KEY.private_child(index)
+def secret_exponent_for_index(index):
+    return HIERARCHICAL_PRIVATE_KEY.secret_exponent_for_child(index)
 
 
 def public_key_bytes_for_index(index):
@@ -34,8 +34,7 @@ def conditions_for_payment(puzzle_hash_amount_pairs):
 
 def make_default_keychain():
     keychain = Keychain()
-    private_keys = [bls_private_key_for_index(_) for _ in range(10)]
-    secret_exponents = [int.from_bytes(bytes(_), "big") for _ in private_keys]
+    secret_exponents = [secret_exponent_for_index(_) for _ in range(10)]
     keychain.add_secret_exponents(secret_exponents)
     return keychain
 
