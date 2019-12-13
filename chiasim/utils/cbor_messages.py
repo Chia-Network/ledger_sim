@@ -46,11 +46,10 @@ def transform_to_streamable(d):
     return [transform_to_streamable(_) for _ in d]
 
 
-def send_cbor_message(msg, writer):
+def xform_to_cbor_message(msg):
     msg_blob = cbor.dumps(transform_to_streamable(msg))
     length_blob = struct.pack(">L", len(msg_blob))
-    writer.write(length_blob)
-    writer.write(msg_blob)
+    return length_blob + msg_blob
 
 
 """

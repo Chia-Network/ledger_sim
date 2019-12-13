@@ -1,4 +1,7 @@
-__version__ = "0.20190701"
+from setuptools_scm import get_version
+version = get_version()
+
+__version__ = version
 
 
 __title__ = 'ledger_sim'

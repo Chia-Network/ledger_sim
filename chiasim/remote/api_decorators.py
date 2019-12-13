@@ -13,10 +13,10 @@ def transform_args(kwarg_transformers, message):
 
 def api_request(**kwarg_transformers):
     """
-    This decorator will transform the values for the given keywords by the corresponding
+    This decorator will transform the arguments for the given keywords by the corresponding
     function.
 
-    @api_request(block=Block.from_blob)
+    @api_request(block=Block.from_bytes)
     def accept_block(block):
         # do some stuff with block as Block rather than bytes
     """
