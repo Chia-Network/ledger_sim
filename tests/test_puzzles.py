@@ -219,12 +219,11 @@ class TestPuzzles(TestCase):
 
         run_test(puzzle_hash, solution, payments)
 
-    def test_p2_delegated_puzzle_or_hidden_puzzle_with_delegated_puzzle(self):
-        HIDDEN_PUB_KEY_INDEX = 9
+    def run_test_p2_delegated_puzzle_or_hidden_puzzle_with_delegated_puzzle(self, hidden_pub_key_index):
         payments, conditions = default_payments_and_conditions()
 
         hidden_puzzle = p2_conditions.puzzle_for_conditions(conditions)
-        hidden_public_key = public_key_bytes_for_index(HIDDEN_PUB_KEY_INDEX)
+        hidden_public_key = public_key_bytes_for_index(hidden_pub_key_index)
 
         puzzle = p2_delegated_puzzle_or_hidden_puzzle.puzzle_for_public_key_and_hidden_puzzle(
             hidden_public_key, hidden_puzzle
@@ -248,10 +247,14 @@ class TestPuzzles(TestCase):
         synthetic_offset = p2_delegated_puzzle_or_hidden_puzzle.calculate_synthetic_offset(
             hidden_public_key, hidden_puzzle_hash
         )
-        private_key = bls_private_key_for_index(HIDDEN_PUB_KEY_INDEX)
+        private_key = bls_private_key_for_index(hidden_pub_key_index)
         assert private_key.public_key() == hidden_public_key
         secret_exponent = private_key.secret_exponent()
         synthetic_secret_exponent = secret_exponent + synthetic_offset
         DEFAULT_KEYCHAIN.add_secret_exponents([synthetic_secret_exponent])
 
         run_test(puzzle_hash, solution, payable_payments)
+
+    def test_p2_delegated_puzzle_or_hidden_puzzle_with_delegated_puzzle(self):
+        for hidden_pub_key_index in range(1, 10):
+            self.run_test_p2_delegated_puzzle_or_hidden_puzzle_with_delegated_puzzle(hidden_pub_key_index)
