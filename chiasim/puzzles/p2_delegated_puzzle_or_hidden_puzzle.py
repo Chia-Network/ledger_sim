@@ -17,6 +17,8 @@ import hashlib
 
 import clvm
 
+from clvm.casts import int_from_bytes
+
 from clvm_tools import binutils
 
 from chiasim.hashable import Program
@@ -40,7 +42,7 @@ def run(program, args):
 
 def calculate_synthetic_offset(public_key, hidden_puzzle_hash):
     blob = hashlib.sha256(bytes(public_key) + hidden_puzzle_hash).digest()
-    return int.from_bytes(blob, "big")
+    return int_from_bytes(blob)
 
 
 def calculate_synthetic_public_key(public_key, hidden_puzzle):
