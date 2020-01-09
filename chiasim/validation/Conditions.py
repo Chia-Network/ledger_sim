@@ -15,6 +15,7 @@ class ConditionOpcode(bytes, enum.Enum):
     ASSERT_MIN_TIME = bytes([54])
     ASSERT_BLOCK_INDEX_EXCEEDS = bytes([55])
     ASSERT_BLOCK_AGE_EXCEEDS = bytes([56])
+    ASSERT_TIME_EXCEEDS = bytes([57])
 
 
 def parse_sexp_to_condition(sexp):
@@ -57,6 +58,10 @@ def make_assert_block_index_exceeds_condition(block_index):
 
 def make_assert_block_age_exceeds_condition(block_index):
     return [ConditionOpcode.ASSERT_BLOCK_AGE_EXCEEDS, block_index]
+
+
+def make_assert_time_exceeds_condition(time):
+    return [ConditionOpcode.ASSERT_TIME_EXCEEDS, time]
 
 
 def conditions_by_opcode(conditions):

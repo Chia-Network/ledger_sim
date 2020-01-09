@@ -1,6 +1,8 @@
 import asyncio
 import collections
 import dataclasses
+import time
+import math
 
 import clvm
 
@@ -141,6 +143,7 @@ async def accept_new_block(
 
     try:
         newly_created_block_index = chain_view.tip_index + 1
+        dob = math.floor(time.time() * 1000)
 
         # verify header extends current view
 
@@ -261,6 +264,7 @@ async def accept_new_block(
             block_index=newly_created_block_index,
             removals=set(removals),
             coin_to_unspent=coin_to_unspent,
+            creation_time=dob,
         )
         hash_key_pairs = []
         for coin, puzzle_hash, conditions_dict in cpc_list:

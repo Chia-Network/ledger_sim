@@ -37,9 +37,17 @@ def assert_block_age_exceeds(condition, coin, context):
             Err.ASSERT_BLOCK_AGE_EXCEEDS_FAILED, (coin, condition))
 
 
+def assert_time_exceeds(condition, coin, context):
+    min_time = clvm.casts.int_from_bytes(condition[1])
+    if context['creation_time'] < min_time:
+        raise ConsensusError(
+            Err.ASSERT_TIME_EXCEEDS_FAILED, (coin, condition))
+
+
 CONDITION_CHECKER_LOOKUP = {
     ConditionOpcode.ASSERT_COIN_CONSUMED: assert_coin_consumed,
     ConditionOpcode.ASSERT_MY_COIN_ID: assert_my_coin_id,
     ConditionOpcode.ASSERT_BLOCK_INDEX_EXCEEDS: assert_block_index_exceeds,
     ConditionOpcode.ASSERT_BLOCK_AGE_EXCEEDS: assert_block_age_exceeds,
+    ConditionOpcode.ASSERT_TIME_EXCEEDS: assert_time_exceeds,
 }
