@@ -6,16 +6,16 @@ import time
 from chiasim.atoms import uint64
 from chiasim.farming import farm_new_block, get_plot_public_key, sign_header
 from chiasim.hashable import (
-    HeaderHash, ProgramHash, ProofOfSpace, SpendBundle
+    HeaderHash, ProgramHash, ProofOfSpace, SpendBundle, Header
 )
 from chiasim.pool import (
     create_coinbase_coin_and_signature, get_pool_public_key
 )
 from chiasim.remote.api_decorators import api_request
 from chiasim.validation import ChainView, validate_spend_bundle_signature
+from chiasim.hashable.Body import BodyList
 
 log = logging.getLogger(__name__)
-
 
 GENESIS_HASH = HeaderHash([0] * 32)
 
@@ -44,7 +44,7 @@ async def new_chain_view(
 
     header_signature = sign_header(header, plot_public_key)
 
-    [await storage.add_preimage(_.as_bin()) for _ in (header, body)]
+    [await storage.add_preimage(bytes(_)) for _ in (header, body)]
 
     chain_view = await chain_view.augment_chain_view(
         header, header_signature, storage, unspent_db, REWARD)
@@ -65,7 +65,7 @@ class LedgerAPI:
         return dict(response="got ping message %r at time %s" % (
             m, datetime.datetime.utcnow()))
 
-    @api_request(tx=SpendBundle.from_bin)
+    @api_request(tx=SpendBundle.from_bytes)
     async def do_push_tx(self, tx):
         log.info("push_tx %s", tx)
         if not validate_spend_bundle_signature(tx):
@@ -93,8 +93,48 @@ class LedgerAPI:
             genesis_hash=chain_view.genesis_hash)
 
     @api_request(
-        coinbase_puzzle_hash=ProgramHash.from_bin,
-        fees_puzzle_hash=ProgramHash.from_bin,
+        most_recent_header=Header.from_bytes,
+    )
+    async def do_get_recent_blocks(self, most_recent_header):
+        # TODO: return just headers
+        # TODO: set a maximum number to return
+        most_recent_tip = self._chain_view.tip_index
+        travelling_header = await self._chain_view.tip_hash.obj(self._storage)
+        update_list = []
+        # maybe add some sanity checks here but this isn't the actual blockchain
+        while travelling_header != most_recent_header:
+            update_list.append(await travelling_header.body_hash.obj(self._storage))
+            previous_header_hash = travelling_header.previous_hash
+            travelling_header = await previous_header_hash.obj(self._storage)
+            most_recent_tip -= 1
+            if travelling_header.previous_hash == bytes([0] * 32):
+                update_list.append(await travelling_header.body_hash.obj(self._storage))
+                continue
+        update_list.reverse()
+        return BodyList(update_list)
+
+    async def do_get_all_blocks(self):
+        # TODO: deprecate. This doesn't scale.
+        travelling_header = await self._chain_view.tip_hash.obj(self._storage)
+        update_list = []
+        complete = False
+        if travelling_header.previous_hash == bytes([0] * 32):
+            update_list.append(await travelling_header.body_hash.obj(self._storage))
+        else:
+            while complete is False:
+                update_list.append(await travelling_header.body_hash.obj(self._storage))
+                previous_header_hash = travelling_header.previous_hash
+                print(previous_header_hash)
+                travelling_header = await previous_header_hash.obj(self._storage)
+                if travelling_header.previous_hash == bytes([0] * 32):
+                    complete = True
+                    update_list.append(await travelling_header.body_hash.obj(self._storage))
+        update_list.reverse()
+        return BodyList(update_list)
+
+    @api_request(
+        coinbase_puzzle_hash=ProgramHash.from_bytes,
+        fees_puzzle_hash=ProgramHash.from_bytes,
     )
     async def do_next_block(self, coinbase_puzzle_hash, fees_puzzle_hash):
         async with self._next_block_lock:

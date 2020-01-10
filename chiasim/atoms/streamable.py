@@ -44,7 +44,7 @@ def streamable(cls):
                 else:
                     raise NotImplementedError("can't stream %s: %s" % (v, f_name))
 
-    cls1 = dataclasses.dataclass(_cls=cls, frozen=True, init=False)
+    cls1 = dataclasses.dataclass(cls, frozen=True, init=False)
 
     cls2 = type(cls.__name__, (cls1, bin_methods, _local), {})
     return cls2

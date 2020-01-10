@@ -16,7 +16,6 @@ import clvm
 
 from clvm_tools import binutils
 
-from chiasim.atoms import hexbytes
 from chiasim.hashable import Program
 from chiasim.validation.Conditions import ConditionOpcode
 
@@ -26,8 +25,8 @@ from . import p2_conditions
 def puzzle_for_pk(public_key):
     aggsig = ConditionOpcode.AGG_SIG[0]
     TEMPLATE = (f"(c (c (q {aggsig}) (c (q 0x%s) (c (sha256 (wrap (f (a)))) (q ())))) "
-                f"(e (f (a)) (f (r (a)))))")
-    return Program(binutils.assemble(TEMPLATE % hexbytes(public_key)))
+                f"((c (f (a)) (f (r (a))))))")
+    return Program(binutils.assemble(TEMPLATE % public_key.hex()))
 
 
 def solution_for_conditions(puzzle_reveal, conditions):

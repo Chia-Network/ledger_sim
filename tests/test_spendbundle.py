@@ -6,7 +6,7 @@ from chiasim.validation.consensus import (
 )
 from chiasim.validation.Conditions import conditions_by_opcode, make_create_coin_condition
 
-from tests.helpers import trace_eval
+from .helpers import trace_eval
 
 
 def test_1():
@@ -14,7 +14,7 @@ def test_1():
     puzzle_program_1 = puzzle_program_for_index(1)
     puzzle_program_2 = puzzle_program_for_index(2)
 
-    conditions = [make_create_coin_condition(std_hash(pp.as_bin()), amount) for pp, amount in [
+    conditions = [make_create_coin_condition(std_hash(bytes(pp)), amount) for pp, amount in [
         (puzzle_program_1, 1000), (puzzle_program_2, 2000),
     ]]
 

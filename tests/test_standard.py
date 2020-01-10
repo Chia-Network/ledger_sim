@@ -3,7 +3,7 @@ from unittest import TestCase
 
 from chiasim.hack.keys import (
     build_spend_bundle, conditions_for_payment, public_key_bytes_for_index,
-    puzzle_hash_for_index, private_key_for_index
+    puzzle_hash_for_index, bls_private_key_for_index
 )
 from chiasim.hashable import Coin, ProgramHash, SpendBundle
 from chiasim.puzzles import (
@@ -11,7 +11,6 @@ from chiasim.puzzles import (
 )
 from chiasim.remote.client import RemoteError
 from chiasim.validation.Conditions import make_assert_my_coin_id_condition
-from chiasim.wallet.BLSPrivateKey import BLSPrivateKey
 from .test_puzzles import farm_spendable_coin, make_client_server
 
 
@@ -101,7 +100,7 @@ class TestStandard(TestCase):
         selectors = [1, [], 1]
         with self.assertRaises(RemoteError) as raised:
             def fuzz_signature(spend_bundle: SpendBundle):
-                bls_private_key = BLSPrivateKey(private_key_for_index(0))
+                bls_private_key = bls_private_key_for_index(0)
                 signature = bls_private_key.sign(b'\x11' * 32)
                 return SpendBundle(spend_bundle.coin_solutions, signature)
 

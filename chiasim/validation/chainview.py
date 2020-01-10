@@ -18,6 +18,9 @@ from .ConsensusError import ConsensusError, Err
 from .check_conditions import CONDITION_CHECKER_LOOKUP
 
 
+MAX_COIN_AMOUNT = int(1 << 48)
+
+
 def check_conditions_dict(coin, conditions_dict, context):
     """
     Check all conditions against current state.
@@ -119,7 +122,7 @@ async def check_header_signature(
 
     # verify header signature
 
-    hkp = header_signature.aggsig_pair(pos.plot_public_key, header.hash())
+    hkp = header_signature.aggsig_pair(pos.plot_public_key, HeaderHash(header))
     if not header_signature.validate([hkp]):
         raise ConsensusError(Err.BAD_HEADER_SIGNATURE, header_signature)
 
@@ -137,6 +140,8 @@ async def accept_new_block(
     """
 
     try:
+        newly_created_block_index = chain_view.tip_index + 1
+
         # verify header extends current view
 
         if header.previous_hash != chain_view.tip_hash:
@@ -165,6 +170,10 @@ async def accept_new_block(
                     yield _
 
         additions = tuple(additions_iter(body, npc_list))
+        for coin in additions:
+            if coin.amount >= MAX_COIN_AMOUNT:
+                raise ConsensusError(
+                    Err.COIN_AMOUNT_EXCEEDS_MAXIMUM, coin)
 
         #  watch out for duplicate outputs
 
@@ -184,9 +193,9 @@ async def accept_new_block(
 
         ram_storage = RAM_DB()
         for _ in additions:
-            await ram_storage.add_preimage(_.as_bin())
+            await ram_storage.add_preimage(bytes(_))
 
-        ram_db = RAMUnspentDB(additions, chain_view.tip_index + 1)
+        ram_db = RAMUnspentDB(additions, newly_created_block_index)
         overlay_storage = OverlayStorage(ram_storage, storage)
         unspent_db = OverlayUnspentDB(chain_view.unspent_db, ram_db)
 
@@ -207,6 +216,17 @@ async def accept_new_block(
             if puzzle_hash != coin.puzzle_hash:
                 raise ConsensusError(Err.WRONG_PUZZLE_HASH, coin)
 
+        # build coin_to_unspent dictionary
+
+        futures = []
+        for coin, puzzle_hash, conditions_dict in cpc_list:
+            futures.append(asyncio.ensure_future(
+                unspent_db.unspent_for_coin_name(coin.name())))
+
+        coin_to_unspent = {}
+        for (coin, puzzle_hash, conditions_dict), future in zip(cpc_list, futures):
+            coin_to_unspent[coin.name()] = await future
+
         # check removals against UnspentDB
 
         for coin, puzzle_hash, conditions_dict in cpc_list:
@@ -214,7 +234,7 @@ async def accept_new_block(
                 # it's an ephemeral coin, created and destroyed in the same block
                 continue
             coin_name = coin.name()
-            unspent = await unspent_db.unspent_for_coin_name(coin_name)
+            unspent = coin_to_unspent[coin_name]
             if (unspent is None or
                     unspent.confirmed_block_index == 0 or
                     unspent.confirmed_block_index > chain_view.tip_index):
@@ -238,7 +258,9 @@ async def accept_new_block(
         # this is where CHECKLOCKTIME etc. are verified
 
         context = dict(
+            block_index=newly_created_block_index,
             removals=set(removals),
+            coin_to_unspent=coin_to_unspent,
         )
         hash_key_pairs = []
         for coin, puzzle_hash, conditions_dict in cpc_list:
@@ -263,7 +285,7 @@ async def apply_deltas(block_index, additions, removals, unspent_db, storage):
     for coin in additions:
         new_unspent = Unspent(block_index, 0)
         await unspent_db.set_unspent_for_coin_name(coin.name(), new_unspent)
-        await storage.add_preimage(coin.as_bin())
+        await storage.add_preimage(bytes(coin))
 
     for coin_name in removals:
         unspent = await unspent_db.unspent_for_coin_name(coin_name)

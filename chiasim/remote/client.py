@@ -3,7 +3,7 @@ import weakref
 
 from aiter import map_aiter
 
-from chiasim.utils.cbor_messages import reader_to_cbor_stream, send_cbor_message
+from chiasim.utils.cbor_messages import reader_to_cbor_stream, xform_to_cbor_message
 
 from .proxy import make_proxy
 
@@ -12,8 +12,14 @@ class RemoteError(Exception):
     pass
 
 
+# TODO: this belongs in aiter
+
 class NonceWatcher:
-    # TODO: this belongs in aiter
+    """
+    This class looks at (nonce, result) events coming out of an aiter called "message stream"
+    and routes them to corresponding futures returned by "future_for_nonce". It's essentially
+    an event router that uses a dictionary to route the events to the appropriate places.
+    """
 
     def __init__(self, message_stream, initial_nonce=0):
         self._message_stream = message_stream
@@ -54,7 +60,8 @@ async def invoke_remote(method, remote, *args, **kwargs):
     nonce = nonce_watcher.next_nonce()
     msg = dict(c=method, n=nonce, q=kwargs)
     future = nonce_watcher.future_for_nonce(nonce)
-    send_cbor_message(msg, writer)
+    cbor_msg = xform_to_cbor_message(msg)
+    writer.write(cbor_msg)
 
     _ = await future
     transformation = remote.get("signatures", {}).get(method)

@@ -4,14 +4,13 @@ from clvm.subclass_sexp import BaseSExp
 
 from .Hash import std_hash
 
-from ..atoms import hash_pointer, streamable
-from ..atoms.bin_methods import bin_methods
+from ..atoms import bin_methods, hash_pointer
 
 
 SExp = to_sexp_f(1).__class__
 
 
-class Program(SExp):
+class Program(SExp, bin_methods):
     """
     A thin wrapper around s-expression data intended to be invoked with "eval".
     """
@@ -29,12 +28,8 @@ class Program(SExp):
     def stream(self, f):
         sexp_to_stream(self, f)
 
-    def __getattribute__(self, attr_name):
-        if attr_name == "code":
-            # breakpoint()
-            # uncomment the line above to find where ".code" is used
-            return self
-        return object.__getattribute__(self, attr_name)
+    def __str__(self):
+        return bytes(self).hex()
 
 
 ProgramHash = hash_pointer(Program, std_hash)

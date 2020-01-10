@@ -8,6 +8,7 @@ from chiasim.clients import ledger_sim
 from chiasim.hack.keys import (
     conditions_for_payment, puzzle_hash_for_index, spend_coin
 )
+from chiasim.hashable import std_hash
 from chiasim.ledger import ledger_api
 from chiasim.remote.api_server import api_server
 from chiasim.remote.client import request_response_proxy
@@ -34,6 +35,10 @@ async def client_test(path):
 
     remote = await proxy_for_unix_connection(path)
 
+    # test preimage API failure case
+    _ = await remote.hash_preimage(hash=b'0'*32)
+    assert _ is None
+
     coinbase_puzzle_hash = puzzle_hash_for_index(1)
     fees_puzzle_hash = puzzle_hash_for_index(6)
 
@@ -41,6 +46,11 @@ async def client_test(path):
         coinbase_puzzle_hash=coinbase_puzzle_hash, fees_puzzle_hash=fees_puzzle_hash)
     header = r.get("header")
     body = r.get("body")
+
+    for _ in [header, body]:
+        hh = std_hash(_)
+        r1 = await remote.hash_preimage(hash=hh)
+        assert r1 == bytes(_)
 
     coinbase_coin = body.coinbase_coin
 
@@ -69,6 +79,11 @@ async def client_test(path):
     header = r.get("header")
     body = r.get("body")
 
+    for _ in [header, body]:
+        hh = std_hash(_)
+        r1 = await remote.hash_preimage(hash=hh)
+        assert r1 == bytes(_)
+
     print(header)
     print(body)
     my_new_coins_2 = tuple(additions_for_body(body))
@@ -78,7 +93,7 @@ async def client_test(path):
     assert len(removals) == 1
     assert repr(removals[0]) == (
         '<CoinPointer: '
-        '494ea5f28893477126c06029a88d5273fc46d4a9a635e7b9fdc5e518af866c8e>')
+        '8f076c94522ca55ce43e27aa10b933cf33bf81946a01e72e225b3676cbaf6082>')
 
     # add a SpendBundle
     input_coin = my_new_coins[0]
@@ -87,6 +102,7 @@ async def client_test(path):
     _ = await remote.push_tx(tx=spend_bundle)
     import pprint
     pprint.pprint(_)
+    assert repr(_).startswith("RemoteError")
 
     r = await remote.next_block(
         coinbase_puzzle_hash=coinbase_puzzle_hash, fees_puzzle_hash=fees_puzzle_hash)
@@ -95,6 +111,11 @@ async def client_test(path):
 
     print(header)
     print(body)
+
+    for _ in [header, body]:
+        hh = std_hash(_)
+        r1 = await remote.hash_preimage(hash=hh)
+        assert r1 == bytes(_)
 
     r = await remote.all_unspents()
     print("unspents = %s" % r.get("unspents"))
@@ -113,8 +134,8 @@ async def client_test(path):
     assert repr(_) == (
         "RemoteError('exception: (<Err.WRONG_PUZZLE_HASH: 8>, "
         "Coin(parent_coin_info=<CoinPointer: "
-        "494ea5f28893477126c06029a88d5273fc46d4a9a635e7b9fdc5e518af866c8e>,"
-        " puzzle_hash=<ProgramPointer: d3477f35ab49aafa48b522d80e586c7bf18b80af23cfd67239d29ea8d3a5f008>, "
+        "8f076c94522ca55ce43e27aa10b933cf33bf81946a01e72e225b3676cbaf6082>,"
+        " puzzle_hash=<ProgramPointer: 365bdd80582fcc2e4868076ab9f24b482a1f83f6d88fd795c362c43544380e7a>, "
         "amount=2000))')")
 
 

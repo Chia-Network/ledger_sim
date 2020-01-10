@@ -1,3 +1,4 @@
+import clvm
 
 from .Conditions import ConditionOpcode
 from .ConsensusError import ConsensusError, Err
@@ -14,7 +15,31 @@ def assert_my_coin_id(condition, coin, context):
         raise ConsensusError(Err.ASSERT_MY_COIN_ID_FAILED, (coin, condition))
 
 
+def assert_block_index_exceeds(condition, coin, context):
+    try:
+        expected_block_index = clvm.casts.int_from_bytes(condition[1])
+    except ValueError:
+        raise ConsensusError(Err.INVALID_CONDITION, (coin, condition))
+    if context["block_index"] <= expected_block_index:
+        raise ConsensusError(
+            Err.ASSERT_BLOCK_INDEX_EXCEEDS_FAILED, (coin, condition))
+
+
+def assert_block_age_exceeds(condition, coin, context):
+    try:
+        unspent = context["coin_to_unspent"][coin.name()]
+        expected_block_age = clvm.casts.int_from_bytes(condition[1])
+        expected_block_index = expected_block_age + unspent.confirmed_block_index
+    except ValueError:
+        raise ConsensusError(Err.INVALID_CONDITION, (coin, condition))
+    if context["block_index"] <= expected_block_index:
+        raise ConsensusError(
+            Err.ASSERT_BLOCK_AGE_EXCEEDS_FAILED, (coin, condition))
+
+
 CONDITION_CHECKER_LOOKUP = {
     ConditionOpcode.ASSERT_COIN_CONSUMED: assert_coin_consumed,
     ConditionOpcode.ASSERT_MY_COIN_ID: assert_my_coin_id,
+    ConditionOpcode.ASSERT_BLOCK_INDEX_EXCEEDS: assert_block_index_exceeds,
+    ConditionOpcode.ASSERT_BLOCK_AGE_EXCEEDS: assert_block_age_exceeds,
 }

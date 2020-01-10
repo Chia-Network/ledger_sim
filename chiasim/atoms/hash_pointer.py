@@ -15,7 +15,7 @@ def hash_pointer(the_type, hash_f):
     def __new__(cls, v):
         has_obj = isinstance(v, the_type)
         if has_obj:
-            v_ptr = hash_f(v.as_bin())
+            v_ptr = hash_f(bytes(v))
         else:
             v_ptr = v
         r = hash_type.__new__(cls, v_ptr)
@@ -32,8 +32,8 @@ def hash_pointer(the_type, hash_f):
         """
         if self._obj is None and data_source:
             blob = await data_source.hash_preimage(hash=self)
-            if hash_f(blob) == self:
-                self._obj = the_type.from_bin(blob)
+            if blob is not None and hash_f(blob) == self:
+                self._obj = the_type.from_bytes(blob)
         return self._obj
 
     namespace = dict(__new__=__new__, obj=obj)

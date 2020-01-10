@@ -1,13 +1,14 @@
-from ..atoms import hash_pointer, hexbytes, streamable, uint64
+from ..atoms import hash_pointer, streamable, uint64
+from ..hashable import bytes32
 
 from .Body import Body
-from .Hash import Hashable, std_hash
+from .Hash import std_hash
 from .ProofOfSpace import ProofOfSpace
 from .Signature import Signature
 
 
 @streamable
-class Header(Hashable):
+class Header:
     """
     A header is the main linked structure of the blockchain. It
     includes a link to previous header (with the first header containing
@@ -21,7 +22,7 @@ class Header(Hashable):
     timestamp: uint64
     proof_of_space_hash: hash_pointer(ProofOfSpace, std_hash)
     body_hash: hash_pointer(Body, std_hash)
-    extension_data_hash: hash_pointer(hexbytes, std_hash)
+    extension_data_hash: bytes32
 
 
 HeaderHash = hash_pointer(Header, std_hash)
