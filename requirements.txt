@@ -3,4 +3,5 @@
 aiter==0.1.2
 blspy==0.1.8
 cbor==1.0.0
+dataclasses
 setuptools-scm==3.3.3
