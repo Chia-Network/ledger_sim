@@ -17,6 +17,10 @@ from chiasim.validation.Conditions import (
 from .test_puzzles import farm_spendable_coin, make_client_server
 
 
+def int_to_bytes(x: int) -> bytes:
+    return x.to_bytes((x.bit_length() + 7) // 8, 'big')
+
+
 class TestConditions(TestCase):
     def test_assert_my_id(self):
         run = asyncio.get_event_loop().run_until_complete
@@ -170,7 +174,8 @@ class TestConditions(TestCase):
 
         coin_1 = farm_spendable_coin(remote, puzzle_hash)
 
-        min_time = math.floor((time.time() + 1) * 1000)
+        now = run(remote.skip_milliseconds(ms=int_to_bytes(0)))
+        min_time = now + 1000
         conditions_time_exceeds = [make_assert_time_exceeds_condition(min_time)]
 
         # try to spend coin_1 with limit set to age 1. Should fail
@@ -181,7 +186,7 @@ class TestConditions(TestCase):
         assert r.args[0].startswith("exception: (<Err.ASSERT_TIME_EXCEEDS_FAILED")
 
         # wait a second, should succeed
-        time.sleep(1)
+        x = run(remote.skip_milliseconds(ms=int_to_bytes(1000)))
 
         r = run(remote.push_tx(tx=spend_bundle_1))
         assert r["response"].startswith("accepted")
