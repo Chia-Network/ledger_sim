@@ -3,6 +3,7 @@ import math
 import time
 from unittest import TestCase
 
+from chiasim.atoms import uint64
 from chiasim.hack.keys import build_spend_bundle, public_key_bytes_for_index
 from chiasim.hashable import ProgramHash
 from chiasim.puzzles import p2_delegated_conditions
@@ -174,7 +175,8 @@ class TestConditions(TestCase):
 
         coin_1 = farm_spendable_coin(remote, puzzle_hash)
 
-        now = run(remote.skip_milliseconds(ms=int_to_bytes(0)))
+        now = run(remote.skip_milliseconds(ms=uint64(0).to_bytes(4, 'big')))
+        assert(type(now) == int)
         min_time = now + 1000
         conditions_time_exceeds = [make_assert_time_exceeds_condition(min_time)]
 
@@ -186,7 +188,7 @@ class TestConditions(TestCase):
         assert r.args[0].startswith("exception: (<Err.ASSERT_TIME_EXCEEDS_FAILED")
 
         # wait a second, should succeed
-        x = run(remote.skip_milliseconds(ms=int_to_bytes(1000)))
+        x = run(remote.skip_milliseconds(ms=uint64(1000).to_bytes(4, 'big')))
 
         r = run(remote.push_tx(tx=spend_bundle_1))
         assert r["response"].startswith("accepted")

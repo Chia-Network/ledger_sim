@@ -161,7 +161,7 @@ class LedgerAPI:
 
         return chain_view
 
-    @api_request(ms=lambda x: int.from_bytes(x, 'big'))
+    @api_request(ms=lambda _: uint64.from_bytes(_, 'big'))
     async def do_skip_milliseconds(self, ms):
         self._now += ms
         return self._now
