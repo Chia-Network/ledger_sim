@@ -1,6 +1,5 @@
 import asyncio
 import math
-import time
 from unittest import TestCase
 
 from chiasim.atoms import uint64
