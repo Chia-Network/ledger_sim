@@ -15,13 +15,12 @@ This roughly corresponds to bitcoin's taproot.
 """
 import hashlib
 
-import clvm
-
 from clvm.casts import int_from_bytes
 
 from clvm_tools import binutils
 
 from chiasim.hashable import Program
+from chiasim.utils.run_program import run_program
 
 from .load_clvm import load_clvm
 
@@ -33,10 +32,8 @@ puzzle_prog_template = load_clvm("make_p2_delegated_puzzle_or_hidden_puzzle.clvm
 
 
 def run(program, args):
-    eval_f = clvm.eval_f
     sexp = binutils.assemble(program)
-    args = clvm.to_sexp_f(args)
-    r = eval_f(eval_f, sexp, args)
+    cost, r = run_program(sexp, args)
     return r.as_python()
 
 

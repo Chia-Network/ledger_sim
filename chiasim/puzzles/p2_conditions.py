@@ -10,11 +10,10 @@ require a delegated puzzle program, so in those cases, this is just what
 the doctor ordered.
 """
 
-import clvm
-
 from clvm_tools import binutils
 
 from chiasim.hashable import Program
+from chiasim.utils.run_program import run_program
 
 
 # contract:
@@ -31,24 +30,29 @@ def make_contract():
             (if is_solution (solution parameters) (puzzle parameters))
         )
     """
-    return binutils.assemble("""
+    return binutils.assemble(
+        """
     ((c (i (f (a))
         (q (c (c (q #q) (c (f (r (a)))
         (q ()))) (q (())))) (q (c (q #q) (c (r (a)) (q ()))))) (a)))
-    """)
+    """
+    )
 
 
 CONTRACT = make_contract()
 
 
 def puzzle_for_contract(contract, puzzle_parameters):
-    return Program(clvm.eval_f(clvm.eval_f, contract, clvm.to_sexp_f(
-        []).cons(puzzle_parameters)))
+    env = Program.to([]).cons(puzzle_parameters)
+    cost, r = run_program(contract, env)
+    return r
 
 
 def solution_for_contract(contract, puzzle_parameters, solution_parameters):
-    return Program(clvm.eval_f(clvm.eval_f, contract, clvm.to_sexp_f(
-        (1, (puzzle_parameters, solution_parameters)))))
+    cost, r = run_program(
+        contract, Program.to((1, (puzzle_parameters, solution_parameters)))
+    )
+    return r
 
 
 def puzzle_for_conditions(conditions):
