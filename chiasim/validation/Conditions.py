@@ -1,8 +1,8 @@
 import enum
 
-import clvm
-
 from clvm_tools import binutils
+
+from chiasim.hashable import Program
 
 from .ConsensusError import ConsensusError, Err
 
@@ -78,4 +78,4 @@ def parse_sexp_to_conditions_dict(sexp):
 
 
 def conditions_to_sexp(conditions):
-    return clvm.to_sexp_f([binutils.assemble("#q"), conditions])
+    return Program.to([binutils.assemble("#q"), conditions])

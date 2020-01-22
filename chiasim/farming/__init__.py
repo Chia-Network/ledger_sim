@@ -1,7 +1,5 @@
 import blspy
 
-from clvm import to_sexp_f
-
 from clvm_tools import binutils
 
 from chiasim.atoms import uint64
@@ -40,7 +38,7 @@ def best_solution_program(bundle: SpendBundle):
     for coin_solution in bundle.coin_solutions:
         entry = [coin_solution.coin.name(), coin_solution.solution]
         r.append(entry)
-    return Program(to_sexp_f([binutils.assemble("#q"), r]))
+    return Program.to([binutils.assemble("#q"), r])
 
 
 def collect_best_bundle(known_bundles) -> SpendBundle:

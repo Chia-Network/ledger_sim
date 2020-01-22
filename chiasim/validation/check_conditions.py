@@ -1,4 +1,4 @@
-import clvm
+from clvm.casts import int_from_bytes
 
 from .Conditions import ConditionOpcode
 from .ConsensusError import ConsensusError, Err
@@ -17,7 +17,7 @@ def assert_my_coin_id(condition, coin, context):
 
 def assert_block_index_exceeds(condition, coin, context):
     try:
-        expected_block_index = clvm.casts.int_from_bytes(condition[1])
+        expected_block_index = int_from_bytes(condition[1])
     except ValueError:
         raise ConsensusError(Err.INVALID_CONDITION, (coin, condition))
     if context["block_index"] <= expected_block_index:
@@ -28,7 +28,7 @@ def assert_block_index_exceeds(condition, coin, context):
 def assert_block_age_exceeds(condition, coin, context):
     try:
         unspent = context["coin_to_unspent"][coin.name()]
-        expected_block_age = clvm.casts.int_from_bytes(condition[1])
+        expected_block_age = int_from_bytes(condition[1])
         expected_block_index = expected_block_age + unspent.confirmed_block_index
     except ValueError:
         raise ConsensusError(Err.INVALID_CONDITION, (coin, condition))
@@ -38,7 +38,7 @@ def assert_block_age_exceeds(condition, coin, context):
 
 
 def assert_time_exceeds(condition, coin, context):
-    min_time = clvm.casts.int_from_bytes(condition[1])
+    min_time = int_from_bytes(condition[1])
     if context['creation_time'] < min_time:
         raise ConsensusError(
             Err.ASSERT_TIME_EXCEEDS_FAILED, (coin, condition))

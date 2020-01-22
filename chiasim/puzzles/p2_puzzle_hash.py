@@ -5,8 +5,6 @@ In this puzzle program, the solution must be a reveal of the puzzle with the giv
 hash along with its solution.
 """
 
-import clvm
-
 from clvm_tools import binutils
 
 from chiasim.hashable import Program, ProgramHash
@@ -31,4 +29,4 @@ def puzzle_for_puzzle_hash(underlying_puzzle_hash):
 def solution_for_puzzle_and_solution(underlying_puzzle, underlying_solution):
     underlying_puzzle_hash = ProgramHash(underlying_puzzle)
     puzzle_program = puzzle_for_puzzle_hash(underlying_puzzle_hash)
-    return Program(clvm.to_sexp_f([puzzle_program, underlying_solution]))
+    return Program.to([puzzle_program, underlying_solution])

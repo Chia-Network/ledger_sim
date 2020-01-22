@@ -1,19 +1,22 @@
 import clvm
 
-from ..hashable import BLSSignature, Coin
+from clvm.EvalError import EvalError
+from clvm.casts import int_from_bytes
+
+from ..hashable import BLSSignature, Coin, Program
 
 from .Conditions import conditions_by_opcode, parse_sexp_to_conditions, ConditionOpcode
 
 
 def conditions_for_solution(solution_program, eval=clvm.eval_f):
     # get the standard script for a puzzle hash and feed in the solution
-    args = clvm.to_sexp_f(solution_program)
+    args = Program.to(solution_program)
     try:
         puzzle_sexp = args.first()
         solution_sexp = args.rest().first()
         r = eval(eval, puzzle_sexp, solution_sexp)
         return parse_sexp_to_conditions(r)
-    except clvm.EvalError.EvalError:
+    except EvalError:
         raise
 
 
@@ -41,7 +44,7 @@ def created_outputs_for_conditions_dict(conditions_dict, input_coin_name):
         # and don't just fail with asserts
         assert len(_) == 3
         opcode, puzzle_hash, amount_bin = _
-        amount = clvm.casts.int_from_bytes(amount_bin)
+        amount = int_from_bytes(amount_bin)
         coin = Coin(input_coin_name, puzzle_hash, amount)
         output_coins.append(coin)
     return output_coins
