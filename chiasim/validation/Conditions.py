@@ -12,7 +12,7 @@ class ConditionOpcode(bytes, enum.Enum):
     CREATE_COIN = bytes([51])
     ASSERT_COIN_CONSUMED = bytes([52])
     ASSERT_MY_COIN_ID = bytes([53])
-    ASSERT_MIN_TIME = bytes([54])
+    ASSERT_TIME_EXCEEDS = bytes([54])
     ASSERT_BLOCK_INDEX_EXCEEDS = bytes([55])
     ASSERT_BLOCK_AGE_EXCEEDS = bytes([56])
 
@@ -57,6 +57,10 @@ def make_assert_block_index_exceeds_condition(block_index):
 
 def make_assert_block_age_exceeds_condition(block_index):
     return [ConditionOpcode.ASSERT_BLOCK_AGE_EXCEEDS, block_index]
+
+
+def make_assert_time_exceeds_condition(time):
+    return [ConditionOpcode.ASSERT_TIME_EXCEEDS, time]
 
 
 def conditions_by_opcode(conditions):

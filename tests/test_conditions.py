@@ -1,6 +1,8 @@
 import asyncio
+import math
 from unittest import TestCase
 
+from chiasim.atoms import uint64
 from chiasim.hack.keys import build_spend_bundle, public_key_bytes_for_index
 from chiasim.hashable import ProgramHash
 from chiasim.puzzles import p2_delegated_conditions
@@ -9,9 +11,14 @@ from chiasim.validation.Conditions import (
     make_assert_my_coin_id_condition,
     make_assert_block_index_exceeds_condition,
     make_assert_block_age_exceeds_condition,
+    make_assert_time_exceeds_condition,
 )
 
 from .test_puzzles import farm_spendable_coin, make_client_server
+
+
+def int_to_bytes(x: int) -> bytes:
+    return x.to_bytes((x.bit_length() + 7) // 8, 'big')
 
 
 class TestConditions(TestCase):
@@ -153,6 +160,34 @@ class TestConditions(TestCase):
 
         # farm a block and try again. Should succeed
         farm_spendable_coin(remote, puzzle_hash)
+
+        r = run(remote.push_tx(tx=spend_bundle_1))
+        assert r["response"].startswith("accepted")
+
+    def test_assert_time_exceeds(self):
+        run = asyncio.get_event_loop().run_until_complete
+
+        remote = make_client_server()
+
+        puzzle_program = p2_delegated_conditions.puzzle_for_pk(public_key_bytes_for_index(8))
+        puzzle_hash = ProgramHash(puzzle_program)
+
+        coin_1 = farm_spendable_coin(remote, puzzle_hash)
+
+        now = run(remote.skip_milliseconds(ms=uint64(0).to_bytes(4, 'big')))
+        assert(type(now) == int)
+        min_time = now + 1000
+        conditions_time_exceeds = [make_assert_time_exceeds_condition(min_time)]
+
+        # try to spend coin_1 with limit set to age 1. Should fail
+        solution_1 = p2_delegated_conditions.solution_for_conditions(puzzle_program, conditions_time_exceeds)
+        spend_bundle_1 = build_spend_bundle(coin_1, solution_1)
+        r = run(remote.push_tx(tx=spend_bundle_1))
+
+        assert r.args[0].startswith("exception: (<Err.ASSERT_TIME_EXCEEDS_FAILED")
+
+        # wait a second, should succeed
+        x = run(remote.skip_milliseconds(ms=uint64(1000).to_bytes(4, 'big')))
 
         r = run(remote.push_tx(tx=spend_bundle_1))
         assert r["response"].startswith("accepted")

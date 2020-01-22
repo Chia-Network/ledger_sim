@@ -1,6 +1,8 @@
 import asyncio
 import collections
 import dataclasses
+import time
+import math
 
 import clvm
 
@@ -87,10 +89,10 @@ class ChainView:
             await check_header_signature(self.tip_hash, self.tip_signature, storage)
 
     async def augment_chain_view(
-            self, header, header_signature, storage, new_unspent_db, reward) -> "ChainView":
+            self, header, header_signature, storage, new_unspent_db, reward, timestamp) -> "ChainView":
         tip_index = self.tip_index + 1
         additions, removals = await self.accept_new_block(
-            header, storage, reward)
+            header, storage, reward, timestamp)
         await apply_deltas(
             tip_index, additions, removals, storage, new_unspent_db)
         chain_view = self.__class__(
@@ -100,9 +102,9 @@ class ChainView:
         return chain_view
 
     async def accept_new_block(
-            self, header: Header, storage: Storage, coinbase_reward: int):
+            self, header: Header, storage: Storage, coinbase_reward: int, timestamp: int):
         return await accept_new_block(
-            self, header, storage, coinbase_reward)
+            self, header, storage, coinbase_reward, timestamp)
 
 
 async def check_header_signature(
@@ -129,7 +131,7 @@ async def check_header_signature(
 
 async def accept_new_block(
         chain_view: ChainView, header: Header,
-        storage: Storage, coinbase_reward: int):
+        storage: Storage, coinbase_reward: int, timestamp: int):
     """
     Checks the block against the existing ChainView object.
     Returns a list of additions (coins), and removals (coin names).
@@ -261,6 +263,7 @@ async def accept_new_block(
             block_index=newly_created_block_index,
             removals=set(removals),
             coin_to_unspent=coin_to_unspent,
+            creation_time=timestamp,
         )
         hash_key_pairs = []
         for coin, puzzle_hash, conditions_dict in cpc_list:
