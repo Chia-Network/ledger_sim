@@ -55,10 +55,7 @@ def calculate_synthetic_public_key(public_key, hidden_puzzle):
 
 
 def puzzle_for_synthetic_public_key(synthetic_public_key):
-    puzzle_src = "((c (q %s) (c (q 0x%s) (a))))" % (
-        binutils.disassemble(puzzle_prog_template),
-        synthetic_public_key.hex(),
-    )
+    puzzle_src = f"((c (q {binutils.disassemble(puzzle_prog_template)}) (c (q 0x{synthetic_public_key.hex(),}) (a))))"
     puzzle_prog = binutils.assemble(puzzle_src)
     return Program(puzzle_prog)
 
