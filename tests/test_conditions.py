@@ -3,7 +3,7 @@ from unittest import TestCase
 
 from chiasim.hack.keys import build_spend_bundle, public_key_bytes_for_index
 from chiasim.hashable import ProgramHash
-from chiasim.puzzles import p2_delegated_conditions
+from  import p2_delegated_conditions
 from chiasim.validation.Conditions import (
     make_assert_coin_consumed_condition,
     make_assert_my_coin_id_condition,

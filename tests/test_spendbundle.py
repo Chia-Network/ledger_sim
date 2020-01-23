@@ -1,6 +1,6 @@
 from chiasim.hack.keys import puzzle_program_for_index
 from chiasim.hashable import std_hash
-from chiasim.puzzles import p2_delegated_puzzle
+from  import p2_delegated_puzzle
 from chiasim.validation.consensus import (
     conditions_for_solution, created_outputs_for_conditions_dict
 )

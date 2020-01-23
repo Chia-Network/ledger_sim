@@ -6,7 +6,7 @@ from chiasim.hack.keys import (
     puzzle_hash_for_index, bls_private_key_for_index
 )
 from chiasim.hashable import Coin, ProgramHash, SpendBundle
-from chiasim.puzzles import (
+from chiasim.hack import (
     p2_conditions, p2_delegated_conditions, p2_m_of_n_delegate_direct
 )
 from chiasim.remote.client import RemoteError
