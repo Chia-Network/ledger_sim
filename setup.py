@@ -47,12 +47,12 @@ setup(
         "Source": "https://github.com/Chia-Network/ledger_sim",
     },
     clvm_extensions=[
-        "chiasim/puzzles/make_p2_delegated_puzzle_or_hidden_puzzle.clvm",
-        "chiasim/puzzles/make_puzzle_m_of_n_direct.clvm",
+        "chiasim/hack/make_p2_delegated_puzzle_or_hidden_puzzle.clvm",
+        "chiasim/hack/make_puzzle_m_of_n_direct.clvm",
     ],
     data_files=[
         (
-            "chiasim/puzzles",
+            "chiasim/hack",
             [
                 "make_p2_delegated_puzzle_or_hidden_puzzle.clvm.hex",
                 "chiasim/puzzles/make_puzzle_m_of_n_direct.clvm.hex",
