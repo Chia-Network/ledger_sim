@@ -1,17 +1,62 @@
 import asyncio
+import pathlib
+import tempfile
 from unittest import TestCase
 
-from chiasim.hack.keys import build_spend_bundle, public_key_bytes_for_index
+from aiter import map_aiter
+
+from chiasim.hack.keys import build_spend_bundle, public_key_bytes_for_index, puzzle_hash_for_index
 from chiasim.hashable import ProgramHash
-from  import p2_delegated_conditions
+from chiasim.hack import p2_delegated_conditions
 from chiasim.validation.Conditions import (
     make_assert_coin_consumed_condition,
     make_assert_my_coin_id_condition,
     make_assert_block_index_exceeds_condition,
     make_assert_block_age_exceeds_condition,
 )
+from chiasim.clients import ledger_sim
+from chiasim.remote.api_server import api_server
+from chiasim.remote.client import request_response_proxy
+from chiasim.ledger import ledger_api
+from chiasim.storage import RAM_DB
+from chiasim.utils.log import init_logging
+from chiasim.utils.server import start_unix_server_aiter
 
-from .test_puzzles import farm_spendable_coin, make_client_server
+
+async def proxy_for_unix_connection(path):
+    reader, writer = await asyncio.open_unix_connection(path)
+    return request_response_proxy(reader, writer, ledger_sim.REMOTE_SIGNATURES)
+
+
+def make_client_server():
+    init_logging()
+    run = asyncio.get_event_loop().run_until_complete
+    path = pathlib.Path(tempfile.mkdtemp(), "port")
+    server, aiter = run(start_unix_server_aiter(path))
+    rws_aiter = map_aiter(
+        lambda rw: dict(reader=rw[0], writer=rw[1], server=server), aiter
+    )
+    initial_block_hash = bytes(([0] * 31) + [1])
+    ledger = ledger_api.LedgerAPI(initial_block_hash, RAM_DB())
+    server_task = asyncio.ensure_future(api_server(rws_aiter, ledger))
+    remote = run(proxy_for_unix_connection(path))
+    # make sure server_task isn't garbage collected
+    remote.server_task = server_task
+    return remote
+
+
+def farm_spendable_coin(remote, puzzle_hash=puzzle_hash_for_index(0)):
+    run = asyncio.get_event_loop().run_until_complete
+
+    r = run(
+        remote.next_block(
+            coinbase_puzzle_hash=puzzle_hash, fees_puzzle_hash=puzzle_hash_for_index(1)
+        )
+    )
+    body = r.get("body")
+
+    coinbase_coin = body.coinbase_coin
+    return coinbase_coin
 
 
 class TestConditions(TestCase):

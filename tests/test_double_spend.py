@@ -15,7 +15,7 @@ from chiasim.hashable import (
     std_hash,
 )
 from chiasim.ledger import ledger_api
-from .p2_conditions import puzzle_for_conditions, solution_for_conditions
+from chiasim.hack.p2_conditions import puzzle_for_conditions, solution_for_conditions
 from chiasim.remote.api_server import api_server
 from chiasim.remote.client import request_response_proxy
 from chiasim.storage import RAM_DB
