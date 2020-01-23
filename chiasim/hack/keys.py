@@ -1,7 +1,7 @@
 import blspy
 
 from chiasim.hashable import CoinSolution, ProgramHash, SpendBundle
-from chiasim.puzzles import p2_delegated_puzzle
+from . import p2_delegated_puzzle
 from chiasim.validation.Conditions import make_create_coin_condition
 from chiasim.wallet.BLSPrivateKey import BLSPrivateKey
 from chiasim.wallet.keychain import Keychain
