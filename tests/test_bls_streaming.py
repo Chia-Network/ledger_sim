@@ -6,7 +6,6 @@ from clvm.ecdsa.bls12_381 import bls12_381_generator
 from clvm.casts import bls12_381_from_bytes, bls12_381_to_bytes
 
 from chiasim.hashable.BLSSignature import BLSPublicKey
-from chiasim.wallet.BLSPrivateKey import BLSPrivateKey
 
 
 class TestBLSStreaming(unittest.TestCase):
@@ -15,7 +14,7 @@ class TestBLSStreaming(unittest.TestCase):
         for _ in range(1, 128):
             p0 = bls12_381_generator * _
             blob_clvm = bls12_381_to_bytes(p0)
-            q0 = BLSPrivateKey.from_secret_exponent(_).public_key()
+            q0 = BLSPublicKey.from_secret_exponent(_)
             blob_blspy = bytes(q0)
             assert blob_clvm.hex() == blob_blspy.hex()
 
