@@ -6,13 +6,9 @@ from ..atoms import streamable
 
 from .sized_bytes import bytes96
 
-from .BLSPublicKey import BLSPublicKey
+from .BLSPublicKey import BLSPublicKey, GROUP_ORDER
 from .Message import MessageHash
 
-
-GROUP_ORDER = (
-    52435875175126190479447740508185965837690552500527637822603658699938581184513
-)
 
 ZERO96 = bytes96([0] * 96)
 
