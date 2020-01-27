@@ -43,9 +43,9 @@ CONTRACT = make_contract()
 
 
 def puzzle_for_contract(contract, puzzle_parameters):
-    env = Program.to([]).cons(puzzle_parameters)
+    env = Program.to([]).cons(Program.to(puzzle_parameters))
     cost, r = run_program(contract, env)
-    return r
+    return Program.to(r)
 
 
 def solution_for_contract(contract, puzzle_parameters, solution_parameters):

@@ -21,7 +21,7 @@ def puzzle_for_m_of_public_key_list(m, public_key_list):
         for _ in (puzzle_prog_template, m, public_key_list))
     puzzle_src = "((c (q %s) (c (q %s) (c (q %s) (a)))))" % format_tuple
     puzzle_prog = binutils.assemble(puzzle_src)
-    return Program(puzzle_prog)
+    return Program.to(puzzle_prog)
 
 
 def solution_for_delegated_puzzle(m, public_key_list, selectors, puzzle, solution):

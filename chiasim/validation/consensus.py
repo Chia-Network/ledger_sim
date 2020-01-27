@@ -8,13 +8,13 @@ from ..hashable import BLSSignature, Coin, Program
 from .Conditions import conditions_by_opcode, parse_sexp_to_conditions, ConditionOpcode
 
 
-def conditions_for_solution(solution_program, eval=clvm.eval_f):
+def conditions_for_solution(solution_program, run_program=clvm.run_program):
     # get the standard script for a puzzle hash and feed in the solution
     args = Program.to(solution_program)
     try:
         puzzle_sexp = args.first()
         solution_sexp = args.rest().first()
-        r = eval(eval, puzzle_sexp, solution_sexp)
+        cost, r = run_program(puzzle_sexp, solution_sexp)
         return parse_sexp_to_conditions(r)
     except EvalError:
         raise

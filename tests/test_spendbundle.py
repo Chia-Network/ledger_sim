@@ -6,8 +6,6 @@ from chiasim.validation.consensus import (
 )
 from chiasim.validation.Conditions import conditions_by_opcode, make_create_coin_condition
 
-from .helpers import trace_eval
-
 
 def test_1():
     puzzle_program_0 = puzzle_program_for_index(0)
@@ -20,7 +18,7 @@ def test_1():
 
     puzzle_hash_solution = p2_delegated_puzzle.solution_for_conditions(puzzle_program_0, conditions)
 
-    output_conditions = conditions_for_solution(puzzle_hash_solution, trace_eval)
+    output_conditions = conditions_for_solution(puzzle_hash_solution)
     from pprint import pprint
     output_conditions_dict = conditions_by_opcode(output_conditions)
     pprint(output_conditions_dict)
