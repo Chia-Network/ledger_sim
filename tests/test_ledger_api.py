@@ -91,9 +91,8 @@ async def client_test(path):
 
     removals = removals_for_body(body)
     assert len(removals) == 1
-    assert repr(removals[0]) == (
-        '<CoinPointer: '
-        '8f076c94522ca55ce43e27aa10b933cf33bf81946a01e72e225b3676cbaf6082>')
+    expected_coin_id = 'dff920df992b0521026ef3e7d1cd1387910d90dd357a93fa1347037354b967cb'
+    assert repr(removals[0]) == f'<CoinPointer: {expected_coin_id}>'
 
     # add a SpendBundle
     input_coin = my_new_coins[0]
@@ -131,11 +130,13 @@ async def client_test(path):
     input_coin = my_new_coins[1]
     spend_bundle = spend_coin(input_coin, [], 2)
     _ = await remote.push_tx(tx=spend_bundle)
+    expected_coin_id = "dff920df992b0521026ef3e7d1cd1387910d90dd357a93fa1347037354b967cb"
+    expected_program_id = "c28bea953c8917c78ea439517857129ba11ddd040f3f5b99ef23076bd921760b"
     assert repr(_) == (
         "RemoteError('exception: (<Err.WRONG_PUZZLE_HASH: 8>, "
         "Coin(parent_coin_info=<CoinPointer: "
-        "8f076c94522ca55ce43e27aa10b933cf33bf81946a01e72e225b3676cbaf6082>,"
-        " puzzle_hash=<ProgramPointer: 365bdd80582fcc2e4868076ab9f24b482a1f83f6d88fd795c362c43544380e7a>, "
+        f"{expected_coin_id}>,"
+        f" puzzle_hash=<ProgramPointer: {expected_program_id}>, "
         "amount=2000))')")
 
 
