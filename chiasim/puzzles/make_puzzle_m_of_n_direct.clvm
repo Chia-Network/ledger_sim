@@ -82,7 +82,7 @@
         (assert (= M (count_selectors selectors))
             ; return the AGGSIG conditions plus the conditions from the delegated_puzzle
                 (add_aggsig (choose_keys selectors public_key_list)
-                            (sha256 (wrap delegated_puzzle))
+                            (sha256tree delegated_puzzle)
                             delegated_puzzle
                             solution)
         )
