@@ -19,7 +19,7 @@ from chiasim.wallet.deltas import additions_for_body, removals_for_body
 
 
 async def proxy_for_unix_connection(path):
-    reader, writer = await asyncio.open_unix_connection(path)
+    reader, writer = await asyncio.open_unix_connection(str(path))
     return request_response_proxy(reader, writer, ledger_sim.REMOTE_SIGNATURES)
 
 
@@ -132,12 +132,12 @@ async def client_test(path):
     _ = await remote.push_tx(tx=spend_bundle)
     expected_coin_id = "dff920df992b0521026ef3e7d1cd1387910d90dd357a93fa1347037354b967cb"
     expected_program_id = "c28bea953c8917c78ea439517857129ba11ddd040f3f5b99ef23076bd921760b"
-    assert repr(_) == (
-        "RemoteError('exception: (<Err.WRONG_PUZZLE_HASH: 8>, "
+    assert str(_) == (
+        "exception: (<Err.WRONG_PUZZLE_HASH: 8>, "
         "Coin(parent_coin_info=<CoinPointer: "
         f"{expected_coin_id}>,"
         f" puzzle_hash=<ProgramPointer: {expected_program_id}>, "
-        "amount=2000))')")
+        "amount=2000))")
 
 
 def test_client_server():

@@ -11,7 +11,7 @@ from chiasim.utils.server import start_unix_server_aiter
 
 
 async def proxy_for_unix_connection(path):
-    reader, writer = await asyncio.open_unix_connection(path)
+    reader, writer = await asyncio.open_unix_connection(str(path))
     return request_response_proxy(reader, writer)
 
 
