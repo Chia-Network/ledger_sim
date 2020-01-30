@@ -32,7 +32,7 @@ from chiasim.utils.server import start_unix_server_aiter
 
 
 async def proxy_for_unix_connection(path):
-    reader, writer = await asyncio.open_unix_connection(path)
+    reader, writer = await asyncio.open_unix_connection(str(path))
     return request_response_proxy(reader, writer, ledger_sim.REMOTE_SIGNATURES)
 
 
@@ -47,7 +47,7 @@ def make_client_server():
     initial_block_hash = bytes(([0] * 31) + [1])
     ledger = ledger_api.LedgerAPI(initial_block_hash, RAM_DB())
     server_task = asyncio.ensure_future(api_server(rws_aiter, ledger))
-    remote = run(proxy_for_unix_connection(path))
+    remote = run(proxy_for_unix_connection(str(path)))
     # make sure server_task isn't garbage collected
     remote.server_task = server_task
     return remote
