@@ -1,5 +1,4 @@
 import asyncio
-import math
 from unittest import TestCase
 
 from chiasim.atoms import uint64
@@ -180,14 +179,15 @@ class TestConditions(TestCase):
         conditions_time_exceeds = [make_assert_time_exceeds_condition(min_time)]
 
         # try to spend coin_1 with limit set to age 1. Should fail
-        solution_1 = p2_delegated_conditions.solution_for_conditions(puzzle_program, conditions_time_exceeds)
+        solution_1 = p2_delegated_conditions.solution_for_conditions(
+            puzzle_program, conditions_time_exceeds)
         spend_bundle_1 = build_spend_bundle(coin_1, solution_1)
         r = run(remote.push_tx(tx=spend_bundle_1))
 
         assert r.args[0].startswith("exception: (<Err.ASSERT_TIME_EXCEEDS_FAILED")
 
         # wait a second, should succeed
-        x = run(remote.skip_milliseconds(ms=uint64(1000).to_bytes(4, 'big')))
+        r = run(remote.skip_milliseconds(ms=uint64(1000)))
 
         r = run(remote.push_tx(tx=spend_bundle_1))
         assert r["response"].startswith("accepted")

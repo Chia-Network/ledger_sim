@@ -1,8 +1,8 @@
 import asyncio
 import collections
 import dataclasses
-import time
-import math
+
+from clvm import EvalError
 
 from chiasim.utils.run_program import run_program
 
@@ -42,7 +42,7 @@ def name_puzzle_conditions_list(body_program):
 
     try:
         cost, sexp = run_program(body_program, [])
-    except clvm.EvalError.EvalError:
+    except EvalError:
         breakpoint()
         raise ConsensusError(Err.INVALID_BLOCK_SOLUTION, body_program)
 
@@ -61,7 +61,7 @@ def name_puzzle_conditions_list(body_program):
         puzzle_hash = ProgramHash(Program(puzzle_program))
         try:
             conditions_dict = conditions_dict_for_solution(puzzle_solution_program)
-        except clvm.EvalError.EvalError:
+        except EvalError:
             raise ConsensusError(Err.INVALID_COIN_SOLUTION, coin_name)
 
         npc_list.append((coin_name, puzzle_hash, conditions_dict))
