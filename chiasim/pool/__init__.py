@@ -16,7 +16,7 @@ def get_pool_public_key(index=0) -> BLSPublicKey:
 
 
 def signature_for_coinbase(coin: Coin, pool_private_key: blspy.PrivateKey):
-    message_hash = blspy.Util.hash256(bytes(coin))
+    message_hash = coin.name()
     return BLSSignature(pool_private_key.sign_prepend_prehashed(message_hash).serialize())
 
 

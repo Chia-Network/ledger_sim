@@ -39,6 +39,7 @@ async def client_test(path):
     _ = await remote.hash_preimage(hash=b'0'*32)
     assert _ is None
 
+    # farm a block
     coinbase_puzzle_hash = puzzle_hash_for_index(1)
     fees_puzzle_hash = puzzle_hash_for_index(6)
 
@@ -74,6 +75,7 @@ async def client_test(path):
 
     coinbase_puzzle_hash = puzzle_hash_for_index(2)
 
+    # farm another block, locking in the spend
     r = await remote.next_block(
         coinbase_puzzle_hash=coinbase_puzzle_hash, fees_puzzle_hash=fees_puzzle_hash)
     header = r.get("header")
@@ -89,9 +91,10 @@ async def client_test(path):
     my_new_coins_2 = tuple(additions_for_body(body))
     assert my_new_coins == my_new_coins_2[2:]
 
+    # ensure we spent the coin
     removals = removals_for_body(body)
     assert len(removals) == 1
-    expected_coin_id = 'f0af631ffa172acce8a5918b1482ca5c69ba4f265c1a535a8682d2476255e854'
+    expected_coin_id = 'dfef63a0c650fb6121f1ecc2e031a46ee4f7d933aaf7b583dfdcd6cd0ba52fdd'
     assert repr(removals[0]) == f'<CoinPointer: {expected_coin_id}>'
 
     # add a SpendBundle
@@ -130,7 +133,6 @@ async def client_test(path):
     input_coin = my_new_coins[1]
     spend_bundle = spend_coin(input_coin, [], 2)
     _ = await remote.push_tx(tx=spend_bundle)
-    expected_coin_id = "f0af631ffa172acce8a5918b1482ca5c69ba4f265c1a535a8682d2476255e854"
     expected_program_id = "3b8f716b029bc6c658e73ac071a4ed8da2d73b8f4181db37cf1c40527bb27835"
     assert str(_) == (
         "exception: (<Err.WRONG_PUZZLE_HASH: 8>, "
