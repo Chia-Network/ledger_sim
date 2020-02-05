@@ -187,7 +187,7 @@ class TestConditions(TestCase):
         assert r.args[0].startswith("exception: (<Err.ASSERT_TIME_EXCEEDS_FAILED")
 
         # wait a second, should succeed
-        r = run(remote.skip_milliseconds(ms=uint64(1000)))
+        r = run(remote.skip_milliseconds(ms=uint64(1001)))
 
         r = run(remote.push_tx(tx=spend_bundle_1))
         assert r["response"].startswith("accepted")
