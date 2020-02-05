@@ -39,7 +39,7 @@ def assert_block_age_exceeds(condition, coin, context):
 
 def assert_time_exceeds(condition, coin, context):
     min_time = int_from_bytes(condition[1])
-    if context['creation_time'] < min_time:
+    if context['creation_time'] <= min_time:
         raise ConsensusError(
             Err.ASSERT_TIME_EXCEEDS_FAILED, (coin, condition))
 
