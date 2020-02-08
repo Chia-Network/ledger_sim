@@ -13,7 +13,7 @@ from chiasim.validation.Conditions import (
     make_assert_time_exceeds_condition,
 )
 
-from .test_puzzles import farm_spendable_coin, make_client_server
+from .helpers import farm_spendable_coin, make_client_server
 
 
 def int_to_bytes(x: int) -> bytes:
