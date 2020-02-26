@@ -57,7 +57,7 @@ setup(
         (
             "chiasim/puzzles",
             [
-                "make_p2_delegated_puzzle_or_hidden_puzzle.clvm.hex",
+                "chiasim/puzzles/make_p2_delegated_puzzle_or_hidden_puzzle.clvm.hex",
                 "chiasim/puzzles/make_puzzle_m_of_n_direct.clvm.hex",
             ],
         )
