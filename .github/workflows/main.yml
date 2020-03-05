@@ -15,45 +15,35 @@ jobs:
     - name: Set env
       run: |
         python3 -m venv env
-        ln -s env/bin/activate
-        . activate
     - name: Install dependencies
-      env:
-        CHIA_MACHINE_SSH_KEY: ${{ secrets.CHIA_MACHINE_SSH_KEY }}
-        GIT_SSH_COMMAND: "ssh -o StrictHostKeyChecking=no"
       run: |
-        eval "$(ssh-agent -s)"
-        ssh-add - <<< "${CHIA_MACHINE_SSH_KEY}"
+        . env/bin/activate
         python -m pip install --upgrade pip
-        pip install -r requirements.txt 
+        pip install -r requirements.txt
         pip install -e .
         pip wheel .
     - name: Test with pytest
       run: |
+        . env/bin/activate
         pip install pytest
         py.test tests
+
   build36:
     runs-on: ubuntu-18.04
 
     steps:
     - uses: actions/checkout@v1
-    - name: Set env
+    - name: Set up Python 3.6 venv
       run: |
         sudo apt-get install python3-venv
-        python3 -m venv env
-        ln -s env/bin/activate
-    - name: Install dependencies
-      env:
-        CHIA_MACHINE_SSH_KEY: ${{ secrets.CHIA_MACHINE_SSH_KEY }}
-        GIT_SSH_COMMAND: "ssh -o StrictHostKeyChecking=no"
+    - name: Set env
       run: |
-        eval "$(ssh-agent -s)"
-        ssh-add - <<< "${CHIA_MACHINE_SSH_KEY}"
+        python3 -m venv env
+    - name: Install dependencies
+      run: |
         . env/bin/activate
         python -m pip install --upgrade pip
-        # need --no-cache-dir due to wheel building failure on github docker image
-        pip install wheel
-        pip install --no-cache-dir -r requirements.txt
+        pip install -r requirements.txt
         pip install -e .
         pip wheel .
     - name: Test with pytest
