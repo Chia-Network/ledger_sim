@@ -37,7 +37,7 @@ setup(
     keywords='chia cryptocurrency',
     packages=find_packages(exclude=['contrib', 'docs', 'tests']),
     python_requires='>=3.6, <4',
-    setup_requires=["clvm_tools", "setuptools_scm"],
+    setup_requires=["setuptools_scm"],
     use_scm_version=True,
     install_requires=[],
     extras_require={"dev": [], "test": ["coverage"], },
