@@ -27,6 +27,7 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt 
         pip install -e .
+        pip wheel .
     - name: Test with pytest
       run: |
         pip install pytest
@@ -47,6 +48,7 @@ jobs:
         # need --no-cache-dir due to wheel building failure on github docker image
         pip3 install --no-cache-dir -r requirements.txt 
         pip3 install -e .
+        pip3 wheel .
     - name: Test with pytest
       run: |
         pip3 install pytest
