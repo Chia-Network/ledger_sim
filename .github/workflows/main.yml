@@ -44,6 +44,7 @@ jobs:
       run: |
         eval "$(ssh-agent -s)"
         ssh-add - <<< "${CHIA_MACHINE_SSH_KEY}"
+        python -m pip3 install --upgrade pip
         pip3 install setuptools
         # need --no-cache-dir due to wheel building failure on github docker image
         pip3 install --no-cache-dir -r requirements.txt 
