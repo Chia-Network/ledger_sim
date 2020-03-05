@@ -1,8 +1,6 @@
-from setuptools_scm import get_version
-version = get_version()
+from .version import version
 
 __version__ = version
-
 
 __title__ = 'ledger_sim'
 __author__ = 'Chia Network'
