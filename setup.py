@@ -17,6 +17,14 @@ here = path.abspath(path.dirname(__file__))
 with open(path.join(here, "README.org"), encoding="utf-8") as f:
     long_description = f.read()
 
+install_requires = [
+    "aiter==0.1.2",
+    "blspy==0.1.8",
+    "cbor==1.0.0",
+    "clvm@git+https://github.com/Chia-Network/clvm.git@13be6779e41b6083d4d118291269e942f121ee4d#egg=clvm",
+    "clvm_tools@git+https://github.com/Chia-Network/clvm_tools.git@360375b8f4a9ef8a13c94644bcb4621b7d5f8b97#egg=clvm_tools",
+    "dataclasses",
+]
 
 setup(
     name="ledger_sim",
@@ -39,7 +47,7 @@ setup(
     python_requires='>=3.6, <4',
     setup_requires=["setuptools_scm"],
     use_scm_version=True,
-    install_requires=[],
+    install_requires=install_requires,
     extras_require={"dev": [], "test": ["coverage"], },
     entry_points={"console_scripts": ["ledger-sim=chiasim.cmds.ledger_sim:main", ], },
     project_urls={

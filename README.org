@@ -18,7 +18,6 @@ Python 3.7 or later is required.
 $ python3 -m venv env
 $ ln -s env/bin/activate
 $ . activate
-$ pip install -r requirements.txt
 $ pip install -e .
 #+END_SRC
 
