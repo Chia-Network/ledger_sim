@@ -1,5 +1,6 @@
+import hashlib
+
 from clvm import to_sexp_f
-from clvm.more_ops import sha256tree
 from clvm.serialize import sexp_from_stream, sexp_to_stream
 from clvm.subclass_sexp import BaseSExp
 
@@ -29,7 +30,14 @@ class Program(SExp, bin_methods):
         sexp_to_stream(self, f)
 
     def tree_hash(self):
-        return sha256tree(self)
+        if self.listp():
+            left = self.to(self.first()).tree_hash()
+            right = self.to(self.rest()).tree_hash()
+            s = b"\2" + left + right
+        else:
+            atom = self.as_atom()
+            s = b"\1" + atom
+        return hashlib.sha256(s).digest()
 
     def __str__(self):
         return bytes(self).hex()
