@@ -21,8 +21,8 @@ install_requires = [
     "aiter==0.1.2",
     "blspy==0.1.8",
     "cbor==1.0.0",
-    "clvm@git+https://github.com/Chia-Network/clvm.git@13be6779e41b6083d4d118291269e942f121ee4d#egg=clvm",
-    "clvm_tools@git+https://github.com/Chia-Network/clvm_tools.git@360375b8f4a9ef8a13c94644bcb4621b7d5f8b97#egg=clvm_tools",
+    "clvm==0.4",
+    "clvm_tools@git+https://github.com/Chia-Network/clvm_tools.git@e1078fcaeadbe4269d6ff20414fcfd2a6afdf3f6#egg=clvm_tools",
     "dataclasses",
 ]
 
