@@ -10,53 +10,17 @@ require a delegated puzzle program, so in those cases, this is just what
 the doctor ordered.
 """
 
-from clvm_tools import binutils
-
 from chiasim.hashable import Program
 
-
-# contract:
-# generate puzzle: (() . puzzle_parameters)
-# generate solution: (1 . (puzzle_parameters . solution_parameters))
+from .load_clvm import load_clvm
 
 
-def make_contract():
-    """
-    Rough source (hasn't been tested):
-        (mod (is_solution . parameters)
-            (defmacro puzzle conditions (qq (q (unquote conditions))))
-            (defmacro solution (conditions . solution_info) (qq (q (unquote (c conditions ())))))
-            (if is_solution (solution parameters) (puzzle parameters))
-        )
-    """
-    return Program.to(binutils.assemble(
-        """
-    ((c (i (f (a))
-        (q (c (c (q #q) (c (f (r (a)))
-        (q ()))) (q (())))) (q (c (q #q) (c (r (a)) (q ()))))) (a)))
-    """
-    ))
-
-
-CONTRACT = make_contract()
-
-
-def puzzle_for_contract(contract, puzzle_parameters):
-    env = Program.to([]).cons(Program.to(puzzle_parameters))
-    r = contract.run(env)
-    return Program.to(r)
-
-
-def solution_for_contract(contract, puzzle_parameters, solution_parameters):
-    r = contract.run(
-        Program.to((1, (puzzle_parameters, solution_parameters)))
-    )
-    return r
+MOD = load_clvm("p2_conditions.clvm")
 
 
 def puzzle_for_conditions(conditions):
-    return puzzle_for_contract(CONTRACT, conditions)
+    return MOD.run([conditions])
 
 
 def solution_for_conditions(conditions):
-    return solution_for_contract(CONTRACT, conditions, [])
+    return Program.to([puzzle_for_conditions(conditions), 0])

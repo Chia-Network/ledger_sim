@@ -12,24 +12,25 @@ you can use p2_conditions.
 This roughly corresponds to bitcoin's graftroot.
 """
 
-from clvm_tools import binutils
+from typing import List
 
 from chiasim.hashable import Program
-from chiasim.validation.Conditions import ConditionOpcode
 
 from . import p2_conditions
 
+from .load_clvm import load_clvm
 
-def puzzle_for_pk(public_key):
-    aggsig = ConditionOpcode.AGG_SIG[0]
-    TEMPLATE = (f"(c (c (q {aggsig}) (c (q 0x%s) (c (sha256tree (f (a))) (q ())))) "
-                f"((c (f (a)) (f (r (a))))))")
-    return Program.to(binutils.assemble(TEMPLATE % public_key.hex()))
+
+MOD = load_clvm("p2_delegated_puzzle.clvm")
+
+
+def puzzle_for_pk(public_key: bytes) -> Program:
+    return MOD.curry(public_key)
 
 
 def solution_for_conditions(puzzle_reveal, conditions):
     delegated_puzzle = p2_conditions.puzzle_for_conditions(conditions)
-    solution = []
+    solution: List = []
     return Program.to([puzzle_reveal, [delegated_puzzle, solution]])
 
 
