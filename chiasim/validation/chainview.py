@@ -4,8 +4,6 @@ import dataclasses
 
 from clvm import EvalError
 
-from chiasim.utils.run_program import run_program
-
 from .consensus import (
     conditions_dict_for_solution,
     created_outputs_for_conditions_dict, hash_key_pairs_for_conditions_dict,
@@ -41,7 +39,7 @@ def name_puzzle_conditions_list(body_program):
     """
 
     try:
-        cost, sexp = run_program(body_program, [])
+        sexp = Program.to(body_program).run([])
     except EvalError:
         breakpoint()
         raise ConsensusError(Err.INVALID_BLOCK_SOLUTION, body_program)
