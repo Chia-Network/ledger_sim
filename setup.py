@@ -19,7 +19,7 @@ with open(path.join(here, "README.org"), encoding="utf-8") as f:
 
 install_requires = [
     "aiter==0.1.2",
-    "blspy==0.1.8",
+    "blspy==0.1.15",
     "cbor==1.0.0",
     "clvm==0.4.1",
     "clvm-tools==0.1.4",
